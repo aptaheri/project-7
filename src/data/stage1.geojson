@@ -1,0 +1,371 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-9.4724771, 38.7324707],
+          [-9.0677509, 39.6015562],
+          [-8.7381261, 40.4287977],
+          [-8.6291053, 41.1579438],
+          [-8.6446202, 42.4298846],
+          [-8.4103923, 43.3637626],
+          [-7.3605628, 43.661982],
+          [-6.6483467, 43.5627804],
+          [-5.8485461, 43.3622522],
+          [-5.0058951, 42.9764192],
+          [-3.6893545, 42.3504659],
+          [-2.4790872, 41.766436],
+          [-1.7225575, 41.826404],
+          [-0.9492193, 42.1169172],
+          [-0.5254869, 42.71649],
+          [-0.370797, 43.2951],
+          [0.897811, 43.80531],
+          [2.236322, 44.306225],
+          [3.5014879, 44.5179297],
+          [4.2904534, 45.1144854],
+          [5.917781, 45.564601],
+          [7.3130948, 45.7350508],
+          [7.1788401, 46.1513081],
+          [7.749117, 46.0207133],
+          [7.9090981, 46.5935058],
+          [8.5935627, 46.6339116],
+          [9.0673318, 47.0994786],
+          [9.8359701, 46.8027453],
+          [11.3910349, 47.2675322],
+          [11.1525785, 46.6711489],
+          [11.8011092, 46.0167828],
+          [12.3159547, 45.440379],
+          [13.6044065, 45.7733884],
+          [15.0213211, 44.5648438],
+          [16.4435148, 43.5147118],
+          [18.0944238, 42.6506606],
+          [19.2147632, 41.9310884],
+          [20.0822631, 41.1113835],
+          [21.4131222, 40.7845262],
+          [22.9444191, 40.6400629],
+          [24.4148129, 40.9366961],
+          [25.8740938, 40.8456352],
+          [27.511674, 40.9780919],
+          [28.9783589, 41.0082376],
+          [30.6418, 40.6282],
+          [31.920441, 40.168218],
+          [33.123771, 39.553374],
+          [34.828889, 38.643056],
+          [36.071732, 39.184872],
+          [37.757236, 39.898445],
+          [38.3581041, 40.629857],
+          [39.7167633, 41.0026969],
+          [41.419843, 41.394618],
+          [42.9824876, 41.6414204],
+          [44.0906451, 41.5993233],
+          [45.3516331, 41.0971074],
+          [46.3723313, 40.6878581],
+          [48.3918135, 40.566698],
+          [50.1197805, 40.5178548]
+        ]
+      },
+      "properties": {
+        "name": "Stage 1 Route",
+        "description": "Praia do Guincho, Portugal to Baku, Azerbaijan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-9.4724771, 38.7324707] },
+      "properties": { "name": "Praia do Guincho", "order": 1 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-9.0677509, 39.6015562] },
+      "properties": { "name": "Nazaré", "order": 2 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-8.7381261, 40.4287977] },
+      "properties": { "name": "Mira", "order": 3 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-8.6291053, 41.1579438] },
+      "properties": { "name": "Porto", "order": 4 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-8.6446202, 42.4298846] },
+      "properties": { "name": "Pontevedra", "order": 5 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-8.4103923, 43.3637626] },
+      "properties": { "name": "A Coruña", "order": 6 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-7.3605628, 43.661982] },
+      "properties": { "name": "Burela", "order": 7 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-6.6483467, 43.5627804] },
+      "properties": { "name": "Puerto de Vega", "order": 8 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-5.8485461, 43.3622522] },
+      "properties": { "name": "Oviedo", "order": 9 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-5.0058951, 42.9764192] },
+      "properties": { "name": "Riaño", "order": 10 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-3.6893545, 42.3504659] },
+      "properties": { "name": "Burgos", "order": 11 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-2.4790872, 41.766436] },
+      "properties": { "name": "Soria", "order": 12 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-1.7225575, 41.826404] },
+      "properties": { "name": "Trasmoz", "order": 13 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-0.9492193, 42.1169172] },
+      "properties": { "name": "Erla", "order": 14 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-0.5254869, 42.71649] },
+      "properties": { "name": "Canfranc", "order": 15 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-0.370797, 43.2951] },
+      "properties": { "name": "Pau", "order": 16 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [0.897811, 43.80531] },
+      "properties": { "name": "Solomiac", "order": 17 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [2.236322, 44.306225] },
+      "properties": { "name": "Rieupeyroux", "order": 18 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [3.5014879, 44.5179297] },
+      "properties": { "name": "Mende", "order": 19 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [4.2904534, 45.1144854] },
+      "properties": { "name": "Tence", "order": 20 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [5.917781, 45.564601] },
+      "properties": { "name": "Chambéry", "order": 21 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [7.3130948, 45.7350508] },
+      "properties": { "name": "Aosta", "order": 22 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [7.1788401, 46.1513081] },
+      "properties": { "name": "Saxon", "order": 23 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [7.749117, 46.0207133] },
+      "properties": { "name": "Zermatt", "order": 24 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [7.9090981, 46.5935058] },
+      "properties": { "name": "Lauterbrunnen", "order": 25 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [8.5935627, 46.6339116] },
+      "properties": { "name": "Andermatt", "order": 26 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [9.0673318, 47.0994786] },
+      "properties": { "name": "Glarus Nord", "order": 27 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [9.8359701, 46.8027453] },
+      "properties": { "name": "Davos", "order": 28 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [11.3910349, 47.2675322] },
+      "properties": { "name": "Innsbruck", "order": 29 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [11.1525785, 46.6711489] },
+      "properties": { "name": "Merano", "order": 30 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [11.8011092, 46.0167828] },
+      "properties": { "name": "Fonzaso", "order": 31 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [12.3159547, 45.440379] },
+      "properties": { "name": "Venice", "order": 32 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [13.6044065, 45.7733884] },
+      "properties": { "name": "Duino", "order": 33 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [15.0213211, 44.5648438] },
+      "properties": { "name": "Cesarica", "order": 34 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [16.4435148, 43.5147118] },
+      "properties": { "name": "Split", "order": 35 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [18.0944238, 42.6506606] },
+      "properties": { "name": "Dubrovnik", "order": 36 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [19.2147632, 41.9310884] },
+      "properties": { "name": "Ulcinj", "order": 37 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [20.0822631, 41.1113835] },
+      "properties": { "name": "Elbasan", "order": 38 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [21.4131222, 40.7845262] },
+      "properties": { "name": "Florina", "order": 39 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [22.9444191, 40.6400629] },
+      "properties": { "name": "Thessaloniki", "order": 40 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [24.4148129, 40.9366961] },
+      "properties": { "name": "Kavala", "order": 41 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [25.8740938, 40.8456352] },
+      "properties": { "name": "Alexandroupoli", "order": 42 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [27.511674, 40.9780919] },
+      "properties": { "name": "Tekirdağ", "order": 43 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [28.9783589, 41.0082376] },
+      "properties": { "name": "Istanbul", "order": 44 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [30.6418, 40.6282] },
+      "properties": { "name": "Kuzuluk", "order": 45 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [31.920441, 40.168218] },
+      "properties": { "name": "Beypazarı", "order": 46 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [33.123771, 39.553374] },
+      "properties": { "name": "Bala", "order": 47 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [34.828889, 38.643056] },
+      "properties": { "name": "Göreme", "order": 48 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [36.071732, 39.184872] },
+      "properties": { "name": "Gemerek", "order": 49 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [37.757236, 39.898445] },
+      "properties": { "name": "Zara", "order": 50 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [38.3581041, 40.629857] },
+      "properties": { "name": "Pınarlar", "order": 51 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [39.7167633, 41.0026969] },
+      "properties": { "name": "Trabzon", "order": 52 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [41.419843, 41.394618] },
+      "properties": { "name": "Hopa", "order": 53 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [42.9824876, 41.6414204] },
+      "properties": { "name": "Akhaltsikhe", "order": 54 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [44.0906451, 41.5993233] },
+      "properties": { "name": "Tsalka", "order": 55 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [45.3516331, 41.0971074] },
+      "properties": { "name": "Gazakh", "order": 56 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [46.3723313, 40.6878581] },
+      "properties": { "name": "Ganja", "order": 57 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [48.3918135, 40.566698] },
+      "properties": { "name": "Agsu", "order": 58 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [50.1197805, 40.5178548] },
+      "properties": { "name": "Baku", "order": 59 }
+    }
+  ]
+}
