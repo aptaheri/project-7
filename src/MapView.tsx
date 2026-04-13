@@ -7,7 +7,6 @@ import stage3Raw from './data/stage3-directions.geojson?raw'
 import stage4Raw from './data/stage4-directions.geojson?raw'
 import stage5Raw from './data/stage5-directions.geojson?raw'
 import stage6Raw from './data/stage6-directions.geojson?raw'
-import stage6Raw from './data/stage6-directions.geojson?raw'
 import './MapView.scss'
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
