@@ -1,0 +1,485 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-17.5285548, 14.7447641],
+          [-16.4111425, 14.3390167],
+          [-15.5498756, 14.1043968],
+          [-13.6710059, 13.7725888],
+          [-13.3067562, 12.4894021],
+          [-13.068045, 11.801194],
+          [-12.2891314, 11.3232042],
+          [-12.0832543, 10.3785237],
+          [-12.8629885, 10.0406725],
+          [-13.0904353, 9.4344715],
+          [-12.7854613, 8.766514],
+          [-13.2354918, 8.4870803],
+          [-12.4333255, 8.1600523],
+          [-11.7409946, 7.9551791],
+          [-11.3062382, 7.3139328],
+          [-10.8073698, 6.3156068],
+          [-9.4728244, 7.0024321],
+          [-8.5363982, 7.5790498],
+          [-8.1447804, 7.2676037],
+          [-7.3624598, 6.7473801],
+          [-6.4396888, 6.8883341],
+          [-5.2743629, 6.8162741],
+          [-4.019603, 5.3252258],
+          [-2.7721149, 5.2883507],
+          [-1.7830973, 4.9015794],
+          [-1.2689394, 5.1230574],
+          [-0.1974306, 5.5592846],
+          [1.2196502, 6.1295577],
+          [2.4277995, 6.3562425],
+          [3.6319131, 6.8322014],
+          [4.8779969, 6.7518524],
+          [6.1817726, 6.2576112],
+          [7.5138947, 6.4482701],
+          [8.7205877, 5.9616504],
+          [9.4172728, 5.3371805],
+          [9.9353318, 4.9741169],
+          [10.5239867, 5.1443561],
+          [11.2240441, 4.7546039],
+          [11.6450084, 4.2846263],
+          [12.3750266, 4.6740235],
+          [13.6767958, 4.5791946],
+          [14.3617343, 4.4354347],
+          [15.0294415, 4.1757741],
+          [15.7879371, 4.2571092],
+          [15.8789403, 4.9404212],
+          [16.7048163, 4.7791368],
+          [17.4647284, 4.3209601],
+          [17.9828138, 3.8665018],
+          [18.5827765, 4.362156],
+          [18.866667, 3.783333],
+          [19.7770261, 3.2515532],
+          [20.1834431, 2.3780262],
+          [20.694367, 2.1955531],
+          [21.4872092, 2.1701072],
+          [22.4708685, 2.1961772],
+          [23.3049491, 2.4922198],
+          [24.13799, 2.9602248],
+          [24.7499112, 2.8045317],
+          [25.5266578, 3.2736229],
+          [26.0591205, 3.6524312],
+          [26.8969234, 3.1360123],
+          [27.6082774, 2.7722364],
+          [28.397289, 2.768303],
+          [29.0401738, 2.7044942],
+          [29.5629662, 3.1292486],
+          [30.145781, 2.932001],
+          [30.8384093, 2.8590231],
+          [31.4948487, 2.460882],
+          [32.3320088, 2.2458645],
+          [32.8902699, 2.2596365],
+          [33.6287951, 1.729074],
+          [34.1865669, 0.6782274],
+          [35.2697802, 0.5142775],
+          [36.080026, -0.3030988],
+          [36.8219462, -1.2920659],
+          [37.967847, -2.4105236],
+          [38.5559336, -3.3973104],
+          [39.7100122, -4.0481643]
+        ]
+      },
+      "properties": {
+        "name": "Stage 4 Route",
+        "description": "Dakar, Senegal to Mombasa, Kenya"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-17.5285548, 14.7447641] },
+      "properties": { "name": "Kraken Pub", "order": 1 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-16.4111425, 14.3390167] },
+      "properties": { "name": "Fatick", "order": 2 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-15.5498756, 14.1043968] },
+      "properties": { "name": "Kaffrine", "order": 3 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-13.6710059, 13.7725888] },
+      "properties": { "name": "Tambacounda", "order": 4 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-13.3067562, 12.4894021] },
+      "properties": { "name": "Koundara", "order": 5 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-13.068045, 11.801194] },
+      "properties": { "name": "Tiankoi", "order": 6 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-12.2891314, 11.3232042] },
+      "properties": { "name": "Labé", "order": 7 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-12.0832543, 10.3785237] },
+      "properties": { "name": "Mamou", "order": 8 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-12.8629885, 10.0406725] },
+      "properties": { "name": "Kindia", "order": 9 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-13.0904353, 9.4344715] },
+      "properties": { "name": "Forécariah", "order": 10 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-12.7854613, 8.766514] },
+      "properties": { "name": "Port Loko", "order": 11 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-13.2354918, 8.4870803] },
+      "properties": { "name": "Freetown", "order": 12 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-12.4333255, 8.1600523] },
+      "properties": { "name": "Moyamba", "order": 13 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-11.7409946, 7.9551791] },
+      "properties": { "name": "Bo", "order": 14 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-11.3062382, 7.3139328] },
+      "properties": { "name": "Zimmi", "order": 15 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-10.8073698, 6.3156068] },
+      "properties": { "name": "Monrovia", "order": 16 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-9.4728244, 7.0024321] },
+      "properties": { "name": "Gbarnga", "order": 17 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-8.5363982, 7.5790498] },
+      "properties": { "name": "Yekepa", "order": 18 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-8.1447804, 7.2676037] },
+      "properties": { "name": "Danané", "order": 19 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-7.3624598, 6.7473801] },
+      "properties": { "name": "Duékoué", "order": 20 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-6.4396888, 6.8883341] },
+      "properties": { "name": "Daloa", "order": 21 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-5.2743629, 6.8162741] },
+      "properties": { "name": "Yamoussoukro", "order": 22 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-4.019603, 5.3252258] },
+      "properties": { "name": "Abidjan", "order": 23 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-2.7721149, 5.2883507] },
+      "properties": { "name": "Elubo", "order": 24 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-1.7830973, 4.9015794] },
+      "properties": { "name": "Takoradi", "order": 25 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-1.2689394, 5.1230574] },
+      "properties": { "name": "Cape Coast", "order": 26 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-0.1974306, 5.5592846] },
+      "properties": { "name": "Accra", "order": 27 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [1.2196502, 6.1295577] },
+      "properties": { "name": "Lomé", "order": 28 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [2.4277995, 6.3562425] },
+      "properties": { "name": "Cotonou", "order": 29 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [3.6319131, 6.8322014] },
+      "properties": { "name": "Sagamu", "order": 30 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [4.8779969, 6.7518524] },
+      "properties": { "name": "Ore", "order": 31 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [6.1817726, 6.2576112] },
+      "properties": { "name": "Agbor", "order": 32 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [7.5138947, 6.4482701] },
+      "properties": { "name": "Enugu", "order": 33 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [8.7205877, 5.9616504] },
+      "properties": { "name": "Ikom", "order": 34 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [9.4172728, 5.3371805] },
+      "properties": { "name": "Nguti", "order": 35 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [9.9353318, 4.9741169] },
+      "properties": { "name": "Nkongsamba", "order": 36 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [10.5239867, 5.1443561] },
+      "properties": { "name": "Bangangté", "order": 37 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [11.2240441, 4.7546039] },
+      "properties": { "name": "Bafia", "order": 38 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [11.6450084, 4.2846263] },
+      "properties": { "name": "Batchenga", "order": 39 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [12.3750266, 4.6740235] },
+      "properties": { "name": "Nanga-Eboko", "order": 40 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [13.6767958, 4.5791946] },
+      "properties": { "name": "Bertoua", "order": 41 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [14.3617343, 4.4354347] },
+      "properties": { "name": "Batouri", "order": 42 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [15.0294415, 4.1757741] },
+      "properties": { "name": "Kenzou", "order": 43 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [15.7879371, 4.2571092] },
+      "properties": { "name": "Berbérati", "order": 44 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [15.8789403, 4.9404212] },
+      "properties": { "name": "Carnot", "order": 45 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [16.7048163, 4.7791368] },
+      "properties": { "name": "Gadzi", "order": 46 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [17.4647284, 4.3209601] },
+      "properties": { "name": "Boda", "order": 47 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [17.9828138, 3.8665018] },
+      "properties": { "name": "Mbaïki", "order": 48 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [18.5827765, 4.362156] },
+      "properties": { "name": "Bangui", "order": 49 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [18.866667, 3.783333] },
+      "properties": { "name": "Boketa", "order": 50 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [19.7770261, 3.2515532] },
+      "properties": { "name": "Gemena", "order": 51 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [20.1834431, 2.3780262] },
+      "properties": { "name": "Akula", "order": 52 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [20.694367, 2.1955531] },
+      "properties": { "name": "Mbokutu", "order": 53 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [21.4872092, 2.1701072] },
+      "properties": { "name": "Lisala", "order": 54 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [22.4708685, 2.1961772] },
+      "properties": { "name": "Bumba", "order": 55 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [23.3049491, 2.4922198] },
+      "properties": { "name": "Bunduki", "order": 56 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [24.13799, 2.9602248] },
+      "properties": { "name": "Dulia", "order": 57 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [24.7499112, 2.8045317] },
+      "properties": { "name": "Buta", "order": 58 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [25.5266578, 3.2736229] },
+      "properties": { "name": "Titule", "order": 59 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [26.0591205, 3.6524312] },
+      "properties": { "name": "Dingila", "order": 60 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [26.8969234, 3.1360123] },
+      "properties": { "name": "Poko", "order": 61 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [27.6082774, 2.7722364] },
+      "properties": { "name": "Isiro", "order": 62 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [28.397289, 2.768303] },
+      "properties": { "name": "Ndubala", "order": 63 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [29.0401738, 2.7044942] },
+      "properties": { "name": "Gombari", "order": 64 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [29.5629662, 3.1292486] },
+      "properties": { "name": "Durba", "order": 65 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [30.145781, 2.932001] },
+      "properties": { "name": "Bo", "order": 66 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [30.8384093, 2.8590231] },
+      "properties": { "name": "Aru", "order": 67 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [31.4948487, 2.460882] },
+      "properties": { "name": "Pakwach", "order": 68 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [32.3320088, 2.2458645] },
+      "properties": { "name": "Kamdini", "order": 69 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [32.8902699, 2.2596365] },
+      "properties": { "name": "Lira", "order": 70 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [33.6287951, 1.729074] },
+      "properties": { "name": "Soroti", "order": 71 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [34.1865669, 0.6782274] },
+      "properties": { "name": "Tororo", "order": 72 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [35.2697802, 0.5142775] },
+      "properties": { "name": "Eldoret", "order": 73 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [36.080026, -0.3030988] },
+      "properties": { "name": "Nakuru", "order": 74 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [36.8219462, -1.2920659] },
+      "properties": { "name": "Nairobi", "order": 75 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [37.967847, -2.4105236] },
+      "properties": { "name": "Kibwezi", "order": 76 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [38.5559336, -3.3973104] },
+      "properties": { "name": "Voi", "order": 77 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [39.7100122, -4.0481643] },
+      "properties": { "name": "Nyali Beach", "order": 78 }
+    }
+  ]
+}

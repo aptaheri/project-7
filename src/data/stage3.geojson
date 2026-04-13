@@ -1,0 +1,359 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-80.9991934, -2.1978303],
+          [-79.8434129, -2.1940656],
+          [-78.9205613, -2.5343513],
+          [-79.0058965, -2.9001285],
+          [-79.2380664, -3.6217479],
+          [-79.2253776, -4.2623285],
+          [-79.1293015, -4.8201318],
+          [-79.0023523, -5.146268],
+          [-78.7569821, -5.8385765],
+          [-79.1188656, -6.5142035],
+          [-79.845161, -6.7712768],
+          [-79.5193162, -7.4088536],
+          [-79.0257381, -8.1157846],
+          [-78.4065859, -9.3620159],
+          [-77.7450242, -10.7173669],
+          [-77.0430886, -12.0466888],
+          [-76.5716728, -12.7871607],
+          [-75.762586, -14.0874587],
+          [-74.9438318, -14.8283179],
+          [-74.1269322, -14.6900941],
+          [-73.6251511, -14.5331542],
+          [-73.5442058, -14.1870933],
+          [-73.3767641, -13.6616515],
+          [-73.1609978, -13.4108658],
+          [-72.9379362, -13.1120354],
+          [-72.58145, -13.0019624],
+          [-72.2298875, -13.2587405],
+          [-71.9674626, -13.53195],
+          [-71.1693594, -14.3568964],
+          [-70.129653, -15.4996879],
+          [-70.0106492, -15.9059466],
+          [-69.292358, -16.2748434],
+          [-69.0273728, -16.5809995],
+          [-68.1212091, -16.494359],
+          [-67.9122605, -17.2327075],
+          [-67.2099831, -17.6509884],
+          [-66.4950242, -17.6728899],
+          [-66.1595813, -17.3820091],
+          [-64.8633533, -17.7576975],
+          [-63.8738479, -18.1746363],
+          [-63.1925079, -17.798072],
+          [-61.981918, -17.609921],
+          [-60.7416776, -17.8461582],
+          [-59.498531, -18.46133],
+          [-57.7995075, -18.9669708],
+          [-56.8779746, -19.9465076],
+          [-55.8054279, -20.4841569],
+          [-54.6218477, -20.4648517],
+          [-52.8780857, -20.4445613],
+          [-51.3732622, -20.8996722],
+          [-49.7467491, -21.6732591],
+          [-48.1742397, -21.7742763],
+          [-46.5619303, -21.7853787],
+          [-45.4601323, -22.4247429],
+          [-44.1772604, -22.5408519],
+          [-43.319365, -22.783855],
+          [-43.2047975, -22.987064]
+        ]
+      },
+      "properties": {
+        "name": "Stage 3 Route",
+        "description": "Manta, Ecuador to Rio de Janeiro, Brazil"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-80.9991934, -2.1978303] },
+      "properties": { "name": "Manta", "order": 1 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-79.8434129, -2.1940656] },
+      "properties": { "name": "Guayaquil", "order": 2 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-78.9205613, -2.5343513] },
+      "properties": { "name": "Riobamba", "order": 3 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-79.0058965, -2.9001285] },
+      "properties": { "name": "Cuenca", "order": 4 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-79.2380664, -3.6217479] },
+      "properties": { "name": "Loja", "order": 5 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-79.2253776, -4.2623285] },
+      "properties": { "name": "Huancabamba", "order": 6 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-79.1293015, -4.8201318] },
+      "properties": { "name": "Jaén", "order": 7 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-79.0023523, -5.146268] },
+      "properties": { "name": "Bagua", "order": 8 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-78.7569821, -5.8385765] },
+      "properties": { "name": "Celendín", "order": 9 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-79.1188656, -6.5142035] },
+      "properties": { "name": "Cajamarca", "order": 10 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-79.845161, -6.7712768] },
+      "properties": { "name": "Chiclayo", "order": 11 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-79.5193162, -7.4088536] },
+      "properties": { "name": "Pacasmayo", "order": 12 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-79.0257381, -8.1157846] },
+      "properties": { "name": "Trujillo", "order": 13 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-78.4065859, -9.3620159] },
+      "properties": { "name": "Huaraz", "order": 14 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-77.7450242, -10.7173669] },
+      "properties": { "name": "Cerro de Pasco", "order": 15 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-77.0430886, -12.0466888] },
+      "properties": { "name": "Lima", "order": 16 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-76.5716728, -12.7871607] },
+      "properties": { "name": "Cañete", "order": 17 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-75.762586, -14.0874587] },
+      "properties": { "name": "Ica", "order": 18 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.9438318, -14.8283179] },
+      "properties": { "name": "Nazca", "order": 19 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.1269322, -14.6900941] },
+      "properties": { "name": "Puquio", "order": 20 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-73.6251511, -14.5331542] },
+      "properties": { "name": "Chalhuanca", "order": 21 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-73.5442058, -14.1870933] },
+      "properties": { "name": "Abancay", "order": 22 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-73.3767641, -13.6616515] },
+      "properties": { "name": "Limatambo", "order": 23 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-73.1609978, -13.4108658] },
+      "properties": { "name": "Mollepata", "order": 24 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-72.9379362, -13.1120354] },
+      "properties": { "name": "Ollantaytambo", "order": 25 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-72.58145, -13.0019624] },
+      "properties": { "name": "Calca", "order": 26 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-72.2298875, -13.2587405] },
+      "properties": { "name": "Paucartambo", "order": 27 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-71.9674626, -13.53195] },
+      "properties": { "name": "Cusco", "order": 28 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-71.1693594, -14.3568964] },
+      "properties": { "name": "Sicuani", "order": 29 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-70.129653, -15.4996879] },
+      "properties": { "name": "Puno", "order": 30 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-70.0106492, -15.9059466] },
+      "properties": { "name": "Desaguadero", "order": 31 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-69.292358, -16.2748434] },
+      "properties": { "name": "Tiwanaku", "order": 32 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-69.0273728, -16.5809995] },
+      "properties": { "name": "El Alto", "order": 33 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-68.1212091, -16.494359] },
+      "properties": { "name": "La Paz", "order": 34 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-67.9122605, -17.2327075] },
+      "properties": { "name": "Oruro", "order": 35 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-67.2099831, -17.6509884] },
+      "properties": { "name": "Challapata", "order": 36 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-66.4950242, -17.6728899] },
+      "properties": { "name": "Potosí", "order": 37 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-66.1595813, -17.3820091] },
+      "properties": { "name": "Sucre", "order": 38 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-64.8633533, -17.7576975] },
+      "properties": { "name": "Cochabamba", "order": 39 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-63.8738479, -18.1746363] },
+      "properties": { "name": "Vallegrande", "order": 40 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-63.1925079, -17.798072] },
+      "properties": { "name": "Santa Cruz", "order": 41 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-61.981918, -17.609921] },
+      "properties": { "name": "San José de Chiquitos", "order": 42 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-60.7416776, -17.8461582] },
+      "properties": { "name": "Roboré", "order": 43 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-59.498531, -18.46133] },
+      "properties": { "name": "Puerto Suárez", "order": 44 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-57.7995075, -18.9669708] },
+      "properties": { "name": "Corumbá", "order": 45 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-56.8779746, -19.9465076] },
+      "properties": { "name": "Miranda", "order": 46 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-55.8054279, -20.4841569] },
+      "properties": { "name": "Campo Grande", "order": 47 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-54.6218477, -20.4648517] },
+      "properties": { "name": "Presidente Prudente", "order": 48 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-52.8780857, -20.4445613] },
+      "properties": { "name": "Marília", "order": 49 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-51.3732622, -20.8996722] },
+      "properties": { "name": "Bauru", "order": 50 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-49.7467491, -21.6732591] },
+      "properties": { "name": "Botucatu", "order": 51 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-48.1742397, -21.7742763] },
+      "properties": { "name": "Araraquara", "order": 52 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-46.5619303, -21.7853787] },
+      "properties": { "name": "Poços de Caldas", "order": 53 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-45.4601323, -22.4247429] },
+      "properties": { "name": "Lavras", "order": 54 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-44.1772604, -22.5408519] },
+      "properties": { "name": "Juiz de Fora", "order": 55 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-43.319365, -22.783855] },
+      "properties": { "name": "Petrópolis", "order": 56 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-43.2047975, -22.987064] },
+      "properties": { "name": "Rio de Janeiro", "order": 57 }
+    }
+  ]
+}

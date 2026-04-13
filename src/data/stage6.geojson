@@ -1,0 +1,275 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-118.4987585, 34.0082821],
+          [-119.698935, 34.420285],
+          [-120.8499924, 35.3659445],
+          [-121.4459342, 35.8765304],
+          [-121.8977688, 36.5972925],
+          [-122.3830152, 37.2551636],
+          [-122.4194155, 37.7749295],
+          [-123.2653184, 38.5289387],
+          [-123.7994591, 39.3076744],
+          [-123.79492, 40.1000828],
+          [-124.0828396, 40.8665166],
+          [-122.3836121, 40.5754129],
+          [-121.0057931, 40.3059999],
+          [-119.8142691, 39.529919],
+          [-118.02556, 39.28778],
+          [-115.9607803, 39.5124858],
+          [-114.874248, 39.2533328],
+          [-112.57717, 39.3521777],
+          [-111.859925, 38.9577407],
+          [-110.1596352, 38.9955607],
+          [-108.5642809, 39.0689478],
+          [-106.9878231, 38.8697146],
+          [-105.6867122, 38.3731692],
+          [-103.7202274, 38.052508],
+          [-102.122685, 38.0522337],
+          [-100.018797, 37.7560487],
+          [-98.580361, 37.2811339],
+          [-96.9955918, 37.2397486],
+          [-95.7083131, 37.2242358],
+          [-94.70496, 37.410884],
+          [-92.9024067, 37.3372552],
+          [-91.357635, 37.1506044],
+          [-89.5878579, 36.876719],
+          [-87.6925074, 37.1672684],
+          [-85.8712385, 37.7043065],
+          [-84.5152662, 38.0389091],
+          [-82.4451746, 38.4191481],
+          [-81.0348297, 38.5356548],
+          [-80.0189659, 39.3409249],
+          [-78.7625185, 39.6528654],
+          [-76.8867008, 40.2731911],
+          [-74.9796117, 40.7584159],
+          [-73.9669053, 40.7165888]
+        ]
+      },
+      "properties": {
+        "name": "Stage 6 Route",
+        "description": "Santa Monica, California to Brooklyn, New York"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-118.4987585, 34.0082821] },
+      "properties": { "name": "Santa Monica Pier", "order": 1 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-119.698935, 34.420285] },
+      "properties": { "name": "Santa Barbara", "order": 2 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-120.8499924, 35.3659445] },
+      "properties": { "name": "Morro Bay", "order": 3 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-121.4459342, 35.8765304] },
+      "properties": { "name": "Gorda", "order": 4 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-121.8977688, 36.5972925] },
+      "properties": { "name": "Monterey", "order": 5 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-122.3830152, 37.2551636] },
+      "properties": { "name": "Pescadero", "order": 6 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-122.4194155, 37.7749295] },
+      "properties": { "name": "San Francisco", "order": 7 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-123.2653184, 38.5289387] },
+      "properties": { "name": "Timber Cove", "order": 8 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-123.7994591, 39.3076744] },
+      "properties": { "name": "Mendocino", "order": 9 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-123.79492, 40.1000828] },
+      "properties": { "name": "Garberville", "order": 10 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-124.0828396, 40.8665166] },
+      "properties": { "name": "Arcata", "order": 11 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-122.3836121, 40.5754129] },
+      "properties": { "name": "Redding", "order": 12 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-121.0057931, 40.3059999] },
+      "properties": { "name": "Westwood", "order": 13 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-119.8142691, 39.529919] },
+      "properties": { "name": "Reno", "order": 14 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-118.02556, 39.28778] },
+      "properties": { "name": "Middlegate", "order": 15 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-115.9607803, 39.5124858] },
+      "properties": { "name": "Eureka", "order": 16 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-114.874248, 39.2533328] },
+      "properties": { "name": "Ely", "order": 17 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-112.57717, 39.3521777] },
+      "properties": { "name": "Delta", "order": 18 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-111.859925, 38.9577407] },
+      "properties": { "name": "Salina", "order": 19 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-110.1596352, 38.9955607] },
+      "properties": { "name": "Green River", "order": 20 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-108.5642809, 39.0689478] },
+      "properties": { "name": "Grand Junction", "order": 21 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-106.9878231, 38.8697146] },
+      "properties": { "name": "Crested Butte", "order": 22 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-105.6867122, 38.3731692] },
+      "properties": { "name": "Cotopaxi", "order": 23 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-103.7202274, 38.052508] },
+      "properties": { "name": "Rocky Ford", "order": 24 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-102.122685, 38.0522337] },
+      "properties": { "name": "Holly", "order": 25 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-100.018797, 37.7560487] },
+      "properties": { "name": "Dodge City", "order": 26 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-98.580361, 37.2811339] },
+      "properties": { "name": "Medicine Lodge", "order": 27 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-96.9955918, 37.2397486] },
+      "properties": { "name": "Winfield", "order": 28 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-95.7083131, 37.2242358] },
+      "properties": { "name": "Independence", "order": 29 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-94.70496, 37.410884] },
+      "properties": { "name": "Pittsburg", "order": 30 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-92.9024067, 37.3372552] },
+      "properties": { "name": "Marshfield", "order": 31 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-91.357635, 37.1506044] },
+      "properties": { "name": "Eminence", "order": 32 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-89.5878579, 36.876719] },
+      "properties": { "name": "Sikeston", "order": 33 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-87.6925074, 37.1672684] },
+      "properties": { "name": "Dawson Springs", "order": 34 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-85.8712385, 37.7043065] },
+      "properties": { "name": "Elizabethtown", "order": 35 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-84.5152662, 38.0389091] },
+      "properties": { "name": "Lexington", "order": 36 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-82.4451746, 38.4191481] },
+      "properties": { "name": "Huntington", "order": 37 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-81.0348297, 38.5356548] },
+      "properties": { "name": "Ivydale", "order": 38 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-80.0189659, 39.3409249] },
+      "properties": { "name": "Grafton", "order": 39 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-78.7625185, 39.6528654] },
+      "properties": { "name": "Cumberland", "order": 40 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-76.8867008, 40.2731911] },
+      "properties": { "name": "Harrisburg", "order": 41 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-74.9796117, 40.7584159] },
+      "properties": { "name": "Washington", "order": 42 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-73.9669053, 40.7165888] },
+      "properties": { "name": "Grand Ferry Park", "order": 43 }
+    }
+  ]
+}

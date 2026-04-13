@@ -1,0 +1,299 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [115.7543761, -31.9709363],
+          [115.76772, -33.3530711],
+          [115.4930618, -33.6828102],
+          [115.0308277, -33.6726467],
+          [115.1572509, -34.3109803],
+          [115.8557031, -34.4100211],
+          [116.7313496, -34.9761838],
+          [117.883959, -35.0275298],
+          [118.7502404, -34.3657676],
+          [120.0470727, -33.5817351],
+          [121.8896205, -33.8608027],
+          [121.6456073, -32.9804187],
+          [121.7789566, -32.1976369],
+          [123.8685351, -32.4645908],
+          [126.0954214, -32.0366802],
+          [127.0226578, -31.8987024],
+          [128.8835431, -31.6750185],
+          [131.2804154, -31.3672977],
+          [133.6763107, -32.1260285],
+          [134.91689, -32.7083282],
+          [136.4188723, -33.1385793],
+          [137.8282669, -32.5417766],
+          [138.3446243, -33.3163559],
+          [138.2127884, -34.1205015],
+          [138.6007456, -34.9284989],
+          [139.6960767, -35.4699978],
+          [140.350533, -36.3923595],
+          [140.7806761, -37.8284406],
+          [141.6405228, -38.2679978],
+          [142.4982086, -38.3686779],
+          [143.1791802, -38.674626],
+          [143.9738066, -38.5368534],
+          [144.6397904, -37.8614639],
+          [144.9630576, -37.8136276],
+          [146.2651379, -37.8407327],
+          [146.9579056, -38.0520376],
+          [147.6173074, -37.8228096],
+          [148.5509232, -37.7573064],
+          [149.1509612, -37.5663245],
+          [149.8582962, -37.2518105],
+          [149.8692825, -36.6195501],
+          [150.0765098, -36.426833],
+          [150.1768997, -35.6613682],
+          [150.4714615, -35.3569715],
+          [150.8443706, -34.6738221],
+          [151.055806, -34.0112894],
+          [151.2703991, -33.8891201]
+        ]
+      },
+      "properties": {
+        "name": "Stage 2 Route",
+        "description": "Perth to Sydney, Australia"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [115.7543761, -31.9709363] },
+      "properties": { "name": "Perth", "order": 1 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [115.76772, -33.3530711] },
+      "properties": { "name": "Bunbury", "order": 2 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [115.4930618, -33.6828102] },
+      "properties": { "name": "Busselton", "order": 3 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [115.0308277, -33.6726467] },
+      "properties": { "name": "Margaret River", "order": 4 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [115.1572509, -34.3109803] },
+      "properties": { "name": "Pemberton", "order": 5 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [115.8557031, -34.4100211] },
+      "properties": { "name": "Walpole", "order": 6 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [116.7313496, -34.9761838] },
+      "properties": { "name": "Albany", "order": 7 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [117.883959, -35.0275298] },
+      "properties": { "name": "Bremer Bay", "order": 8 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [118.7502404, -34.3657676] },
+      "properties": { "name": "Ravensthorpe", "order": 9 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [120.0470727, -33.5817351] },
+      "properties": { "name": "Norseman", "order": 10 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [121.8896205, -33.8608027] },
+      "properties": { "name": "Balladonia", "order": 11 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [121.6456073, -32.9804187] },
+      "properties": { "name": "Coolgardie", "order": 12 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [121.7789566, -32.1976369] },
+      "properties": { "name": "Kalgoorlie", "order": 13 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [123.8685351, -32.4645908] },
+      "properties": { "name": "Fraser Range", "order": 14 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [126.0954214, -32.0366802] },
+      "properties": { "name": "Caiguna", "order": 15 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [127.0226578, -31.8987024] },
+      "properties": { "name": "Madura", "order": 16 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [128.8835431, -31.6750185] },
+      "properties": { "name": "Eucla", "order": 17 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [131.2804154, -31.3672977] },
+      "properties": { "name": "Nullarbor", "order": 18 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [133.6763107, -32.1260285] },
+      "properties": { "name": "Ceduna", "order": 19 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [134.91689, -32.7083282] },
+      "properties": { "name": "Streaky Bay", "order": 20 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [136.4188723, -33.1385793] },
+      "properties": { "name": "Port Lincoln", "order": 21 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [137.8282669, -32.5417766] },
+      "properties": { "name": "Whyalla", "order": 22 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [138.3446243, -33.3163559] },
+      "properties": { "name": "Port Pirie", "order": 23 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [138.2127884, -34.1205015] },
+      "properties": { "name": "Clare", "order": 24 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [138.6007456, -34.9284989] },
+      "properties": { "name": "Adelaide", "order": 25 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [139.6960767, -35.4699978] },
+      "properties": { "name": "Murray Bridge", "order": 26 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [140.350533, -36.3923595] },
+      "properties": { "name": "Bordertown", "order": 27 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [140.7806761, -37.8284406] },
+      "properties": { "name": "Portland", "order": 28 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [141.6405228, -38.2679978] },
+      "properties": { "name": "Warrnambool", "order": 29 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [142.4982086, -38.3686779] },
+      "properties": { "name": "Colac", "order": 30 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [143.1791802, -38.674626] },
+      "properties": { "name": "Apollo Bay", "order": 31 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [143.9738066, -38.5368534] },
+      "properties": { "name": "Lorne", "order": 32 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [144.6397904, -37.8614639] },
+      "properties": { "name": "Geelong", "order": 33 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [144.9630576, -37.8136276] },
+      "properties": { "name": "Melbourne", "order": 34 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [146.2651379, -37.8407327] },
+      "properties": { "name": "Warragul", "order": 35 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [146.9579056, -38.0520376] },
+      "properties": { "name": "Traralgon", "order": 36 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [147.6173074, -37.8228096] },
+      "properties": { "name": "Sale", "order": 37 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [148.5509232, -37.7573064] },
+      "properties": { "name": "Bairnsdale", "order": 38 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [149.1509612, -37.5663245] },
+      "properties": { "name": "Orbost", "order": 39 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [149.8582962, -37.2518105] },
+      "properties": { "name": "Eden", "order": 40 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [149.8692825, -36.6195501] },
+      "properties": { "name": "Bega", "order": 41 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [150.0765098, -36.426833] },
+      "properties": { "name": "Narooma", "order": 42 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [150.1768997, -35.6613682] },
+      "properties": { "name": "Batemans Bay", "order": 43 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [150.4714615, -35.3569715] },
+      "properties": { "name": "Ulladulla", "order": 44 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [150.8443706, -34.6738221] },
+      "properties": { "name": "Nowra", "order": 45 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [151.055806, -34.0112894] },
+      "properties": { "name": "Wollongong", "order": 46 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [151.2703991, -33.8891201] },
+      "properties": { "name": "Sydney", "order": 47 }
+    }
+  ]
+}

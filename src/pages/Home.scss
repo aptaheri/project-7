@@ -1,0 +1,76 @@
+.home {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: #0a0a0f;
+}
+
+// Dark gradient over the map so text stays readable
+.home-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.35) 0%,
+      rgba(0, 0, 0, 0.5) 50%,
+      rgba(0, 0, 0, 0.7) 100%
+    );
+  pointer-events: none;
+}
+
+.home-content {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px 35vh;
+  text-align: center;
+  gap: 16px;
+
+  h1 {
+    font-size: clamp(36px, 6vw, 72px);
+    font-weight: 700;
+    letter-spacing: -1.5px;
+    line-height: 1.05;
+    color: #fff;
+    margin: 0;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.4);
+  }
+
+  p {
+    font-size: clamp(15px, 2vw, 19px);
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+    letter-spacing: 0.02em;
+  }
+}
+
+.home-cta {
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.2s, gap 0.2s;
+
+  &::after {
+    content: '→';
+    font-size: 14px;
+  }
+
+  &:hover {
+    color: #fff;
+    gap: 12px;
+  }
+}

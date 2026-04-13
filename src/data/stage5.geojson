@@ -1,0 +1,581 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [72.8607424, 19.1405254],
+          [73.6627443, 19.7982619],
+          [74.2472779, 20.3271277],
+          [74.5910891, 20.5870515],
+          [74.7748979, 20.9042201],
+          [74.8932131, 21.35132],
+          [75.2041468, 21.8635361],
+          [75.8577258, 22.7195687],
+          [76.1126955, 22.9943276],
+          [77.412615, 23.2599333],
+          [78.2770021, 23.4536988],
+          [78.7378068, 23.838805],
+          [79.5910058, 24.9167821],
+          [79.9084719, 25.3296547],
+          [80.3395498, 25.4762689],
+          [81.2528139, 26.2144806],
+          [82.2101076, 26.8000742],
+          [82.7629893, 26.8139844],
+          [83.2867678, 27.0938787],
+          [83.4561307, 27.5060573],
+          [83.4790285, 27.6986324],
+          [84.4384613, 27.670626],
+          [84.5611818, 27.8638719],
+          [85.3221634, 27.7103145],
+          [85.9087307, 27.4061321],
+          [86.4782961, 27.16721],
+          [87.0524338, 27.1779842],
+          [87.3022707, 27.0645328],
+          [87.2847086, 26.806497],
+          [87.280298, 26.6479758],
+          [88.4338625, 26.7166906],
+          [88.4997805, 26.9127898],
+          [88.7986806, 26.8815374],
+          [89.087549, 26.6921543],
+          [89.3731936, 26.7412215],
+          [89.5221456, 26.9227792],
+          [89.4169523, 27.4283009],
+          [90.1530097, 27.5450982],
+          [90.4828127, 27.4551784],
+          [90.7472993, 27.4989829],
+          [91.0286955, 27.3622845],
+          [91.4066356, 27.2598452],
+          [91.5375002, 27.3186086],
+          [91.5232832, 26.9976523],
+          [91.5704592, 26.618514],
+          [92.095914, 26.7451087],
+          [92.8229006, 26.6528854],
+          [93.2266562, 26.5746716],
+          [94.2346438, 26.7657472],
+          [95.0213885, 27.026657],
+          [95.9045656, 27.3625244],
+          [96.1672818, 27.2363752],
+          [96.2066896, 26.7166906],
+          [96.5307863, 26.569394],
+          [96.7225182, 26.3559704],
+          [96.6681154, 25.6915594],
+          [96.9757326, 25.3693686],
+          [97.3939224, 25.3867687],
+          [97.5689943, 25.0512929],
+          [97.2383178, 24.2629574],
+          [97.6074465, 23.8160302],
+          [97.85189, 24.0127799],
+          [99.16181, 25.1120499],
+          [99.3103273, 25.4090695],
+          [100.26764, 25.6064799],
+          [101.5276703, 25.0449495],
+          [102.57876, 24.9616847],
+          [102.7105959, 25.0313857],
+          [102.83322, 24.8796599],
+          [104.9298342, 25.0985598],
+          [106.4349611, 25.1880679],
+          [108.1268557, 24.709936],
+          [109.4012697, 24.3601347],
+          [110.29002, 25.2736099],
+          [109.7308596, 26.9642095],
+          [110.0016, 27.5697399],
+          [109.6759279, 28.3266516],
+          [109.478174, 28.5970881],
+          [110.55042, 29.3458899],
+          [111.87741, 29.6054299],
+          [113.12919, 29.3572799],
+          [114.2804, 29.26219],
+          [114.7076662, 28.962998],
+          [115.8579399, 28.6820199],
+          [116.2567385, 28.3266516],
+          [117.06919, 28.2601899],
+          [117.981592, 28.4426377],
+          [118.87419, 28.9359199],
+          [119.6515139, 29.107082],
+          [120.3875979, 28.7705738],
+          [120.72881, 28.8468299],
+          [121.2005861, 28.8668305],
+          [121.4203127, 28.6645889],
+          [121.643535, 28.310581]
+        ]
+      },
+      "properties": {
+        "name": "Stage 5 Route",
+        "description": "Mumbai, India to Wenzhou, China"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [72.8607424, 19.1405254] },
+      "properties": { "name": "Mumbai", "order": 1 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [73.6627443, 19.7982619] },
+      "properties": { "name": "Nashik", "order": 2 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [74.2472779, 20.3271277] },
+      "properties": { "name": "Malegaon", "order": 3 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [74.5910891, 20.5870515] },
+      "properties": { "name": "Dhule", "order": 4 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [74.7748979, 20.9042201] },
+      "properties": { "name": "Jalgaon", "order": 5 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [74.8932131, 21.35132] },
+      "properties": { "name": "Nandurbar", "order": 6 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [75.2041468, 21.8635361] },
+      "properties": { "name": "Burhanpur", "order": 7 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [75.8577258, 22.7195687] },
+      "properties": { "name": "Indore", "order": 8 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [76.1126955, 22.9943276] },
+      "properties": { "name": "Dewas", "order": 9 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [77.412615, 23.2599333] },
+      "properties": { "name": "Bhopal", "order": 10 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [78.2770021, 23.4536988] },
+      "properties": { "name": "Sagar", "order": 11 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [78.7378068, 23.838805] },
+      "properties": { "name": "Damoh", "order": 12 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [79.5910058, 24.9167821] },
+      "properties": { "name": "Chhatarpur", "order": 13 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [79.9084719, 25.3296547] },
+      "properties": { "name": "Banda", "order": 14 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [80.3395498, 25.4762689] },
+      "properties": { "name": "Fatehpur", "order": 15 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [81.2528139, 26.2144806] },
+      "properties": { "name": "Lucknow", "order": 16 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [82.2101076, 26.8000742] },
+      "properties": { "name": "Faizabad", "order": 17 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [82.7629893, 26.8139844] },
+      "properties": { "name": "Basti", "order": 18 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [83.2867678, 27.0938787] },
+      "properties": { "name": "Siddharthanagar", "order": 19 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [83.4561307, 27.5060573] },
+      "properties": { "name": "Lumbini", "order": 20 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [83.4790285, 27.6986324] },
+      "properties": { "name": "Butwal", "order": 21 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [84.4384613, 27.670626] },
+      "properties": { "name": "Chitwan", "order": 22 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [84.5611818, 27.8638719] },
+      "properties": { "name": "Damauli", "order": 23 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [85.3221634, 27.7103145] },
+      "properties": { "name": "Kathmandu", "order": 24 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [85.9087307, 27.4061321] },
+      "properties": { "name": "Dhulikhel", "order": 25 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [86.4782961, 27.16721] },
+      "properties": { "name": "Okhaldhunga", "order": 26 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [87.0524338, 27.1779842] },
+      "properties": { "name": "Khandbari", "order": 27 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [87.3022707, 27.0645328] },
+      "properties": { "name": "Taplejung", "order": 28 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [87.2847086, 26.806497] },
+      "properties": { "name": "Ilam", "order": 29 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [87.280298, 26.6479758] },
+      "properties": { "name": "Siliguri", "order": 30 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [88.4338625, 26.7166906] },
+      "properties": { "name": "Jalpaiguri", "order": 31 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [88.4997805, 26.9127898] },
+      "properties": { "name": "Cooch Behar", "order": 32 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [88.7986806, 26.8815374] },
+      "properties": { "name": "Dhubri", "order": 33 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [89.087549, 26.6921543] },
+      "properties": { "name": "Rangpur", "order": 34 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [89.3731936, 26.7412215] },
+      "properties": { "name": "Kurigram", "order": 35 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [89.5221456, 26.9227792] },
+      "properties": { "name": "Phuntsholing", "order": 36 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [89.4169523, 27.4283009] },
+      "properties": { "name": "Thimphu", "order": 37 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [90.1530097, 27.5450982] },
+      "properties": { "name": "Punakha", "order": 38 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [90.4828127, 27.4551784] },
+      "properties": { "name": "Trongsa", "order": 39 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [90.7472993, 27.4989829] },
+      "properties": { "name": "Bumthang", "order": 40 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [91.0286955, 27.3622845] },
+      "properties": { "name": "Mongar", "order": 41 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [91.4066356, 27.2598452] },
+      "properties": { "name": "Trashigang", "order": 42 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [91.5375002, 27.3186086] },
+      "properties": { "name": "Samdrup Jongkhar", "order": 43 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [91.5232832, 26.9976523] },
+      "properties": { "name": "Bongaigaon", "order": 44 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [91.5704592, 26.618514] },
+      "properties": { "name": "Guwahati", "order": 45 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [92.095914, 26.7451087] },
+      "properties": { "name": "Nagaon", "order": 46 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [92.8229006, 26.6528854] },
+      "properties": { "name": "Golaghat", "order": 47 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [93.2266562, 26.5746716] },
+      "properties": { "name": "Jorhat", "order": 48 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [94.2346438, 26.7657472] },
+      "properties": { "name": "Dibrugarh", "order": 49 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [95.0213885, 27.026657] },
+      "properties": { "name": "Tinsukia", "order": 50 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [95.9045656, 27.3625244] },
+      "properties": { "name": "Changlang", "order": 51 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [96.1672818, 27.2363752] },
+      "properties": { "name": "Jairampur", "order": 52 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [96.2066896, 26.7166906] },
+      "properties": { "name": "Myitkyina", "order": 53 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [96.5307863, 26.569394] },
+      "properties": { "name": "Mohnyin", "order": 54 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [96.7225182, 26.3559704] },
+      "properties": { "name": "Hopin", "order": 55 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [96.6681154, 25.6915594] },
+      "properties": { "name": "Katha", "order": 56 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [96.9757326, 25.3693686] },
+      "properties": { "name": "Naba", "order": 57 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [97.3939224, 25.3867687] },
+      "properties": { "name": "Bhamo", "order": 58 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [97.5689943, 25.0512929] },
+      "properties": { "name": "Namhkam", "order": 59 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [97.2383178, 24.2629574] },
+      "properties": { "name": "Muse", "order": 60 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [97.6074465, 23.8160302] },
+      "properties": { "name": "Ruili", "order": 61 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [97.85189, 24.0127799] },
+      "properties": { "name": "Mangshi", "order": 62 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [99.16181, 25.1120499] },
+      "properties": { "name": "Baoshan", "order": 63 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [99.3103273, 25.4090695] },
+      "properties": { "name": "Yongping", "order": 64 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [100.26764, 25.6064799] },
+      "properties": { "name": "Dali", "order": 65 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [101.5276703, 25.0449495] },
+      "properties": { "name": "Kunming", "order": 66 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [102.57876, 24.9616847] },
+      "properties": { "name": "Qujing", "order": 67 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [102.7105959, 25.0313857] },
+      "properties": { "name": "Zhanyi", "order": 68 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [102.83322, 24.8796599] },
+      "properties": { "name": "Luliang", "order": 69 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [104.9298342, 25.0985598] },
+      "properties": { "name": "Xingyi", "order": 70 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [106.4349611, 25.1880679] },
+      "properties": { "name": "Hechi", "order": 71 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [108.1268557, 24.709936] },
+      "properties": { "name": "Liuzhou", "order": 72 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [109.4012697, 24.3601347] },
+      "properties": { "name": "Guilin", "order": 73 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.29002, 25.2736099] },
+      "properties": { "name": "Yongzhou", "order": 74 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [109.7308596, 26.9642095] },
+      "properties": { "name": "Huaihua", "order": 75 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.0016, 27.5697399] },
+      "properties": { "name": "Jishou", "order": 76 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [109.6759279, 28.3266516] },
+      "properties": { "name": "Qianjiang", "order": 77 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [109.478174, 28.5970881] },
+      "properties": { "name": "Youyang", "order": 78 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.55042, 29.3458899] },
+      "properties": { "name": "Zhangjiajie", "order": 79 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [111.87741, 29.6054299] },
+      "properties": { "name": "Changde", "order": 80 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [113.12919, 29.3572799] },
+      "properties": { "name": "Yueyang", "order": 81 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [114.2804, 29.26219] },
+      "properties": { "name": "Wuhan", "order": 82 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [114.7076662, 28.962998] },
+      "properties": { "name": "Huangshi", "order": 83 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [115.8579399, 28.6820199] },
+      "properties": { "name": "Nanchang", "order": 84 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [116.2567385, 28.3266516] },
+      "properties": { "name": "Fuzhou (Jiangxi)", "order": 85 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [117.06919, 28.2601899] },
+      "properties": { "name": "Shangrao", "order": 86 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [117.981592, 28.4426377] },
+      "properties": { "name": "Quzhou", "order": 87 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [118.87419, 28.9359199] },
+      "properties": { "name": "Jinhua", "order": 88 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [119.6515139, 29.107082] },
+      "properties": { "name": "Hangzhou", "order": 89 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [120.3875979, 28.7705738] },
+      "properties": { "name": "Shaoxing", "order": 90 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [120.72881, 28.8468299] },
+      "properties": { "name": "Taizhou", "order": 91 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [121.2005861, 28.8668305] },
+      "properties": { "name": "Linhai", "order": 92 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [121.4203127, 28.6645889] },
+      "properties": { "name": "Wenling", "order": 93 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [121.643535, 28.310581] },
+      "properties": { "name": "Wenzhou", "order": 94 }
+    }
+  ]
+}
