@@ -5,6 +5,58 @@
   height: 100%;
 }
 
+// ── Map controls legend ────────────────────────────────────────────────────
+.map-controls {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+}
+
+.map-control-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  background: rgba(10, 10, 20, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  color: rgba(255, 255, 255, 0.45);
+  font-family: system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+
+  .map-control-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+
+  &.active {
+    color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(255, 255, 255, 0.25);
+
+    .map-control-dot {
+      background: #4285f4;
+    }
+  }
+
+  &:hover {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.35);
+  }
+}
+
 // Waypoint hover tooltip
 .waypoint-tooltip {
   .mapboxgl-popup-content {
