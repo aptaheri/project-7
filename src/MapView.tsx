@@ -7,6 +7,7 @@ mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
 
 const STAGE_URLS = [
   '/geojson/stage1-map.geojson',
+  '/geojson/stage1a-map.geojson',
   '/geojson/stage2-map.geojson',
   '/geojson/stage3-map.geojson',
   '/geojson/stage4-map.geojson',
@@ -17,6 +18,7 @@ const STAGE_URLS = [
 
 const DETAIL_URLS = [
   '/geojson/stage1-detail.geojson',
+  '/geojson/stage1a-detail.geojson',
   '/geojson/stage2-detail.geojson',
   '/geojson/stage3-detail.geojson',
   '/geojson/stage4-detail.geojson',
@@ -27,6 +29,7 @@ const DETAIL_URLS = [
 
 const ULTRA_URLS = [
   '/geojson/stage1-ultra.geojson',
+  '/geojson/stage1a-ultra.geojson',
   '/geojson/stage2-ultra.geojson',
   '/geojson/stage3-ultra.geojson',
   '/geojson/stage4-ultra.geojson',
@@ -163,7 +166,7 @@ export default function MapView() {
       })
 
       // Fit camera — exclude stage7 (Antarctica, lat ~-83) which breaks fitBounds on globe
-      const fittableFeatures = stages.slice(0, 6).flatMap((s) => s.features)
+      const fittableFeatures = stages.slice(0, 7).flatMap((s) => s.features)
       const lines = fittableFeatures.filter((f) => f.geometry.type === 'LineString') as GeoJSON.Feature<GeoJSON.LineString>[]
       if (lines.length) {
         const coords = lines.flatMap((f) => f.geometry.coordinates) as [number, number][]

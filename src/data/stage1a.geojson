@@ -1,0 +1,245 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [50.2624052, 44.5075526],
+          [50.8647032, 44.2470283],
+          [51.2120512, 43.671863],
+          [52.0731993, 43.5185404],
+          [52.0512267, 43.8918157],
+          [52.1629811, 44.1394626],
+          [53.1938048, 44.0973097],
+          [53.5393361, 44.3261671],
+          [54.9516173, 44.9976884],
+          [55.181848, 45.3222362],
+          [56.1960646, 44.7668967],
+          [57.4982057, 43.9689765],
+          [58.3024474, 43.0948255],
+          [58.858679, 43.0630147],
+          [59.4120665, 42.3766649],
+          [59.983333, 42.333333],
+          [60.990675, 41.5518741],
+          [61.7631407, 41.2714689],
+          [62.0487853, 41.0564276],
+          [63.4567092, 40.1274545],
+          [63.9713927, 40.1220431],
+          [64.4568648, 39.7682591],
+          [65.388629, 40.1052392],
+          [65.9303869, 39.9656983],
+          [66.9653502, 39.6507963],
+          [67.4430724, 39.835811],
+          [67.6188536, 40.0716187],
+          [67.8808243, 40.1250439],
+          [69.1335585, 40.2294559],
+          [70.4744342, 40.6351948],
+          [71.6436028, 41.0057729],
+          [72.2061345, 41.2020249],
+          [72.357486, 41.4906959],
+          [72.6844934, 41.6304435],
+          [73.5741357, 41.9007793],
+          [74.41655, 41.8834981],
+          [74.9822461, 42.0301273],
+          [76.1855204, 42.4613649]
+        ]
+      },
+      "properties": {
+        "name": "Stage 1A Route",
+        "description": "Atyrau, Kazakhstan to Bishkek, Kyrgyzstan"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [50.2624052, 44.5075526] },
+      "properties": { "name": "Atyrau", "order": 1 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [50.8647032, 44.2470283] },
+      "properties": { "name": "Makat", "order": 2 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [51.2120512, 43.671863] },
+      "properties": { "name": "Beyneu", "order": 3 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [52.0731993, 43.5185404] },
+      "properties": { "name": "Shetpe", "order": 4 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [52.0512267, 43.8918157] },
+      "properties": { "name": "Aktau", "order": 5 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [52.1629811, 44.1394626] },
+      "properties": { "name": "Zhanaozen", "order": 6 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [53.1938048, 44.0973097] },
+      "properties": { "name": "Karakiya", "order": 7 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [53.5393361, 44.3261671] },
+      "properties": { "name": "Garabogaz", "order": 8 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [54.9516173, 44.9976884] },
+      "properties": { "name": "Gyzylgaya", "order": 9 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [55.181848, 45.3222362] },
+      "properties": { "name": "Kungrad", "order": 10 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [56.1960646, 44.7668967] },
+      "properties": { "name": "Nukus", "order": 11 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [57.4982057, 43.9689765] },
+      "properties": { "name": "Dashoguz", "order": 12 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [58.3024474, 43.0948255] },
+      "properties": { "name": "Köneürgenç", "order": 13 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [58.858679, 43.0630147] },
+      "properties": { "name": "Türkmenabat", "order": 14 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [59.4120665, 42.3766649] },
+      "properties": { "name": "Gazojak", "order": 15 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [59.983333, 42.333333] },
+      "properties": { "name": "Türkmenbaşy", "order": 16 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [60.990675, 41.5518741] },
+      "properties": { "name": "Türkmenabat", "order": 17 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [61.7631407, 41.2714689] },
+      "properties": { "name": "Mary", "order": 18 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [62.0487853, 41.0564276] },
+      "properties": { "name": "Bayramaly", "order": 19 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [63.4567092, 40.1274545] },
+      "properties": { "name": "Kerki", "order": 20 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [63.9713927, 40.1220431] },
+      "properties": { "name": "Lebap", "order": 21 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [64.4568648, 39.7682591] },
+      "properties": { "name": "Bukhara", "order": 22 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [65.388629, 40.1052392] },
+      "properties": { "name": "Navoi", "order": 23 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [65.9303869, 39.9656983] },
+      "properties": { "name": "Kattakurgan", "order": 24 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [66.9653502, 39.6507963] },
+      "properties": { "name": "Samarkand", "order": 25 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [67.4430724, 39.835811] },
+      "properties": { "name": "Jizzakh", "order": 26 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [67.6188536, 40.0716187] },
+      "properties": { "name": "Zaamin", "order": 27 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [67.8808243, 40.1250439] },
+      "properties": { "name": "Dashtobod", "order": 28 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [69.1335585, 40.2294559] },
+      "properties": { "name": "Guliston", "order": 29 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [70.4744342, 40.6351948] },
+      "properties": { "name": "Khujand", "order": 30 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [71.6436028, 41.0057729] },
+      "properties": { "name": "Fergana", "order": 31 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [72.2061345, 41.2020249] },
+      "properties": { "name": "Andijan", "order": 32 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [72.357486, 41.4906959] },
+      "properties": { "name": "Osh", "order": 33 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [72.6844934, 41.6304435] },
+      "properties": { "name": "Jalal-Abad", "order": 34 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [73.5741357, 41.9007793] },
+      "properties": { "name": "Toktogul", "order": 35 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [74.41655, 41.8834981] },
+      "properties": { "name": "Suusamyr", "order": 36 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [74.9822461, 42.0301273] },
+      "properties": { "name": "Kara-Balta", "order": 37 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [76.1855204, 42.4613649] },
+      "properties": { "name": "Bishkek", "order": 38 }
+    }
+  ]
+}

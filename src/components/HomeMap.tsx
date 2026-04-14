@@ -4,10 +4,10 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
 
-// Only stages 1–3 are used for the home animation; they loop continuously.
 // Uses pre-slimmed *-home.geojson files (~25 KB each vs ~10+ MB originals).
 const ANIM_STAGE_URLS = [
   '/geojson/stage1-home.geojson',
+  '/geojson/stage1a-home.geojson',
   '/geojson/stage2-home.geojson',
   '/geojson/stage3-home.geojson',
 ]
