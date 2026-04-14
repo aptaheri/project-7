@@ -10,6 +10,10 @@ const ANIM_STAGE_URLS = [
   '/geojson/stage1a-home.geojson',
   '/geojson/stage2-home.geojson',
   '/geojson/stage3-home.geojson',
+  '/geojson/stage4-home.geojson',
+  '/geojson/stage5-home.geojson',
+  '/geojson/stage6-home.geojson',
+  '/geojson/stage7-home.geojson',
 ]
 
 function extractCoords(fc: GeoJSON.FeatureCollection): [number, number][] {
