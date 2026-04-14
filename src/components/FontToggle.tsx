@@ -4,7 +4,7 @@ import './FontToggle.scss'
 const FONTS = [
   { id: 'tt-norms',  label: 'TT Norms Pro' },
   { id: 'inter',     label: 'Inter'         },
-  { id: 'nunito',    label: 'Nunito Sans'   },
+  { id: 'rajdhani',  label: 'Rajdhani'      },
 ] as const
 
 type FontId = typeof FONTS[number]['id']
@@ -12,7 +12,7 @@ type FontId = typeof FONTS[number]['id']
 const STACKS: Record<FontId, string> = {
   'tt-norms': "'TT Norms Pro', system-ui, sans-serif",
   'inter':    "'Inter', system-ui, sans-serif",
-  'nunito':   "'Nunito Sans', system-ui, sans-serif",
+  'rajdhani': "'Rajdhani', system-ui, sans-serif",
 }
 
 function getSaved(): FontId {
