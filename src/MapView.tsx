@@ -25,10 +25,43 @@ const DETAIL_URLS = [
   '/geojson/stage7-detail.geojson',
 ]
 
-// Zoom level at which the detail swap is triggered
+const ULTRA_URLS = [
+  '/geojson/stage1-ultra.geojson',
+  '/geojson/stage2-ultra.geojson',
+  '/geojson/stage3-ultra.geojson',
+  '/geojson/stage4-ultra.geojson',
+  '/geojson/stage5-ultra.geojson',
+  '/geojson/stage6-ultra.geojson',
+  '/geojson/stage7-ultra.geojson',
+]
+
+// Zoom thresholds for LOD swaps
 const DETAIL_ZOOM = 6
+const ULTRA_ZOOM  = 8
 
 const PIN_LAYERS = ['waypoints-border', 'waypoints']
+
+type Quality = 'map' | 'detail' | 'ultra' | 'ultra-loading'
+
+interface StageBounds { w: number; e: number; s: number; n: number }
+
+function computeStageBounds(fc: GeoJSON.FeatureCollection): StageBounds | null {
+  const coords = fc.features
+    .filter((f) => f.geometry.type === 'LineString')
+    .flatMap((f) => (f.geometry as GeoJSON.LineString).coordinates) as [number, number][]
+  if (!coords.length) return null
+  return coords.reduce(
+    (b, [lng, lat]) => ({
+      w: Math.min(b.w, lng), e: Math.max(b.e, lng),
+      s: Math.min(b.s, lat), n: Math.max(b.n, lat),
+    }),
+    { w: coords[0][0], e: coords[0][0], s: coords[0][1], n: coords[0][1] },
+  )
+}
+
+function viewportIntersects(vp: mapboxgl.LngLatBounds, b: StageBounds): boolean {
+  return !(vp.getEast() < b.w || vp.getWest() > b.e || vp.getNorth() < b.s || vp.getSouth() > b.n)
+}
 
 export default function MapView() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -39,6 +72,11 @@ export default function MapView() {
   const [showPins,   setShowPins]   = useState(false)
   const labelLayersRef  = useRef<string[]>([])
   const roadLayersRef   = useRef<string[]>([])
+
+  // Per-stage LOD state
+  const stageDataRef    = useRef<GeoJSON.FeatureCollection[]>([])
+  const stageQualityRef = useRef<Quality[]>([])
+  const stageBoundsRef  = useRef<Array<StageBounds | null>>([])
   const detailLoadedRef = useRef(false)
 
   useEffect(() => {
@@ -54,19 +92,30 @@ export default function MapView() {
 
     mapRef.current = map
 
+    // Combines all per-stage data into one FeatureCollection and updates the source
+    function updateSource() {
+      ;(map.getSource('route') as mapboxgl.GeoJSONSource).setData({
+        type: 'FeatureCollection',
+        features: stageDataRef.current.flatMap((fc) => fc.features),
+      })
+    }
+
     map.on('load', async () => {
-      // Fetch all stages in parallel
+      // --- Initial load: slim map-quality files ---
       const stages = await Promise.all(
         STAGE_URLS.map((url) => fetch(url).then((r) => r.json() as Promise<GeoJSON.FeatureCollection>))
       )
+
+      stageDataRef.current    = stages
+      stageQualityRef.current = stages.map(() => 'map' as Quality)
+      stageBoundsRef.current  = stages.map(computeStageBounds)
 
       const allStages: GeoJSON.FeatureCollection = {
         type: 'FeatureCollection',
         features: stages.flatMap((s) => s.features),
       }
 
-      // Atmospheric fog — softens the globe edge and hides the harsh ocean
-      // cutoff that appears near Antarctica at extreme latitudes
+      // Atmospheric fog
       map.setFog({
         color: 'rgb(20, 20, 30)',
         'high-color': 'rgb(10, 10, 20)',
@@ -82,8 +131,7 @@ export default function MapView() {
         filter: ['==', '$type', 'LineString'],
         paint: { 'line-color': '#4285f4', 'line-width': 14, 'line-opacity': 0.15, 'line-blur': 4 },
       })
-      // Dark shadow sits beneath the casing so the route is visible on white
-      // surfaces (Antarctica snow) where the white casing would otherwise vanish
+      // Dark shadow so the route is visible on white surfaces (Antarctica snow)
       map.addLayer({
         id: 'route-shadow', type: 'line', source: 'route',
         filter: ['==', '$type', 'LineString'],
@@ -143,13 +191,8 @@ export default function MapView() {
       const ourLayers = new Set(['route-glow', 'route-shadow', 'route-casing', 'route-line', 'waypoints-border', 'waypoints'])
       const baseLayers = map.getStyle().layers.filter((l) => !ourLayers.has(l.id))
 
-      labelLayersRef.current = baseLayers
-        .filter((l) => l.type === 'symbol')
-        .map((l) => l.id)
-
-      roadLayersRef.current = baseLayers
-        .filter((l) => l.type === 'line')
-        .map((l) => l.id)
+      labelLayersRef.current = baseLayers.filter((l) => l.type === 'symbol').map((l) => l.id)
+      roadLayersRef.current  = baseLayers.filter((l) => l.type === 'line').map((l) => l.id)
 
       // Apply initial visibility: labels, roads, and pins all hidden
       ;[...labelLayersRef.current, ...roadLayersRef.current, ...PIN_LAYERS].forEach((id) => {
@@ -158,24 +201,48 @@ export default function MapView() {
 
       setMapReady(true)
 
-      // Progressive detail: once the user zooms in past DETAIL_ZOOM, fetch
-      // the higher-res files (15k pts/stage) and swap them in. Fires once.
+      // --- Progressive LOD on zoom ---
       map.on('zoomend', async () => {
-        if (detailLoadedRef.current) return
-        if (map.getZoom() < DETAIL_ZOOM) return
+        const zoom = map.getZoom()
 
-        detailLoadedRef.current = true // Prevent re-fetch on subsequent zoom events
+        // Level 1 → Level 2: swap all stages to detail quality
+        if (!detailLoadedRef.current && zoom >= DETAIL_ZOOM) {
+          detailLoadedRef.current = true
 
-        const detailStages = await Promise.all(
-          DETAIL_URLS.map((url) => fetch(url).then((r) => r.json() as Promise<GeoJSON.FeatureCollection>))
-        )
+          const detailStages = await Promise.all(
+            DETAIL_URLS.map((url) => fetch(url).then((r) => r.json() as Promise<GeoJSON.FeatureCollection>))
+          )
 
-        const allDetail: GeoJSON.FeatureCollection = {
-          type: 'FeatureCollection',
-          features: detailStages.flatMap((s) => s.features),
+          // Only overwrite stages not already being upgraded to ultra
+          detailStages.forEach((fc, i) => {
+            if (stageQualityRef.current[i] !== 'ultra' && stageQualityRef.current[i] !== 'ultra-loading') {
+              stageDataRef.current[i]    = fc
+              stageQualityRef.current[i] = 'detail'
+            }
+          })
+          updateSource()
         }
 
-        ;(map.getSource('route') as mapboxgl.GeoJSONSource).setData(allDetail)
+        // Level 2 → Level 3: swap visible stages to ultra quality
+        if (zoom >= ULTRA_ZOOM) {
+          const vp = map.getBounds()
+          ULTRA_URLS.forEach((url, i) => {
+            const q = stageQualityRef.current[i]
+            if (q === 'ultra' || q === 'ultra-loading') return
+            const b = stageBoundsRef.current[i]
+            if (!b || !viewportIntersects(vp, b)) return
+
+            stageQualityRef.current[i] = 'ultra-loading'
+            fetch(url)
+              .then((r) => r.json() as Promise<GeoJSON.FeatureCollection>)
+              .then((fc) => {
+                if (!mapRef.current) return
+                stageDataRef.current[i]    = fc
+                stageQualityRef.current[i] = 'ultra'
+                updateSource()
+              })
+          })
+        }
       })
     })
 

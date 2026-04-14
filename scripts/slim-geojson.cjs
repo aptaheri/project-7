@@ -2,10 +2,11 @@
  * Pre-generates slim GeoJSON files for web consumption.
  *
  * Full files have 66k–280k LineString coords — way too large for mobile.
- * This creates three variants per stage:
- *   - *-home.geojson   :   800 pts  (home page animation)
- *   - *-map.geojson    : 4,000 pts  (map view, initial globe zoom)
- *   - *-detail.geojson : 15,000 pts (map view, loaded on zoom-in)
+ * This creates four variants per stage:
+ *   - *-home.geojson   :    800 pts  (home page animation)
+ *   - *-map.geojson    :  4,000 pts  (map view, initial globe zoom)
+ *   - *-detail.geojson : 15,000 pts  (map view, loaded at zoom > 6)
+ *   - *-ultra.geojson  : 60,000 pts  (map view, loaded per-stage at zoom > 8)
  *
  * Point (waypoint) features are always kept in full.
  */
@@ -18,6 +19,7 @@ const STAGES         = 7
 const HOME_TARGET    = 800
 const MAP_TARGET     = 4000
 const DETAIL_TARGET  = 15000
+const ULTRA_TARGET   = 60000
 
 function sample(coords, target) {
   if (coords.length <= target) return coords
@@ -45,7 +47,7 @@ for (let i = 1; i <= STAGES; i++) {
 
   const origCount = lineFeature.geometry.coordinates.length
 
-  for (const [suffix, target] of [['home', HOME_TARGET], ['map', MAP_TARGET], ['detail', DETAIL_TARGET]]) {
+  for (const [suffix, target] of [['home', HOME_TARGET], ['map', MAP_TARGET], ['detail', DETAIL_TARGET], ['ultra', ULTRA_TARGET]]) {
     const slimCoords = sample(lineFeature.geometry.coordinates, target)
 
     const slimFC = {
