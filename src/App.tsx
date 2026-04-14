@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import MapView from './MapView'
+import About from './pages/About'
 import Admin from './pages/Admin'
 import './App.scss'
 
@@ -12,6 +13,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/map" element={<MapView />} />
+        <Route path="/about" element={<About />} />
         <Route path="/7c-editor" element={<Admin />} />
       </Routes>
     </BrowserRouter>

@@ -1,0 +1,119 @@
+.about {
+  min-height: 100vh;
+  background: #0a0a0f;
+  padding-top: 64px; // navbar height
+}
+
+.about-content {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 80px 24px 120px;
+}
+
+// ── Hero ──────────────────────────────────────────────────────────────────────
+
+.about-hero {
+  margin-bottom: 72px;
+}
+
+.about-overline {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #4285f4;
+  margin: 0 0 20px;
+}
+
+.about-hero h1 {
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 700;
+  line-height: 1.1;
+  color: #fff;
+  margin: 0 0 24px;
+  letter-spacing: -0.5px;
+}
+
+.about-lead {
+  font-size: clamp(16px, 2vw, 19px);
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.65);
+  margin: 0;
+}
+
+// ── Sections ──────────────────────────────────────────────────────────────────
+
+.about-section {
+  margin-bottom: 64px;
+
+  h2 {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.35);
+    margin: 0 0 24px;
+  }
+
+  p {
+    font-size: 16px;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0 0 16px;
+
+    &:last-child { margin-bottom: 0; }
+  }
+}
+
+// ── Stage list ────────────────────────────────────────────────────────────────
+
+.about-stages {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.about-stage {
+  padding: 20px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+
+  &:last-child {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+}
+
+.about-stage-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.about-stage-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+
+.about-stage-region {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.about-stage-route {
+  font-size: 13px;
+  color: #4285f4;
+  margin: 0 0 8px;
+  letter-spacing: 0.01em;
+}
+
+.about-stage-detail {
+  font-size: 14px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+}

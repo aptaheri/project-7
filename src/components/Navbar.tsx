@@ -6,7 +6,6 @@ import './Navbar.scss'
 const NAV_LINKS = [
   { label: 'Map', to: '/map' },
   { label: 'About', to: '/about' },
-  { label: 'Contact', to: '/contact' },
 ]
 
 export default function Navbar() {
