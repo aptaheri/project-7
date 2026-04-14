@@ -51,28 +51,28 @@ export default function About() {
       <div className="about-content">
         <section className="about-hero">
           <p className="about-overline">The Expedition</p>
-          <h1>Seven continents.<br />Human power only.</h1>
+          <h1>Seven continents.<br />One road bike.</h1>
           <p className="about-lead">
-            Project 7 is an attempt to become the first person to complete a
-            human-powered journey across all seven continents — cycling, rowing,
-            and trekking every kilometre without the aid of a motor.
+            Project 7 is a friend's attempt to become the first person to cycle
+            across all seven continents — riding every kilometre on a road bike,
+            without the aid of a motor.
           </p>
         </section>
 
         <section className="about-section">
           <h2>The Mission</h2>
           <p>
-            The concept is simple: visit every continent and cross each one
-            entirely under human power. No motors, no sails, no shortcuts.
-            The route was designed to maximise geographic coverage while
-            remaining logistically possible — crossing oceans by rowing or
-            paddling, and covering land by bicycle or on foot.
+            The concept is straightforward: cross every continent by bike. 99%
+            of the route is on a road bike — through cities, deserts, mountain
+            passes, and plains. On the rare occasions where geography makes
+            riding impossible, he may need to row or swim a short section, but
+            these are the exception, not the rule.
           </p>
           <p>
-            The journey spans roughly 50,000 km across seven continents and
-            multiple ocean crossings. Each stage presents its own set of
-            challenges: heat and distance in Australia, altitude in the Andes,
-            extreme cold in Antarctica.
+            The journey spans roughly 50,000 km across seven continents. Each
+            stage has its own character: the endless flats of Central Asia, the
+            heat of the Nullarbor, altitude in the Andes, and the brutal cold
+            of Antarctica.
           </p>
         </section>
 
