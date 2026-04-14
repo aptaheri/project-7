@@ -1,3 +1,7 @@
+:root {
+  --font-sans: 'TT Norms Pro', system-ui, sans-serif;
+}
+
 *,
 *::before,
 *::after {
@@ -14,7 +18,7 @@ body,
 
 body {
   background: #0a0a0f;
-  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-sans);
   color: #f3f4f6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
+import logoUrl from '../assets/logo.svg'
 import './Navbar.scss'
 
 const NAV_LINKS = [
@@ -28,12 +29,7 @@ export default function Navbar() {
     <>
       <header className={`navbar${scrolled ? ' navbar--scrolled' : ''}`}>
         <Link to="/" className="navbar-logo" onClick={() => setMenuOpen(false)}>
-          {/* Placeholder logo mark */}
-          <svg className="navbar-logo-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="2" />
-            <path d="M10 22 L16 10 L22 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M12 18 H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
+          <img src={logoUrl} className="navbar-logo-icon" alt="" />
           <span className="navbar-logo-text">Project 7</span>
         </Link>
 
@@ -61,11 +57,7 @@ export default function Navbar() {
       <div className={`mobile-menu${menuOpen ? ' mobile-menu--open' : ''}`}>
         <div className="mobile-menu-header">
           <Link to="/" className="navbar-logo" onClick={() => setMenuOpen(false)}>
-            <svg className="navbar-logo-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="2" />
-              <path d="M10 22 L16 10 L22 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M12 18 H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
+            <img src={logoUrl} className="navbar-logo-icon" alt="" />
             <span className="navbar-logo-text">Project 7</span>
           </Link>
           <button className="mobile-menu-close" onClick={() => setMenuOpen(false)} aria-label="Close menu">

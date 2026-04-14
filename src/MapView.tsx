@@ -67,6 +67,7 @@ export default function MapView() {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef       = useRef<mapboxgl.Map | null>(null)
   const [mapReady, setMapReady]     = useState(false)
+  const [mapVisible, setMapVisible] = useState(false)
   const [showLabels, setShowLabels] = useState(false)
   const [showRoads,  setShowRoads]  = useState(false)
   const [showPins,   setShowPins]   = useState(false)
@@ -201,6 +202,9 @@ export default function MapView() {
 
       setMapReady(true)
 
+      // Fade in once layers are hidden and tiles are fully painted
+      map.once('idle', () => setMapVisible(true))
+
       // --- Progressive LOD on zoom ---
       map.on('zoomend', async () => {
         const zoom = map.getZoom()
@@ -285,7 +289,11 @@ export default function MapView() {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <div ref={containerRef} className="map-container" />
+      <div
+        ref={containerRef}
+        className="map-container"
+        style={{ opacity: mapVisible ? 1 : 0, transition: 'opacity 0.6s ease' }}
+      />
       <div className="map-controls">
         <button className={`map-control-btn${showLabels ? ' active' : ''}`} onClick={() => setShowLabels((v) => !v)}>
           <span className="map-control-dot" />
