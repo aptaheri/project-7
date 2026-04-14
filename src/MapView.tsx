@@ -226,6 +226,7 @@ export default function MapView() {
         // Level 2 → Level 3: swap visible stages to ultra quality
         if (zoom >= ULTRA_ZOOM) {
           const vp = map.getBounds()
+          if (!vp) return
           ULTRA_URLS.forEach((url, i) => {
             const q = stageQualityRef.current[i]
             if (q === 'ultra' || q === 'ultra-loading') return
