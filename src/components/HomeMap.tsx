@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
@@ -34,6 +34,7 @@ export default function HomeMap() {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef       = useRef<mapboxgl.Map | null>(null)
   const frameRef     = useRef<number>(0)
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
@@ -201,6 +202,9 @@ export default function HomeMap() {
       }
 
       runStage(0)
+
+      // Fade in once tiles at the start position are fully painted
+      map.once('idle', () => setReady(true))
     })
 
     return () => {
@@ -211,5 +215,15 @@ export default function HomeMap() {
     }
   }, [])
 
-  return <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        position: 'absolute',
+        inset: 0,
+        opacity: ready ? 1 : 0,
+        transition: 'opacity 0.6s ease',
+      }}
+    />
+  )
 }
