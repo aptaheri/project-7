@@ -15,6 +15,19 @@ const STAGE_URLS = [
   '/geojson/stage7-map.geojson',
 ]
 
+const DETAIL_URLS = [
+  '/geojson/stage1-detail.geojson',
+  '/geojson/stage2-detail.geojson',
+  '/geojson/stage3-detail.geojson',
+  '/geojson/stage4-detail.geojson',
+  '/geojson/stage5-detail.geojson',
+  '/geojson/stage6-detail.geojson',
+  '/geojson/stage7-detail.geojson',
+]
+
+// Zoom level at which the detail swap is triggered
+const DETAIL_ZOOM = 6
+
 const PIN_LAYERS = ['waypoints-border', 'waypoints']
 
 export default function MapView() {
@@ -24,8 +37,9 @@ export default function MapView() {
   const [showLabels, setShowLabels] = useState(false)
   const [showRoads,  setShowRoads]  = useState(false)
   const [showPins,   setShowPins]   = useState(false)
-  const labelLayersRef = useRef<string[]>([])
-  const roadLayersRef  = useRef<string[]>([])
+  const labelLayersRef  = useRef<string[]>([])
+  const roadLayersRef   = useRef<string[]>([])
+  const detailLoadedRef = useRef(false)
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
@@ -143,6 +157,26 @@ export default function MapView() {
       })
 
       setMapReady(true)
+
+      // Progressive detail: once the user zooms in past DETAIL_ZOOM, fetch
+      // the higher-res files (15k pts/stage) and swap them in. Fires once.
+      map.on('zoomend', async () => {
+        if (detailLoadedRef.current) return
+        if (map.getZoom() < DETAIL_ZOOM) return
+
+        detailLoadedRef.current = true // Prevent re-fetch on subsequent zoom events
+
+        const detailStages = await Promise.all(
+          DETAIL_URLS.map((url) => fetch(url).then((r) => r.json() as Promise<GeoJSON.FeatureCollection>))
+        )
+
+        const allDetail: GeoJSON.FeatureCollection = {
+          type: 'FeatureCollection',
+          features: detailStages.flatMap((s) => s.features),
+        }
+
+        ;(map.getSource('route') as mapboxgl.GeoJSONSource).setData(allDetail)
+      })
     })
 
     return () => {
