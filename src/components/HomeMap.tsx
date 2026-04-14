@@ -44,7 +44,7 @@ export default function HomeMap() {
       container: containerRef.current,
       style: 'mapbox://styles/mapbox/satellite-v9',
       projection: 'globe',
-      center: [20, 41],
+      center: [-9.472264, 38.732407], // start of stage 1
       zoom: START_ZOOM,
       interactive: false,
       attributionControl: false,
