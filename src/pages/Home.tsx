@@ -8,8 +8,7 @@ export default function Home() {
       <HomeMap />
       <div className="home-overlay" />
       <div className="home-content">
-        <h1>Project 7</h1>
-        <p>The first human-powered journey across the 7 continents</p>
+        <p>The first human-powered journey<br />across the 7 continents</p>
         <Link to="/map" className="home-cta">Explore the Map</Link>
       </div>
     </div>

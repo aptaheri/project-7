@@ -33,22 +33,12 @@
   text-align: center;
   gap: 16px;
 
-  h1 {
-    font-size: clamp(36px, 6vw, 72px);
-    font-weight: 700;
-    letter-spacing: -1.5px;
-    line-height: 1.05;
-    color: #fff;
-    margin: 0;
-    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.4);
-    text-transform: uppercase;
-  }
-
   p {
-    font-size: clamp(15px, 2vw, 19px);
+    font-size: clamp(20px, 2.8vw, 30px);
     color: rgba(255, 255, 255, 0.7);
     margin: 0;
     letter-spacing: 0.02em;
+    line-height: 1.45;
   }
 }
 
