@@ -6,6 +6,7 @@ import './Navbar.scss'
 const NAV_LINKS = [
   { label: 'Map', to: '/map' },
   { label: 'About', to: '/about' },
+  { label: 'Donate', to: '/donate' },
 ]
 
 export default function Navbar() {
