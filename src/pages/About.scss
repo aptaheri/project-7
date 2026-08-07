@@ -65,6 +65,38 @@
   }
 }
 
+// ── Rules list ────────────────────────────────────────────────────────────────
+
+.about-rules {
+  list-style: none;
+  counter-reset: rule;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  li {
+    counter-increment: rule;
+    position: relative;
+    padding-left: 36px;
+    font-size: 16px;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.8);
+
+    &::before {
+      content: counter(rule);
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.7;
+      color: #4285f4;
+    }
+  }
+}
+
 // ── Stage list ────────────────────────────────────────────────────────────────
 
 .about-stages {

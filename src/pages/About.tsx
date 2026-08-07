@@ -45,35 +45,40 @@ const STAGES = [
   },
 ]
 
+const RULES = [
+  'Crossing a continent officially begins with a back tire dip in one ocean and ends with a front tire dip in the other ocean (or sea).',
+  'Between tire dips, every point of longitude must be crossed under human power (cycling, walking, rowing, swimming). No hitching rides, no hanging onto backs of trucks, etc. No motors, no sails, and no animals.',
+  'In emergency situations, hitching a ride is allowed, but returning to the exact pickup location to resume is required.',
+  'Biking with others is allowed, but drafting directly behind them is not.',
+  'To make it one continuous trip, no more than two-week breaks in one location are allowed.',
+]
+
 export default function About() {
   return (
     <div className="about">
       <div className="about-content">
         <section className="about-hero">
           <p className="about-overline">The Expedition</p>
-          <h1>Seven continents.<br />One road bike.</h1>
+          <h1>Seven continents.<br />On a bike.</h1>
           <p className="about-lead">
-            Project 7 is a friend's attempt to become the first person to cycle
-            across all seven continents — riding every kilometre on a road bike,
-            without the aid of a motor.
-          </p>
-        </section>
-
-        <section className="about-section">
-          <h2>The Mission</h2>
-          <p>
-            The concept is straightforward: cross every continent by bike. 99%
-            of the route is on a road bike — through cities, deserts, mountain
-            passes, and plains. On the rare occasions where geography makes
-            riding impossible, he may need to row or swim a short section, but
-            these are the exception, not the rule.
-          </p>
-          <p>
-            The journey spans roughly 50,000 km across seven continents. Each
+            If Project 7 is completed, it will be the first human-powered
+            expedition of any kind across all seven continents. The journey
+            starts in Europe, then continues in Australia, South America,
+            Africa, Asia, North America, and finally ends in Antarctica. The
+            33,000-mile route goes through 44 countries over 77 weeks. Each
             stage has its own character: the endless flats of Central Asia, the
             heat of the Nullarbor, altitude in the Andes, and the brutal cold
             of Antarctica.
           </p>
+        </section>
+
+        <section className="about-section">
+          <h2>The Rules</h2>
+          <ol className="about-rules">
+            {RULES.map((rule, i) => (
+              <li key={i}>{rule}</li>
+            ))}
+          </ol>
         </section>
 
         <section className="about-section">

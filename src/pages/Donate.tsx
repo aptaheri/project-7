@@ -8,7 +8,7 @@ export default function Donate() {
       <div className="donate-content">
         <section className="donate-hero">
           <p className="donate-overline">Support the Ride</p>
-          <h1>Every kilometre<br />is for a kid.</h1>
+          <h1>Every kilometer<br />is for a kid.</h1>
           <p className="donate-lead">
             Project 7 rides in support of the Marty Lyons Foundation, which
             grants wishes to children aged 3 to 17 facing terminal or
