@@ -2,12 +2,10 @@ import { createRemoteJWKSet, jwtVerify } from 'jose'
 import { json } from '../lib/auth.mts'
 import { clearedCookie, createSession, currentSession, sessionCookie } from '../lib/session.mts'
 import { canViewTrack, recordSignIn } from '../lib/users.mts'
-import { db, ensureSchema } from '../lib/db.mts'
-import type { Role } from '../lib/session.mts'
 
 /**
- * Google sign-in. Actions arrive as ?action=… from the /api/auth/:action
- * rewrite in public/_redirects.
+ * Google sign-in. Actions are resolved from the request path, with ?action=
+ * as a fallback (see the handler for why).
  *
  *   GET  /api/auth/me      → who am I, plus the client id for the sign-in button
  *   POST /api/auth/google  → exchange a Google ID token for a session cookie
@@ -18,15 +16,6 @@ const ACTIONS = ['me', 'google', 'logout']
 
 const GOOGLE_JWKS = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'))
 const GOOGLE_ISSUERS = ['https://accounts.google.com', 'accounts.google.com']
-
-async function roleFor(email: string): Promise<Role> {
-  await ensureSchema()
-  const sql = db()
-  const rows = (await sql`select role from viewers where email = ${email.toLowerCase()}`) as unknown as {
-    role: Role
-  }[]
-  return rows[0]?.role ?? 'pending'
-}
 
 export default async function handler(req: Request): Promise<Response> {
   const clientId = process.env.GOOGLE_CLIENT_ID ?? null
@@ -50,7 +39,10 @@ export default async function handler(req: Request): Promise<Response> {
     const session = currentSession(req)
     if (!session) return json({ authenticated: false, clientId })
     try {
-      const role = await roleFor(session.email)
+      // recordSignIn rather than a plain lookup, so adding someone to
+      // TRACK_OWNER_EMAILS promotes them on their next poll instead of
+      // requiring them to sign out and back in.
+      const role = await recordSignIn(session.email)
       return json({
         authenticated: true,
         email: session.email,
