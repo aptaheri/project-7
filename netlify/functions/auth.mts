@@ -1,7 +1,7 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import { json } from '../lib/auth.mts'
 import { clearedCookie, createSession, currentSession, sessionCookie } from '../lib/session.mts'
-import { canViewTrack, recordSignIn } from '../lib/users.mts'
+import { canViewTrack, normalizeEmail, recordSignIn } from '../lib/users.mts'
 
 /**
  * Google sign-in. Actions are resolved from the request path, with ?action=
@@ -93,7 +93,7 @@ export default async function handler(req: Request): Promise<Response> {
       if (payload.email_verified !== true || typeof payload.email !== 'string') {
         return json({ error: 'email not verified with Google' }, 403)
       }
-      email = payload.email.toLowerCase()
+      email = normalizeEmail(payload.email)
     } catch (error) {
       console.error('google token verification failed', error)
       return json({ error: 'invalid credential' }, 401)

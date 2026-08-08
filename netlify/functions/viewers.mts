@@ -1,6 +1,6 @@
 import { json } from '../lib/auth.mts'
 import { currentSession } from '../lib/session.mts'
-import { isRole, listViewers, removeViewer, setRole } from '../lib/users.mts'
+import { isRole, listViewers, normalizeEmail, removeViewer, setRole } from '../lib/users.mts'
 import { db, ensureSchema } from '../lib/db.mts'
 import type { Role } from '../lib/session.mts'
 
@@ -17,12 +17,12 @@ async function requireOwner(req: Request): Promise<{ email: string } | Response>
 
   await ensureSchema()
   const sql = db()
-  const rows = (await sql`select role from viewers where email = ${session.email}`) as unknown as {
+  const rows = (await sql`select role from viewers where email = ${normalizeEmail(session.email)}`) as unknown as {
     role: Role
   }[]
 
   if (rows[0]?.role !== 'owner') return json({ error: 'forbidden' }, 403)
-  return { email: session.email }
+  return { email: normalizeEmail(session.email) }
 }
 
 export default async function handler(req: Request): Promise<Response> {
@@ -42,7 +42,7 @@ export default async function handler(req: Request): Promise<Response> {
         return json({ error: 'invalid json' }, 400)
       }
 
-      const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
+      const email = typeof body.email === 'string' ? normalizeEmail(body.email) : ''
       if (!email.includes('@')) return json({ error: 'a valid email is required' }, 400)
 
       if (body.remove === true) {

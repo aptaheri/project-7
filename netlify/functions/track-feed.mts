@@ -1,7 +1,7 @@
 import { json } from '../lib/auth.mts'
 import { db, ensureSchema } from '../lib/db.mts'
 import { currentSession } from '../lib/session.mts'
-import { canViewTrack } from '../lib/users.mts'
+import { canViewTrack, normalizeEmail } from '../lib/users.mts'
 import type { Role } from '../lib/session.mts'
 
 /**
@@ -39,7 +39,7 @@ export default async function handler(req: Request): Promise<Response> {
   try {
     await ensureSchema()
     const roles = (await db()`
-      select role from viewers where email = ${session.email}
+      select role from viewers where email = ${normalizeEmail(session.email)}
     `) as unknown as { role: Role }[]
     if (!canViewTrack(roles[0]?.role ?? 'pending')) {
       return json({ error: 'forbidden' }, 403)

@@ -11,6 +11,28 @@ export interface Viewer {
 
 export const ROLES: Role[] = ['owner', 'viewer', 'pending']
 
+/**
+ * Canonical form of an address, used as the primary key everywhere.
+ *
+ * Gmail ignores dots and +tags in the local part and treats googlemail.com as
+ * gmail.com, but Google's ID token only ever reports the canonical spelling.
+ * Without this, pre-approving `john.smith@gmail.com` would not match a token
+ * that says `johnsmith@gmail.com`. Only gmail is folded this way — for every
+ * other domain a dot is significant and must be preserved.
+ */
+export function normalizeEmail(raw: string): string {
+  const email = raw.trim().toLowerCase()
+  const at = email.lastIndexOf('@')
+  if (at === -1) return email
+
+  const local = email.slice(0, at)
+  const domain = email.slice(at + 1)
+  if (domain !== 'gmail.com' && domain !== 'googlemail.com') return email
+
+  const withoutTag = local.split('+')[0]
+  return `${withoutTag.split('.').join('')}@gmail.com`
+}
+
 export function isRole(value: unknown): value is Role {
   return typeof value === 'string' && (ROLES as string[]).includes(value)
 }
@@ -23,7 +45,7 @@ export function canViewTrack(role: Role): boolean {
 function bootstrapOwners(): string[] {
   return (process.env.TRACK_OWNER_EMAILS ?? '')
     .split(',')
-    .map((e) => e.trim().toLowerCase())
+    .map((e) => normalizeEmail(e))
     .filter(Boolean)
 }
 
@@ -37,7 +59,7 @@ function bootstrapOwners(): string[] {
 export async function recordSignIn(email: string): Promise<Role> {
   await ensureSchema()
   const sql = db()
-  const address = email.toLowerCase()
+  const address = normalizeEmail(email)
 
   if (bootstrapOwners().includes(address)) {
     await sql`
@@ -78,7 +100,7 @@ export async function setRole(email: string, role: Role, grantedBy: string): Pro
   const sql = db()
   await sql`
     insert into viewers (email, role, granted_by)
-    values (${email.toLowerCase()}, ${role}, ${grantedBy})
+    values (${normalizeEmail(email)}, ${role}, ${grantedBy})
     on conflict (email) do update
       set role = ${role}, granted_by = ${grantedBy}, updated_at = now()
   `
@@ -87,5 +109,5 @@ export async function setRole(email: string, role: Role, grantedBy: string): Pro
 export async function removeViewer(email: string): Promise<void> {
   await ensureSchema()
   const sql = db()
-  await sql`delete from viewers where email = ${email.toLowerCase()}`
+  await sql`delete from viewers where email = ${normalizeEmail(email)}`
 }
