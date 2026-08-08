@@ -15,7 +15,9 @@
 
 .track-panel {
   position: absolute;
-  top: 20px;
+  // The map runs full-bleed behind the fixed 64px navbar, so the panel has to
+  // clear it explicitly or it sits under the logo.
+  top: 84px;
   left: 20px;
   z-index: 2;
   width: 260px;
@@ -273,7 +275,7 @@
 
 @media (max-width: 600px) {
   .track-panel {
-    top: 12px;
+    top: 76px;
     left: 12px;
     right: 12px;
     width: auto;
