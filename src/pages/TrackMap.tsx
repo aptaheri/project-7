@@ -38,7 +38,11 @@ interface LatestFix {
 interface Feed {
   latest: LatestFix | null
   trail: [number, number][]
+  /** Every stored fix, not the thinned trail. */
   count: number
+  distanceKm: number
+  elevationGainM: number
+  trailPoints: number
 }
 
 type Status = 'loading' | 'ok' | 'denied' | 'error'
@@ -346,8 +350,12 @@ export default function TrackMap({ email, role }: Props) {
                 </div>
               )}
               <div>
-                <dt>Points</dt>
-                <dd>{feed?.count ?? 0}</dd>
+                <dt>Distance</dt>
+                <dd>{(feed?.distanceKm ?? 0).toLocaleString(undefined, { maximumFractionDigits: 1 })} km</dd>
+              </div>
+              <div>
+                <dt>Elevation gain</dt>
+                <dd>{Math.round(feed?.elevationGainM ?? 0).toLocaleString()} m</dd>
               </div>
             </dl>
             )}
