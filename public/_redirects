@@ -1,1 +1,7 @@
+# Rules are matched top to bottom, first match wins. The API routes must come
+# before the SPA catch-all or it swallows them. These live here rather than in
+# netlify.toml because _redirects is processed first.
+/api/owntracks  /.netlify/functions/owntracks   200!
+/api/track      /.netlify/functions/track-feed  200!
+
 /* /index.html 200
