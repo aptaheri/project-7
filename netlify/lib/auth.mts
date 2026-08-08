@@ -18,16 +18,52 @@ export function json(body: unknown, status = 200): Response {
   })
 }
 
+interface Credential {
+  user: string
+  pass: string
+}
+
 /**
- * Verifies HTTP Basic credentials against OWNTRACKS_USER / OWNTRACKS_PASS.
+ * Every accepted phone.
+ *
+ * OwnTracks sends its UserID as the Basic auth username, and that UserID also
+ * becomes part of the topic that identifies the rider. So each rider needs
+ * their own username, or their fixes are rejected with a 401 that the app
+ * silently queues and retries forever.
+ *
+ * OWNTRACKS_CREDENTIALS holds `user:pass` pairs, comma separated.
+ * OWNTRACKS_USER / OWNTRACKS_PASS remain valid so an existing phone keeps
+ * working without being reconfigured.
+ */
+function credentials(): Credential[] {
+  const list: Credential[] = []
+
+  const user = process.env.OWNTRACKS_USER
+  const pass = process.env.OWNTRACKS_PASS
+  if (user && pass) list.push({ user, pass })
+
+  for (const entry of (process.env.OWNTRACKS_CREDENTIALS ?? '').split(',')) {
+    const trimmed = entry.trim()
+    if (!trimmed) continue
+    const separator = trimmed.indexOf(':')
+    if (separator === -1) continue
+    const u = trimmed.slice(0, separator).trim()
+    const p = trimmed.slice(separator + 1).trim()
+    if (u && p) list.push({ user: u, pass: p })
+  }
+
+  return list
+}
+
+/**
+ * Verifies HTTP Basic credentials against any configured rider.
  * Returns a 401 Response when the request should be rejected, else null.
  */
 export function checkBasicAuth(req: Request): Response | null {
-  const expectedUser = process.env.OWNTRACKS_USER
-  const expectedPass = process.env.OWNTRACKS_PASS
+  const accepted = credentials()
 
-  if (!expectedUser || !expectedPass) {
-    console.error('OWNTRACKS_USER / OWNTRACKS_PASS are not configured')
+  if (accepted.length === 0) {
+    console.error('No OwnTracks credentials are configured')
     return json({ error: 'server not configured' }, 500)
   }
 
@@ -57,8 +93,14 @@ export function checkBasicAuth(req: Request): Response | null {
   const user = decoded.slice(0, separator)
   const pass = decoded.slice(separator + 1)
 
-  // Both comparisons always run so timing does not reveal which half failed.
-  const userOk = secretsMatch(user, expectedUser)
-  const passOk = secretsMatch(pass, expectedPass)
-  return userOk && passOk ? null : unauthorized()
+  // Every candidate is checked without short-circuiting, so neither timing nor
+  // early exit reveals which username exists or which half of a pair failed.
+  let matched = false
+  for (const candidate of accepted) {
+    const userOk = secretsMatch(user, candidate.user)
+    const passOk = secretsMatch(pass, candidate.pass)
+    if (userOk && passOk) matched = true
+  }
+
+  return matched ? null : unauthorized()
 }

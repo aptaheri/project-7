@@ -37,6 +37,7 @@ endpoints return 500 until they exist.
 | `NETLIFY_DB_URL` | Injected at runtime by Netlify Database. Nothing to do. |
 | `OWNTRACKS_USER` | Username the phone sends via Basic auth. |
 | `OWNTRACKS_PASS` | Password the phone sends. Generate it, don't pick it. |
+| `OWNTRACKS_CREDENTIALS` | Extra riders as `user:pass` pairs, comma separated. |
 | `GOOGLE_CLIENT_ID` | OAuth 2.0 Web client ID from Google Cloud. Public. |
 | `SESSION_SECRET` | Signs the session cookie. Generate it; never reuse. |
 | `TRACK_OWNER_EMAILS` | Comma-separated emails promoted to owner on sign-in. |
@@ -86,8 +87,17 @@ OwnTracks → Settings → Connection:
 
 - **Mode**: HTTP
 - **URL**: `https://project7.bike/api/owntracks`
-- **Authentication**: on, with `OWNTRACKS_USER` / `OWNTRACKS_PASS`
+- **Authentication**: on, with the rider's own UserID and password
 - **Device ID / Tracker ID**: anything short, e.g. `JD`
+
+OwnTracks sends its **UserID as the Basic auth username**, and that same UserID
+becomes part of the topic (`owntracks/<user>/<device>`) that identifies the
+rider in the database. So each rider needs their own username — reusing one
+means their fixes cannot be told apart, and using an unconfigured one means
+every post is rejected with a 401 that the app silently queues and retries.
+
+Add riders to `OWNTRACKS_CREDENTIALS`; the original
+`OWNTRACKS_USER`/`OWNTRACKS_PASS` pair stays valid alongside it.
 
 OwnTracks → Settings → Advanced:
 
