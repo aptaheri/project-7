@@ -24,7 +24,7 @@ OwnTracks (iPhone)  ──POST──▶  /api/owntracks  ──▶  Neon (locati
 | `netlify/lib/users.mts` | Roles and the viewers table. |
 | `src/pages/Track.tsx` | Auth gate for the map. |
 | `src/pages/TrackMap.tsx` | The map itself. Polls every 30s. |
-| `src/pages/Admin.tsx` | Owner UI at `/7c-editor`. |
+| `src/pages/Admin.tsx` | Owner UI at `/track/sharing`. |
 | `db/schema.sql` | Table definition, for reference. |
 
 ## Environment variables
@@ -108,7 +108,7 @@ constraint makes the replay idempotent.
 
 | Role | Can do |
 | --- | --- |
-| `owner` | See the map, and grant/revoke everyone else at `/7c-editor` |
+| `owner` | See the map, and grant/revoke everyone else at `/track/sharing` |
 | `viewer` | See the map |
 | `pending` | Nothing. Recorded so an owner can see who asked. |
 

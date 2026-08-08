@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import type { Role } from '../lib/auth'
 import './Admin.scss'
@@ -68,7 +69,7 @@ export default function Admin() {
   if (!me?.authenticated) {
     return (
       <div className="admin admin-message">
-        Sign in from the <a href="/track">tracker page</a> first.
+        Sign in from the <Link to="/track">tracker page</Link> first.
       </div>
     )
   }

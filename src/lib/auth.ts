@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useReducer } from 'react'
 
 export type Role = 'owner' | 'viewer' | 'pending'
 
@@ -74,27 +74,60 @@ export interface AuthState {
   me: Me | null
   loading: boolean
   error: string | null
-  refresh: () => void
+  refresh: () => Promise<void>
   setMe: (me: Me) => void
 }
 
-export function useAuth(): AuthState {
-  const [me, setMe] = useState<Me | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+/**
+ * One shared auth state for the whole app.
+ *
+ * Both the navbar and the tracker need to know who is signed in. A per-hook
+ * useState would mean two requests on /track and a navbar that stays stale
+ * after sign-in, so the state lives here and every hook subscribes to it.
+ */
+let state: { me: Me | null; loading: boolean; error: string | null } = {
+  me: null,
+  loading: true,
+  error: null,
+}
+const listeners = new Set<() => void>()
+let started = false
 
-  const refresh = useCallback(() => {
-    setLoading(true)
-    fetchMe()
-      .then((next) => {
-        setMe(next)
-        setError(null)
-      })
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false))
+function emit() {
+  for (const listener of listeners) listener()
+}
+
+export function refreshMe(): Promise<void> {
+  state = { ...state, loading: true }
+  emit()
+  return fetchMe()
+    .then((me) => {
+      state = { me, loading: false, error: null }
+    })
+    .catch((err: Error) => {
+      state = { me: null, loading: false, error: err.message }
+    })
+    .finally(emit)
+}
+
+function setMe(me: Me) {
+  state = { me, loading: false, error: null }
+  emit()
+}
+
+export function useAuth(): AuthState {
+  const [, bump] = useReducer((n: number) => n + 1, 0)
+
+  useEffect(() => {
+    listeners.add(bump)
+    if (!started) {
+      started = true
+      void refreshMe()
+    }
+    return () => {
+      listeners.delete(bump)
+    }
   }, [])
 
-  useEffect(refresh, [refresh])
-
-  return { me, loading, error, refresh, setMe }
+  return { ...state, refresh: refreshMe, setMe }
 }

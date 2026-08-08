@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import MapView from './MapView'
@@ -17,8 +17,10 @@ export default function App() {
         <Route path="/map" element={<MapView />} />
         <Route path="/about" element={<About />} />
         <Route path="/donate" element={<Donate />} />
-        <Route path="/7c-editor" element={<Admin />} />
         <Route path="/track" element={<Track />} />
+        <Route path="/track/sharing" element={<Admin />} />
+        {/* Former home of the sharing panel, kept so old links still land. */}
+        <Route path="/7c-editor" element={<Navigate to="/track/sharing" replace />} />
       </Routes>
     </BrowserRouter>
   )
