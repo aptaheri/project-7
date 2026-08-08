@@ -14,6 +14,8 @@ import type { Role } from '../lib/session.mts'
  *   POST /api/auth/logout  → drop the session
  */
 
+const ACTIONS = ['me', 'google', 'logout']
+
 const GOOGLE_JWKS = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'))
 const GOOGLE_ISSUERS = ['https://accounts.google.com', 'accounts.google.com']
 
@@ -28,7 +30,21 @@ async function roleFor(email: string): Promise<Role> {
 
 export default async function handler(req: Request): Promise<Response> {
   const clientId = process.env.GOOGLE_CLIENT_ID ?? null
-  const action = new URL(req.url).searchParams.get('action')
+
+  // The action can arrive two ways depending on how Netlify presents a
+  // rewritten request: as the last path segment of the original URL
+  // (/api/auth/me) or as the ?action= set by the redirect destination. Accept
+  // either rather than depending on which one the platform surfaces.
+  const url = new URL(req.url)
+  const lastSegment = url.pathname.split('/').filter(Boolean).pop() ?? ''
+  const action = ACTIONS.includes(lastSegment)
+    ? lastSegment
+    : (url.searchParams.get('action') ?? '')
+
+  if (!ACTIONS.includes(action)) {
+    console.error(`unknown auth action; pathname=${url.pathname} search=${url.search}`)
+    return json({ error: 'not found' }, 404)
+  }
 
   if (action === 'me' && req.method === 'GET') {
     const session = currentSession(req)
