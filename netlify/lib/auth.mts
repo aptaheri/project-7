@@ -102,5 +102,13 @@ export function checkBasicAuth(req: Request): Response | null {
     if (userOk && passOk) matched = true
   }
 
-  return matched ? null : unauthorized()
+  if (!matched) {
+    // A rejected phone retries silently forever, so without this line a
+    // mistyped credential is invisible from both ends. The username is not a
+    // secret; the password is never logged.
+    console.warn(`owntracks auth rejected for username="${user}"`)
+    return unauthorized()
+  }
+
+  return null
 }

@@ -70,8 +70,17 @@ export default async function handler(req: Request): Promise<Response> {
     : [body as OwnTracksMessage]
 
   const points = messages.filter((m) => m?._type === 'location')
-  // Acknowledge transitions, waypoints and lwt without storing them.
-  if (points.length === 0) return ack()
+  if (points.length === 0) {
+    // Acknowledge transitions, waypoints and lwt without storing them — but say
+    // so, because a phone posting only these looks identical to one posting
+    // nothing at all.
+    console.log(`owntracks: no location in payload (_type=${String(messages[0]?._type)})`)
+    return ack()
+  }
+
+  console.log(
+    `owntracks: ${points.length} fix(es) from ${str(points[0].topic) ?? str(points[0].tid) ?? 'unknown'}`,
+  )
 
   try {
     await ensureSchema()
