@@ -171,7 +171,7 @@ export default function Navbar() {
               Sign out
             </button>
           ) : (
-            <Link to="/track" className="navbar-auth navbar-auth--primary">
+            <Link to="/track" className="navbar-auth">
               Log in
             </Link>
           )}
@@ -226,7 +226,7 @@ export default function Navbar() {
             ) : (
               <Link
                 to="/track"
-                className="navbar-auth navbar-auth--primary"
+                className="navbar-auth"
                 onClick={() => setMenuOpen(false)}
               >
                 Log in

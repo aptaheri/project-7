@@ -52,6 +52,7 @@
 
 .navbar-links {
   display: flex;
+  align-items: center;
   gap: 32px;
 
   @media (max-width: 768px) {
@@ -276,34 +277,21 @@
 // ── Log in / sign out ─────────────────────────────────────────────────────────
 
 .navbar-auth {
-  padding: 7px 14px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: transparent;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 13px;
-  font-weight: 600;
-  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: inherit;
+  opacity: 0.8;
   text-decoration: none;
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: inherit;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: opacity 0.2s;
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-  }
-}
-
-.navbar-auth--primary {
-  border-color: rgba(66, 133, 244, 0.5);
-  background: rgba(66, 133, 244, 0.16);
-  color: #7aa9f7;
-
-  &:hover {
-    background: rgba(66, 133, 244, 0.3);
-    color: #fff;
-  }
+  &:hover { opacity: 1; }
 }
 
 // ── Mobile ────────────────────────────────────────────────────────────────────
@@ -336,4 +324,11 @@
   color: rgba(255, 255, 255, 0.45);
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+// The mobile menu's links are much larger, so the auth control matches them
+// rather than inheriting the desktop size.
+.mobile-menu-auth .navbar-auth {
+  font-size: 20px;
+  opacity: 0.9;
 }
