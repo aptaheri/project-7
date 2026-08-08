@@ -4,7 +4,7 @@
 
 create table if not exists locations (
   id          bigserial primary key,
-  device      text not null,              -- OwnTracks topic, e.g. owntracks/alex/iphone
+  device      text not null,              -- OwnTracks topic, e.g. owntracks/<user>/<device>
   tst         timestamptz not null,       -- fix time reported by the phone
   lat         double precision not null,
   lon         double precision not null,
