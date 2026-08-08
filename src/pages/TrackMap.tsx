@@ -67,10 +67,9 @@ function freshness(iso: string): 'live' | 'stale' | 'offline' {
 interface Props {
   email: string
   role: string
-  onSignOut: () => void
 }
 
-export default function TrackMap({ email, role, onSignOut }: Props) {
+export default function TrackMap({ email, role }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const markerRef = useRef<mapboxgl.Marker | null>(null)
@@ -339,12 +338,10 @@ export default function TrackMap({ email, role, onSignOut }: Props) {
           </>
         )}
 
+        {/* Signing out lives in the navbar; this just says who you are. */}
         <div className="track-account">
           <span className="track-account-email">{email}</span>
           {role === 'owner' && <span className="track-account-role">Owner</span>}
-          <button className="track-signout" onClick={onSignOut}>
-            Sign out
-          </button>
         </div>
       </div>
     </div>

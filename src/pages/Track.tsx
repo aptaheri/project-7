@@ -79,5 +79,5 @@ export default function Track() {
     )
   }
 
-  return <TrackMap email={me.email ?? ''} role={me.role ?? 'viewer'} onSignOut={handleSignOut} />
+  return <TrackMap email={me.email ?? ''} role={me.role ?? 'viewer'} />
 }
