@@ -28,7 +28,7 @@ are required; the endpoints return 500 until they exist.
 
 | Variable | What it is |
 | --- | --- |
-| `NETLIFY_DATABASE_URL` | Set for you by the Netlify DB extension. Nothing to do. |
+| `NETLIFY_DB_URL` | Injected at runtime by Netlify Database. Nothing to do. |
 | `OWNTRACKS_USER` | Username the phone sends via Basic auth. |
 | `OWNTRACKS_PASS` | Password the phone sends. Generate it, don't pick it. |
 | `OWNTRACKS_VIEW_TOKEN` | Secret in the `/track?key=…` URL. |
@@ -46,23 +46,31 @@ openssl rand -hex 24
 
 ## Database setup
 
-Netlify provisions the Neon database for you — there is no separate Neon
-signup, and nothing to paste.
+Netlify provisions the Postgres instance for you — there is no separate Neon
+signup and nothing to paste. Two things have to be true:
 
-**From the UI:** team → Extensions → install **Neon** (Netlify DB) → open the
-site → Extensions → Neon → provision. It injects `NETLIFY_DATABASE_URL`.
+1. The **Neon extension** is enabled for the team.
+2. **`@netlify/database` is a dependency** and the site has been deployed.
 
-**From the CLI:**
+The second one is what actually turns it on. The package is not imported
+anywhere — its presence at deploy time is the trigger, and the connection
+string arrives at runtime as `NETLIFY_DB_URL`. Removing the dependency
+un-provisions the database.
+
+Check the state with:
 
 ```sh
-netlify db init
+npx netlify-cli@latest db status
 ```
 
-A database created this way starts unclaimed and expires if it is not claimed
-to a Neon account within a week. The command prints a claim link — use it.
+Note this is `NETLIFY_DB_URL`, not `NETLIFY_DATABASE_URL` — the longer name
+appears in some docs and is wrong.
 
 No migration step — the ingest function runs `create table if not exists` on
 cold start. `db/schema.sql` is the same DDL if you'd rather apply it by hand.
+Netlify also has its own migrations directory at `netlify/database/migrations`,
+applied automatically on deploy, which is the better route for future schema
+changes.
 
 ## Phone setup
 

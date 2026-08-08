@@ -7,11 +7,23 @@ let schemaReady: Promise<void> | null = null
 
 export function db(): Sql {
   if (!client) {
-    // NETLIFY_DATABASE_URL is injected by the Netlify DB (Neon) extension.
-    // DATABASE_URL is checked first so a manually set value can override it.
-    const url = process.env.DATABASE_URL ?? process.env.NETLIFY_DATABASE_URL
+    // Netlify injects the connection string at runtime once @netlify/database
+    // is a dependency and the site has been deployed. Their SDK reads
+    // NETLIFY_DB_URL while their drizzle scaffold reads NETLIFY_DATABASE_URL,
+    // so accept either. DATABASE_URL wins so a manual value can override.
+    const url =
+      process.env.DATABASE_URL ??
+      process.env.NETLIFY_DB_URL ??
+      process.env.NETLIFY_DATABASE_URL
     if (!url) {
-      throw new Error('Neither DATABASE_URL nor NETLIFY_DATABASE_URL is set')
+      // Name the database-ish vars that *are* present — the injected name has
+      // changed before, and this turns a silent 500 into an obvious log line.
+      const present = Object.keys(process.env)
+        .filter((k) => k.includes('DB') || k.includes('DATABASE'))
+        .join(', ')
+      throw new Error(
+        `No connection string: DATABASE_URL, NETLIFY_DB_URL and NETLIFY_DATABASE_URL are all unset. Database-related vars present: ${present || 'none'}`,
+      )
     }
     client = neon(url)
   }
