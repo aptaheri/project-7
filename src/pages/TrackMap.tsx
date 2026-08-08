@@ -35,6 +35,10 @@ interface LatestFix {
   tid: string | null
 }
 
+type Mode = 'production' | 'test'
+
+const MODE_KEY = 'p7.trackMode'
+
 interface Feed {
   latest: LatestFix | null
   trail: [number, number][]
@@ -43,6 +47,8 @@ interface Feed {
   distanceKm: number
   elevationGainM: number
   trailPoints: number
+  mode: Mode
+  devices?: string[]
 }
 
 type Status = 'loading' | 'ok' | 'denied' | 'error'
@@ -98,6 +104,12 @@ export default function TrackMap({ email, role }: Props) {
   // On a phone the panel covers a third of the map, so it starts collapsed
   // there and open on the roomier desktop layout.
   const [expanded, setExpanded] = useState(() => window.innerWidth > 600)
+  // Owners can look at their own test phone instead of the live rider. The
+  // choice survives reloads so a debugging session is not lost on refresh, and
+  // production is always the default for everyone else.
+  const [mode, setMode] = useState<Mode>(() =>
+    role === 'owner' && localStorage.getItem(MODE_KEY) === 'test' ? 'test' : 'production',
+  )
 
   // Re-renders the "x minutes ago" label without refetching.
   const [, setTick] = useState(0)
@@ -109,10 +121,12 @@ export default function TrackMap({ email, role }: Props) {
   // --- Poll the feed ---
   useEffect(() => {
     let cancelled = false
+    // A different rider is somewhere else entirely, so let the map fly there.
+    hasCenteredRef.current = false
 
     async function load() {
       try {
-        const res = await fetch('/api/track')
+        const res = await fetch(`/api/track?mode=${mode}`)
         if (cancelled) return
         if (res.status === 401 || res.status === 403) {
           setStatus('denied')
@@ -144,7 +158,7 @@ export default function TrackMap({ email, role }: Props) {
       clearInterval(id)
       window.removeEventListener('focus', onFocus)
     }
-  }, [])
+  }, [mode])
 
   // --- Map setup (once) ---
   useEffect(() => {
@@ -261,6 +275,14 @@ export default function TrackMap({ email, role }: Props) {
     }
   }, [feed, mapReady])
 
+  function switchMode(next: Mode) {
+    if (next === mode) return
+    localStorage.setItem(MODE_KEY, next)
+    setFeed(null)
+    setStatus('loading')
+    setMode(next)
+  }
+
   function recenter() {
     const map = mapRef.current
     if (!map || !feed?.latest) return
@@ -315,6 +337,8 @@ export default function TrackMap({ email, role }: Props) {
         >
           <span className={`track-dot track-dot-${indicator.tone}`} />
           <span className="track-status-label">{indicator.label}</span>
+          {/* Collapsed, this badge is the only clue the map is not the rider. */}
+          {mode === 'test' && <span className="track-test-badge">Test</span>}
           {/* Always rendered so the chevron stays pinned right either way. */}
           <span className="track-status-age">{latest ? timeAgo(latest.tst) : ''}</span>
           <svg
@@ -375,6 +399,29 @@ export default function TrackMap({ email, role }: Props) {
               Recenter
             </button>
           </>
+        )}
+
+        {expanded && role === 'owner' && (
+          <div className="track-modes">
+            <button
+              type="button"
+              className={`track-mode${mode === 'production' ? ' active' : ''}`}
+              onClick={() => switchMode('production')}
+            >
+              Production
+            </button>
+            <button
+              type="button"
+              className={`track-mode${mode === 'test' ? ' active' : ''}`}
+              onClick={() => switchMode('test')}
+            >
+              Test
+            </button>
+          </div>
+        )}
+
+        {expanded && role === 'owner' && feed?.devices && feed.devices.length > 0 && (
+          <p className="track-devices">Devices seen: {feed.devices.join(', ')}</p>
         )}
 
         {/* Signing out lives in the navbar; this just says who you are. */}

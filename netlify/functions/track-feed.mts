@@ -27,6 +27,18 @@ const GAIN_THRESHOLD_M = 3
 /** Serving a slightly stale feed beats re-scanning the table for every viewer. */
 const CACHE_MS = 20_000
 
+/**
+ * Devices whose fixes are test data. Production is defined as everything NOT
+ * listed here, so a new rider's phone counts as real from its first fix — no
+ * configuration needed on his side and no way for day one to land in test.
+ */
+function testDevices(): string[] {
+  return (process.env.TRACK_TEST_DEVICES ?? '')
+    .split(',')
+    .map((d) => d.trim())
+    .filter(Boolean)
+}
+
 interface LatestRow {
   tst: string
   lat: number
@@ -58,9 +70,20 @@ interface Payload {
   distanceKm: number
   elevationGainM: number
   trailPoints: number
+  mode: 'production' | 'test'
+  /** Owners only: every device seen, so a misconfigured test list is visible. */
+  devices?: string[]
 }
 
-let cache: { at: number; payload: Payload } | null = null
+// Keyed by mode so the two views cannot serve each other's cached payload.
+const cache = new Map<string, { at: number; payload: Payload }>()
+
+async function knownDevices(sql: ReturnType<typeof db>): Promise<string[]> {
+  const rows = (await sql`
+    select distinct device from locations order by device
+  `) as unknown as { device: string }[]
+  return rows.map((r) => r.device)
+}
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method !== 'GET') {
@@ -70,12 +93,14 @@ export default async function handler(req: Request): Promise<Response> {
   const session = currentSession(req)
   if (!session) return json({ error: 'unauthorized' }, 401)
 
+  let role: Role = 'pending'
   try {
     await ensureSchema()
     const roles = (await db()`
       select role from viewers where email = ${normalizeEmail(session.email)}
     `) as unknown as { role: Role }[]
-    if (!canViewTrack(roles[0]?.role ?? 'pending')) {
+    role = roles[0]?.role ?? 'pending'
+    if (!canViewTrack(role)) {
       return json({ error: 'forbidden' }, 403)
     }
   } catch (error) {
@@ -83,16 +108,28 @@ export default async function handler(req: Request): Promise<Response> {
     return json({ error: 'query failed' }, 500)
   }
 
-  if (cache && Date.now() - cache.at < CACHE_MS) {
-    return json(cache.payload)
+  // Test data is an owner-only view. Anyone else always gets production, no
+  // matter what they put in the query string.
+  const isOwner = role === 'owner'
+  const wantsTest = new URL(req.url).searchParams.get('mode') === 'test'
+  const mode: 'production' | 'test' = isOwner && wantsTest ? 'test' : 'production'
+  const devices = testDevices()
+  const isTest = mode === 'test'
+
+  const cached = cache.get(mode)
+  if (cached && Date.now() - cached.at < CACHE_MS) {
+    return json(cached.payload)
   }
 
   try {
     const sql = db()
 
+    // `(device is in the test list) = isTest` keeps test rows in test mode and
+    // everything else in production, with one comparison and no branching SQL.
     const latestRows = (await sql`
       select tst, lat, lon, acc, alt, vel, batt, bs, conn, tid
       from locations
+      where (device = any(${devices}::text[])) = ${isTest}::boolean
       order by tst desc
       limit 1
     `) as unknown as LatestRow[]
@@ -106,8 +143,10 @@ export default async function handler(req: Request): Promise<Response> {
         distanceKm: 0,
         elevationGainM: 0,
         trailPoints: 0,
+        mode,
+        ...(isOwner ? { devices: await knownDevices(sql) } : {}),
       }
-      cache = { at: Date.now(), payload }
+      cache.set(mode, { at: Date.now(), payload })
       return json(payload)
     }
 
@@ -121,6 +160,7 @@ export default async function handler(req: Request): Promise<Response> {
           lag(lon) over (order by tst) as plon,
           lag(alt) over (order by tst) as palt
         from locations
+        where (device = any(${devices}::text[])) = ${isTest}::boolean
       ),
       steps as (
         select
@@ -161,6 +201,7 @@ export default async function handler(req: Request): Promise<Response> {
           lag(lat) over (order by tst) as plat,
           lag(lon) over (order by tst) as plon
         from locations
+        where (device = any(${devices}::text[])) = ${isTest}::boolean
       ),
       steps as (
         select
@@ -208,9 +249,11 @@ export default async function handler(req: Request): Promise<Response> {
       distanceKm: stats.distance_m / 1000,
       elevationGainM: stats.gain_m,
       trailPoints: trail.length,
+      mode,
+      ...(isOwner ? { devices: await knownDevices(sql) } : {}),
     }
 
-    cache = { at: Date.now(), payload }
+    cache.set(mode, { at: Date.now(), payload })
     return json(payload)
   } catch (error) {
     console.error('track feed failed', error)
