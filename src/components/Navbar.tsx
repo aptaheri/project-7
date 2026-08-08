@@ -1,29 +1,69 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import logoUrl from '../assets/logo.svg'
-import { useAuth } from '../lib/auth'
+import { signOut, useAuth, refreshMe } from '../lib/auth'
+import type { Me } from '../lib/auth'
 import './Navbar.scss'
 
 const NAV_LINKS = [
-  { label: 'Map', to: '/map' },
   { label: 'About', to: '/about' },
   { label: 'Donate', to: '/donate' },
 ]
 
-const TRACK_LINK = { label: 'Live map', to: '/track' }
-const SHARING_LINK = { label: 'Sharing', to: '/track/sharing' }
+interface MapItem {
+  label: string
+  to: string
+  enabled: boolean
+  /** Shown as a tooltip on a disabled item, so the reason is never a mystery. */
+  reason?: string
+}
+
+/**
+ * The Map menu always lists every destination. Ones the visitor cannot reach
+ * are disabled rather than hidden, so the site does not silently change shape
+ * depending on who is looking at it.
+ */
+function mapItems(me: Me | null): MapItem[] {
+  const authed = me?.authenticated === true
+  const role = me?.role
+  const canView = me?.canView === true
+  const isOwner = role === 'owner'
+
+  const locked = !authed
+    ? 'Sign in to view'
+    : role === 'pending'
+      ? 'Awaiting owner approval'
+      : undefined
+
+  return [
+    { label: 'Route map', to: '/map', enabled: true },
+    {
+      label: 'Live',
+      to: '/track',
+      enabled: canView,
+      reason: locked ?? 'Viewer access required',
+    },
+    {
+      label: 'Sharing',
+      to: '/track/sharing',
+      enabled: isOwner,
+      reason: locked ?? 'Owners only',
+    },
+  ]
+}
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [trackOpen, setTrackOpen] = useState(false)
-  const trackRef = useRef<HTMLDivElement>(null)
+  const [mapOpen, setMapOpen] = useState(false)
+  const mapRef = useRef<HTMLDivElement>(null)
   const location = useLocation()
 
   const { me } = useAuth()
-  // Sharing is owner-only, so it is not advertised to anyone else.
-  const isOwner = me?.role === 'owner'
-  const onTrack = location.pathname.startsWith('/track')
+  const authed = me?.authenticated === true
+  const items = mapItems(me)
+  const onMapSection =
+    location.pathname.startsWith('/map') || location.pathname.startsWith('/track')
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
@@ -37,14 +77,14 @@ export default function Navbar() {
     return () => { document.body.style.overflow = '' }
   }, [menuOpen])
 
-  // Close the Track dropdown on outside click or Escape
+  // Close the Map dropdown on outside click or Escape
   useEffect(() => {
-    if (!trackOpen) return
+    if (!mapOpen) return
     const onPointerDown = (e: MouseEvent) => {
-      if (!trackRef.current?.contains(e.target as Node)) setTrackOpen(false)
+      if (!mapRef.current?.contains(e.target as Node)) setMapOpen(false)
     }
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setTrackOpen(false)
+      if (e.key === 'Escape') setMapOpen(false)
     }
     document.addEventListener('mousedown', onPointerDown)
     document.addEventListener('keydown', onKeyDown)
@@ -52,10 +92,42 @@ export default function Navbar() {
       document.removeEventListener('mousedown', onPointerDown)
       document.removeEventListener('keydown', onKeyDown)
     }
-  }, [trackOpen])
+  }, [mapOpen])
 
-  // Navigating away should not leave the dropdown hanging open
-  useEffect(() => setTrackOpen(false), [location.pathname])
+  useEffect(() => setMapOpen(false), [location.pathname])
+
+  function handleSignOut() {
+    setMenuOpen(false)
+    setMapOpen(false)
+    signOut().finally(refreshMe)
+  }
+
+  function renderItem(item: MapItem, className: string) {
+    if (!item.enabled) {
+      return (
+        <span
+          key={item.to}
+          className={`${className} ${className}--disabled`}
+          aria-disabled="true"
+          title={item.reason}
+        >
+          <span>{item.label}</span>
+          {item.reason && <span className="navbar-item-reason">{item.reason}</span>}
+        </span>
+      )
+    }
+    return (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        end={item.to === '/track'}
+        className={className}
+        onClick={() => { setMenuOpen(false); setMapOpen(false) }}
+      >
+        <span>{item.label}</span>
+      </NavLink>
+    )
+  }
 
   return (
     <>
@@ -67,39 +139,42 @@ export default function Navbar() {
 
         {/* Desktop nav */}
         <nav className="navbar-links">
+          <div className="navbar-dropdown" ref={mapRef}>
+            <button
+              type="button"
+              className={`navbar-link navbar-dropdown-toggle${onMapSection ? ' active' : ''}`}
+              onClick={() => setMapOpen((v) => !v)}
+              aria-expanded={mapOpen}
+              aria-haspopup="menu"
+            >
+              Map
+              <svg className="navbar-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+
+            {mapOpen && (
+              <div className="navbar-dropdown-menu" role="menu">
+                {items.map((item) => renderItem(item, 'navbar-dropdown-item'))}
+              </div>
+            )}
+          </div>
+
           {NAV_LINKS.map((l) => (
             <NavLink key={l.to} to={l.to} className={({ isActive }) => isActive ? 'navbar-link active' : 'navbar-link'}>
               {l.label}
             </NavLink>
           ))}
 
-          <div className="navbar-dropdown" ref={trackRef}>
-            <button
-              type="button"
-              className={`navbar-link navbar-dropdown-toggle${onTrack ? ' active' : ''}`}
-              onClick={() => setTrackOpen((v) => !v)}
-              aria-expanded={trackOpen}
-              aria-haspopup="menu"
-            >
-              Track
-              <svg className="navbar-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M6 9l6 6 6-6" />
-              </svg>
+          {authed ? (
+            <button type="button" className="navbar-auth" onClick={handleSignOut} title={me?.email}>
+              Sign out
             </button>
-
-            {trackOpen && (
-              <div className="navbar-dropdown-menu" role="menu">
-                <NavLink to={TRACK_LINK.to} end className="navbar-dropdown-item" role="menuitem">
-                  {TRACK_LINK.label}
-                </NavLink>
-                {isOwner && (
-                  <NavLink to={SHARING_LINK.to} className="navbar-dropdown-item" role="menuitem">
-                    {SHARING_LINK.label}
-                  </NavLink>
-                )}
-              </div>
-            )}
-          </div>
+          ) : (
+            <Link to="/track" className="navbar-auth navbar-auth--primary">
+              Log in
+            </Link>
+          )}
         </nav>
 
         {/* Mobile hamburger */}
@@ -126,6 +201,9 @@ export default function Navbar() {
         </div>
 
         <nav className="mobile-menu-links">
+          <span className="mobile-menu-section">Map</span>
+          {items.map((item) => renderItem(item, 'mobile-menu-link'))}
+
           {NAV_LINKS.map((l) => (
             <NavLink
               key={l.to}
@@ -134,27 +212,27 @@ export default function Navbar() {
               onClick={() => setMenuOpen(false)}
             >
               <span>{l.label}</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 18l6-6-6-6" />
-              </svg>
             </NavLink>
           ))}
 
-          <span className="mobile-menu-section">Track</span>
-          {[TRACK_LINK, ...(isOwner ? [SHARING_LINK] : [])].map((l) => (
-            <NavLink
-              key={l.to}
-              to={l.to}
-              end={l.to === TRACK_LINK.to}
-              className="mobile-menu-link mobile-menu-link--nested"
-              onClick={() => setMenuOpen(false)}
-            >
-              <span>{l.label}</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </NavLink>
-          ))}
+          <div className="mobile-menu-auth">
+            {authed ? (
+              <>
+                <span className="mobile-menu-email">{me?.email}</span>
+                <button type="button" className="navbar-auth" onClick={handleSignOut}>
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/track"
+                className="navbar-auth navbar-auth--primary"
+                onClick={() => setMenuOpen(false)}
+              >
+                Log in
+              </Link>
+            )}
+          </div>
         </nav>
       </div>
     </>

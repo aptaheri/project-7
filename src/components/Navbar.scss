@@ -194,7 +194,7 @@
   }
 }
 
-// ── Track dropdown ────────────────────────────────────────────────────────────
+// ── Map dropdown ──────────────────────────────────────────────────────────────
 
 .navbar-dropdown {
   position: relative;
@@ -221,8 +221,8 @@
 .navbar-dropdown-menu {
   position: absolute;
   top: calc(100% + 12px);
-  right: 0;
-  min-width: 168px;
+  left: 0;
+  min-width: 200px;
   padding: 6px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -235,6 +235,9 @@
 }
 
 .navbar-dropdown-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   padding: 9px 12px;
   border-radius: 6px;
   font-size: 14px;
@@ -249,12 +252,61 @@
     color: #fff;
   }
 
-  &.active {
-    color: #7aa9f7;
+  &.active { color: #7aa9f7; }
+}
+
+// Disabled entries stay visible so the menu keeps its shape, but say why.
+.navbar-dropdown-item--disabled,
+.mobile-menu-link--disabled {
+  color: rgba(255, 255, 255, 0.3);
+  cursor: not-allowed;
+
+  &:hover {
+    background: none;
+    color: rgba(255, 255, 255, 0.3);
   }
 }
 
-// ── Mobile: Track section ─────────────────────────────────────────────────────
+.navbar-item-reason {
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+// ── Log in / sign out ─────────────────────────────────────────────────────────
+
+.navbar-auth {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+  }
+}
+
+.navbar-auth--primary {
+  border-color: rgba(66, 133, 244, 0.5);
+  background: rgba(66, 133, 244, 0.16);
+  color: #7aa9f7;
+
+  &:hover {
+    background: rgba(66, 133, 244, 0.3);
+    color: #fff;
+  }
+}
+
+// ── Mobile ────────────────────────────────────────────────────────────────────
 
 .mobile-menu-section {
   padding: 24px 28px 8px;
@@ -265,8 +317,23 @@
   color: rgba(255, 255, 255, 0.35);
 }
 
-.mobile-menu-link--nested {
-  font-size: 22px;
-  padding-left: 40px;
-  color: rgba(243, 244, 246, 0.85);
+.mobile-menu-link {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.mobile-menu-auth {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 28px;
+  margin-top: auto;
+}
+
+.mobile-menu-email {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.45);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
