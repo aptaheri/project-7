@@ -53,6 +53,17 @@ const EMPTY_LINE: GeoJSON.Feature<GeoJSON.LineString> = {
   geometry: { type: 'LineString', coordinates: [] },
 }
 
+const MILES_PER_KM = 0.621371
+const FEET_PER_METRE = 3.28084
+
+function miles(km: number): string {
+  return (km * MILES_PER_KM).toLocaleString(undefined, { maximumFractionDigits: 1 })
+}
+
+function feet(metres: number): string {
+  return Math.round(metres * FEET_PER_METRE).toLocaleString()
+}
+
 function timeAgo(iso: string): string {
   const seconds = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000)
   if (seconds < 60) return `${Math.floor(seconds)}s ago`
@@ -328,13 +339,13 @@ export default function TrackMap({ email, role }: Props) {
               {latest.vel !== null && (
                 <div>
                   <dt>Speed</dt>
-                  <dd>{Math.round(latest.vel)} km/h</dd>
+                  <dd>{Math.round(latest.vel * MILES_PER_KM)} mph</dd>
                 </div>
               )}
               {latest.alt !== null && (
                 <div>
                   <dt>Elevation</dt>
-                  <dd>{Math.round(latest.alt)} m</dd>
+                  <dd>{feet(latest.alt)} ft</dd>
                 </div>
               )}
               {latest.batt !== null && (
@@ -346,16 +357,16 @@ export default function TrackMap({ email, role }: Props) {
               {latest.acc !== null && (
                 <div>
                   <dt>Accuracy</dt>
-                  <dd>±{Math.round(latest.acc)} m</dd>
+                  <dd>±{feet(latest.acc)} ft</dd>
                 </div>
               )}
               <div>
                 <dt>Distance</dt>
-                <dd>{(feed?.distanceKm ?? 0).toLocaleString(undefined, { maximumFractionDigits: 1 })} km</dd>
+                <dd>{miles(feed?.distanceKm ?? 0)} mi</dd>
               </div>
               <div>
                 <dt>Elevation gain</dt>
-                <dd>{Math.round(feed?.elevationGainM ?? 0).toLocaleString()} m</dd>
+                <dd>{feet(feed?.elevationGainM ?? 0)} ft</dd>
               </div>
             </dl>
             )}
