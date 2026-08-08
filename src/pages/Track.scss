@@ -137,6 +137,106 @@
   }
 }
 
+// ── Auth gate ─────────────────────────────────────────────────────────────────
+
+.track-gate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.track-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 32px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: #fff;
+  font-family: system-ui, sans-serif;
+
+  h1 {
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0 0 12px;
+    letter-spacing: -0.4px;
+  }
+
+  strong { color: #fff; font-weight: 600; }
+}
+
+.track-overline {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #4285f4;
+  margin: 0 0 14px;
+}
+
+.track-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+
+  .track-recenter { margin-top: 0; }
+}
+
+.track-panel-error { color: #f87171; }
+
+.google-signin {
+  margin-top: 22px;
+  display: flex;
+  justify-content: center;
+}
+
+// ── Account footer ────────────────────────────────────────────────────────────
+
+.track-account {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+}
+
+.track-account-email {
+  color: rgba(255, 255, 255, 0.45);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.track-account-role {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(66, 133, 244, 0.18);
+  color: #7aa9f7;
+  flex-shrink: 0;
+}
+
+.track-signout {
+  margin-left: auto;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+}
+
 // ── Live position marker ──────────────────────────────────────────────────────
 
 .track-marker {

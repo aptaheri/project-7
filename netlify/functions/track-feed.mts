@@ -1,12 +1,15 @@
-import { json, secretsMatch } from '../lib/auth.mts'
+import { json } from '../lib/auth.mts'
 import { db, ensureSchema } from '../lib/db.mts'
+import { currentSession } from '../lib/session.mts'
+import { canViewTrack } from '../lib/users.mts'
+import type { Role } from '../lib/session.mts'
 
 /**
  * Read endpoint backing the /track page.
  *
- * Gated by a shared token in the query string rather than Basic auth, so the
- * page can be opened from a bookmark without a credential prompt. The token is
- * the only thing keeping the feed private — treat the URL as a secret.
+ * Requires a signed-in Google account holding the owner or viewer role. The
+ * role is read fresh on every request rather than trusted from the cookie, so
+ * revoking someone takes effect on their next poll.
  */
 
 const DEFAULT_LIMIT = 1000
@@ -30,18 +33,23 @@ export default async function handler(req: Request): Promise<Response> {
     return json({ error: 'method not allowed' }, 405)
   }
 
-  const expected = process.env.OWNTRACKS_VIEW_TOKEN
-  if (!expected) {
-    console.error('OWNTRACKS_VIEW_TOKEN is not configured')
-    return json({ error: 'server not configured' }, 500)
+  const session = currentSession(req)
+  if (!session) return json({ error: 'unauthorized' }, 401)
+
+  try {
+    await ensureSchema()
+    const roles = (await db()`
+      select role from viewers where email = ${session.email}
+    `) as unknown as { role: Role }[]
+    if (!canViewTrack(roles[0]?.role ?? 'pending')) {
+      return json({ error: 'forbidden' }, 403)
+    }
+  } catch (error) {
+    console.error('role check failed', error)
+    return json({ error: 'query failed' }, 500)
   }
 
   const url = new URL(req.url)
-  const key = url.searchParams.get('key') ?? ''
-  if (!secretsMatch(key, expected)) {
-    return json({ error: 'unauthorized' }, 401)
-  }
-
   const requested = Number(url.searchParams.get('limit'))
   const limit = Number.isFinite(requested) && requested > 0
     ? Math.min(Math.floor(requested), MAX_LIMIT)

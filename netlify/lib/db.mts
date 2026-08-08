@@ -59,6 +59,15 @@ export function ensureSchema(): Promise<void> {
         )
       `
       await sql`create index if not exists locations_tst_idx on locations (tst desc)`
+      await sql`
+        create table if not exists viewers (
+          email      text primary key,
+          role       text not null default 'pending',
+          created_at timestamptz not null default now(),
+          updated_at timestamptz not null default now(),
+          granted_by text
+        )
+      `
     })()
     schemaReady.catch(() => {
       schemaReady = null

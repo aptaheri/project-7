@@ -1,0 +1,174 @@
+.admin {
+  min-height: 100vh;
+  background: #0a0a0f;
+  padding-top: 64px; // navbar height
+  color: #fff;
+  font-family: system-ui, sans-serif;
+}
+
+.admin-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 64px);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 15px;
+
+  a { color: #4285f4; }
+}
+
+.admin-content {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 64px 24px 96px;
+}
+
+.admin-overline {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #4285f4;
+  margin: 0 0 16px;
+}
+
+.admin h1 {
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 700;
+  margin: 0 0 16px;
+  letter-spacing: -0.5px;
+}
+
+.admin-lead {
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0 0 32px;
+}
+
+.admin-note {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.admin-error {
+  font-size: 14px;
+  color: #f87171;
+  margin: 0 0 16px;
+}
+
+// ── Invite ────────────────────────────────────────────────────────────────────
+
+.admin-invite {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 32px;
+
+  input {
+    flex: 1;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.04);
+    color: #fff;
+    font-size: 14px;
+    font-family: inherit;
+
+    &::placeholder { color: rgba(255, 255, 255, 0.3); }
+    &:focus {
+      outline: none;
+      border-color: rgba(66, 133, 244, 0.6);
+    }
+  }
+
+  button {
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(66, 133, 244, 0.4);
+    background: rgba(66, 133, 244, 0.15);
+    color: #7aa9f7;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+
+    &:hover:not(:disabled) { background: rgba(66, 133, 244, 0.28); color: #fff; }
+    &:disabled { opacity: 0.5; cursor: default; }
+  }
+}
+
+// ── List ──────────────────────────────────────────────────────────────────────
+
+.admin-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  flex-wrap: wrap;
+
+  &:last-child { border-bottom: 1px solid rgba(255, 255, 255, 0.07); }
+}
+
+.admin-row-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.admin-email {
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-role {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.admin-role-owner   { background: rgba(66, 133, 244, 0.18); color: #7aa9f7; }
+.admin-role-viewer  { background: rgba(34, 211, 166, 0.15); color: #22d3a6; }
+.admin-role-pending { background: rgba(245, 166, 35, 0.15); color: #f5a623; }
+
+.admin-row-actions {
+  display: flex;
+  gap: 8px;
+
+  button {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+    &:disabled { opacity: 0.4; cursor: default; }
+  }
+
+  .admin-danger {
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #f87171;
+
+    &:hover:not(:disabled) { background: rgba(239, 68, 68, 0.15); }
+  }
+}

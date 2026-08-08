@@ -15,23 +15,31 @@ OwnTracks (iPhone)  ──POST──▶  /api/owntracks  ──▶  Neon (locati
 | Path | What it is |
 | --- | --- |
 | `netlify/functions/owntracks.mts` | Ingest. Basic auth, validates, inserts. |
-| `netlify/functions/track-feed.mts` | Read. Token-gated, returns latest fix + trail. |
+| `netlify/functions/track-feed.mts` | Read. Session-gated, returns latest fix + trail. |
+| `netlify/functions/auth.mts` | Google sign-in, session cookie, current user. |
+| `netlify/functions/viewers.mts` | Owner-only role management. |
 | `netlify/lib/db.mts` | Neon client, applies the schema on cold start. |
 | `netlify/lib/auth.mts` | Constant-time secret comparison, Basic auth check. |
-| `src/pages/Track.tsx` | The map page. Polls every 30s. |
+| `netlify/lib/session.mts` | Signed session cookie. |
+| `netlify/lib/users.mts` | Roles and the viewers table. |
+| `src/pages/Track.tsx` | Auth gate for the map. |
+| `src/pages/TrackMap.tsx` | The map itself. Polls every 30s. |
+| `src/pages/Admin.tsx` | Owner UI at `/7c-editor`. |
 | `db/schema.sql` | Table definition, for reference. |
 
 ## Environment variables
 
-Set these in **Netlify → Site configuration → Environment variables**. All four
-are required; the endpoints return 500 until they exist.
+Set these in **Netlify → Site configuration → Environment variables**. The
+endpoints return 500 until they exist.
 
 | Variable | What it is |
 | --- | --- |
 | `NETLIFY_DB_URL` | Injected at runtime by Netlify Database. Nothing to do. |
 | `OWNTRACKS_USER` | Username the phone sends via Basic auth. |
 | `OWNTRACKS_PASS` | Password the phone sends. Generate it, don't pick it. |
-| `OWNTRACKS_VIEW_TOKEN` | Secret in the `/track?key=…` URL. |
+| `GOOGLE_CLIENT_ID` | OAuth 2.0 Web client ID from Google Cloud. Public. |
+| `SESSION_SECRET` | Signs the session cookie. Generate it; never reuse. |
+| `TRACK_OWNER_EMAILS` | Comma-separated emails promoted to owner on sign-in. |
 
 If you're using a Neon project created outside Netlify, set `DATABASE_URL` to
 its **pooled** connection string instead — it takes precedence when both exist.
@@ -96,13 +104,20 @@ constraint makes the replay idempotent.
 
 ## Viewing
 
-```
-https://project7.bike/track?key=<OWNTRACKS_VIEW_TOKEN>
-```
+`https://project7.bike/track` — sign in with Google. Access is by role:
 
-The token is the only thing keeping this private — the page is not linked from
-the nav, but the URL is a secret. To revoke access, change
-`OWNTRACKS_VIEW_TOKEN` in Netlify and redeploy.
+| Role | Can do |
+| --- | --- |
+| `owner` | See the map, and grant/revoke everyone else at `/7c-editor` |
+| `viewer` | See the map |
+| `pending` | Nothing. Recorded so an owner can see who asked. |
+
+Anyone who signs in is stored as `pending`; an owner promotes them. Roles are
+read from the database on every request, so revoking access takes effect on the
+next poll rather than when a cookie expires.
+
+Emails in `TRACK_OWNER_EMAILS` are promoted to owner on every sign-in, which
+bootstraps the first owners and makes it impossible to lock everyone out.
 
 ## Local development
 
@@ -113,7 +128,9 @@ npm i -g netlify-cli
 netlify dev
 ```
 
-with the four variables in a local `.env` (already gitignored).
+with the variables above in a local `.env` (already gitignored). Add
+`http://localhost:8888` to the OAuth client's authorised JavaScript origins so
+Google sign-in works there too.
 
 ## Checking it end to end
 
@@ -124,8 +141,9 @@ curl -u "$OWNTRACKS_USER:$OWNTRACKS_PASS" \
   -d '{"_type":"location","lat":40.9886,"lon":-111.8878,"tst":1786000000,"tid":"JD","topic":"owntracks/test/iphone"}' \
   https://project7.bike/api/owntracks
 
-# Should return that point.
-curl "https://project7.bike/api/track?key=$OWNTRACKS_VIEW_TOKEN"
+# The feed is no longer reachable with curl alone:
+# Should return 401 — the feed needs a signed-in session cookie now.
+curl -i "https://project7.bike/api/track"
 ```
 
 Delete test rows with `delete from locations where device = 'owntracks/test/iphone';`
