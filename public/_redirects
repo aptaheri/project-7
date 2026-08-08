@@ -3,7 +3,11 @@
 # netlify.toml because _redirects is processed first.
 /api/owntracks     /.netlify/functions/owntracks              200!
 /api/track         /.netlify/functions/track-feed             200!
-/api/auth/:action  /.netlify/functions/auth?action=:action    200!
+# One rule per action: a :placeholder does not get substituted into the
+# destination's query string, so the function saw no action at all.
+/api/auth/me       /.netlify/functions/auth?action=me         200!
+/api/auth/google   /.netlify/functions/auth?action=google      200!
+/api/auth/logout   /.netlify/functions/auth?action=logout      200!
 /api/viewers       /.netlify/functions/viewers                200!
 
 /* /index.html 200
