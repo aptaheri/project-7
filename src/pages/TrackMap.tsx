@@ -79,6 +79,9 @@ export default function TrackMap({ email, role }: Props) {
   const [mapError, setMapError] = useState<string | null>(null)
   const [feed, setFeed] = useState<Feed | null>(null)
   const [status, setStatus] = useState<Status>('loading')
+  // On a phone the panel covers a third of the map, so it starts collapsed
+  // there and open on the roomier desktop layout.
+  const [expanded, setExpanded] = useState(() => window.innerWidth > 600)
 
   // Re-renders the "x minutes ago" label without refetching.
   const [, setTick] = useState(0)
@@ -289,14 +292,30 @@ export default function TrackMap({ email, role }: Props) {
 
         {status === 'ok' && latest && (
           <>
-            <div className="track-status">
+            <button
+              type="button"
+              className="track-status"
+              onClick={() => setExpanded((v) => !v)}
+              aria-expanded={expanded}
+              aria-label={expanded ? 'Hide details' : 'Show details'}
+            >
               <span className={`track-dot track-dot-${state}`} />
               <span className="track-status-label">
                 {state === 'live' ? 'Live' : state === 'stale' ? 'No recent fix' : 'Offline'}
               </span>
               <span className="track-status-age">{timeAgo(latest.tst)}</span>
-            </div>
+              <svg
+                className={`track-chevron${expanded ? ' open' : ''}`}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
 
+            {expanded && (
             <dl className="track-stats">
               <div>
                 <dt>Position</dt>
@@ -331,18 +350,23 @@ export default function TrackMap({ email, role }: Props) {
                 <dd>{feed?.count ?? 0}</dd>
               </div>
             </dl>
+            )}
 
-            <button className="track-recenter" onClick={recenter}>
-              Recenter
-            </button>
+            {expanded && (
+              <button className="track-recenter" onClick={recenter}>
+                Recenter
+              </button>
+            )}
           </>
         )}
 
         {/* Signing out lives in the navbar; this just says who you are. */}
-        <div className="track-account">
-          <span className="track-account-email">{email}</span>
-          {role === 'owner' && <span className="track-account-role">Owner</span>}
-        </div>
+        {expanded && (
+          <div className="track-account">
+            <span className="track-account-email">{email}</span>
+            {role === 'owner' && <span className="track-account-role">Owner</span>}
+          </div>
+        )}
       </div>
     </div>
   )

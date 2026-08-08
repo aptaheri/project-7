@@ -20,8 +20,8 @@
   top: 84px;
   left: 20px;
   z-index: 2;
-  width: 260px;
-  padding: 18px 20px;
+  width: 244px;
+  padding: 12px 14px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(10, 10, 15, 0.82);
@@ -52,11 +52,28 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.track-chevron {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  opacity: 0.45;
+  transition: transform 0.2s ease;
+
+  &.open { transform: rotate(180deg); }
 }
 
 .track-status-label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -64,7 +81,7 @@
 
 .track-status-age {
   margin-left: auto;
-  font-size: 12px;
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.45);
 }
 
@@ -93,10 +110,10 @@
 // ── Stats ─────────────────────────────────────────────────────────────────────
 
 .track-stats {
-  margin: 0;
+  margin: 14px 0 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 
   div {
     display: flex;
@@ -106,13 +123,13 @@
   }
 
   dt {
-    font-size: 12px;
+    font-size: 11px;
     color: rgba(255, 255, 255, 0.4);
   }
 
   dd {
     margin: 0;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     font-variant-numeric: tabular-nums;
     color: rgba(255, 255, 255, 0.9);
@@ -120,9 +137,9 @@
 }
 
 .track-recenter {
-  margin-top: 18px;
+  margin-top: 12px;
   width: 100%;
-  padding: 9px 12px;
+  padding: 7px 12px;
   border-radius: 8px;
   border: 1px solid rgba(66, 133, 244, 0.4);
   background: rgba(66, 133, 244, 0.12);
@@ -199,8 +216,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 18px;
-  padding-top: 14px;
+  margin-top: 12px;
+  padding-top: 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 12px;
 }
@@ -280,6 +297,9 @@
     right: 12px;
     width: auto;
   }
+
+  // Collapsed, the panel is a single status strip; give the tap target room.
+  .track-status { padding: 2px 0; }
 }
 
 .track-panel-detail {
