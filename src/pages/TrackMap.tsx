@@ -94,6 +94,7 @@ export default function TrackMap({ email, role }: Props) {
   const [mapError, setMapError] = useState<string | null>(null)
   const [feed, setFeed] = useState<Feed | null>(null)
   const [status, setStatus] = useState<Status>('loading')
+  const failuresRef = useRef(0)
   // On a phone the panel covers a third of the map, so it starts collapsed
   // there and open on the roomier desktop layout.
   const [expanded, setExpanded] = useState(() => window.innerWidth > 600)
@@ -120,13 +121,16 @@ export default function TrackMap({ email, role }: Props) {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const data = (await res.json()) as Feed
         if (cancelled) return
+        failuresRef.current = 0
         setFeed(data)
         setStatus('ok')
       } catch (error) {
-        if (!cancelled) {
-          console.error('track feed request failed', error)
-          setStatus('error')
-        }
+        if (cancelled) return
+        console.error('track feed request failed', error)
+        failuresRef.current += 1
+        // The database sleeps when idle, so a lone failure is usually just a
+        // cold start. Only report trouble once it persists.
+        if (failuresRef.current >= 2) setStatus('error')
       }
     }
 
@@ -264,73 +268,70 @@ export default function TrackMap({ email, role }: Props) {
   }
 
   const latest = feed?.latest ?? null
-  const state = latest ? freshness(latest.tst) : null
+
+  // Every condition resolves to one status line, so the panel keeps its shape
+  // and "something is off" always reads the same way. The distinction that
+  // matters to a viewer is why there is no position, not which layer failed.
+  const indicator: { tone: 'live' | 'stale' | 'offline'; label: string; note: string | null } =
+    status === 'denied'
+      ? {
+          tone: 'offline',
+          label: 'Access removed',
+          note: 'Your access was revoked. Reload to sign in again.',
+        }
+      : status === 'error'
+        ? {
+            tone: 'offline',
+            label: 'No connection',
+            note: 'Cannot reach the tracker. Retrying every 30 seconds.',
+          }
+        : status === 'loading'
+          ? { tone: 'stale', label: 'Connecting', note: null }
+          : !latest
+            ? {
+                tone: 'stale',
+                label: 'No location shared',
+                note: 'Nothing has arrived from the phone yet.',
+              }
+            : freshness(latest.tst) === 'live'
+              ? { tone: 'live', label: 'Live', note: null }
+              : freshness(latest.tst) === 'stale'
+                ? { tone: 'stale', label: 'No recent fix', note: null }
+                : { tone: 'offline', label: 'Not sharing location', note: null }
 
   return (
     <div className="track">
       <div ref={containerRef} className="track-map" />
 
       <div className="track-panel">
-        {mapError && (
+        {mapError && <p className="track-panel-detail">Map unavailable — {mapError}</p>}
+
+        <button
+          type="button"
+          className="track-status"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          aria-label={expanded ? 'Hide details' : 'Show details'}
+        >
+          <span className={`track-dot track-dot-${indicator.tone}`} />
+          <span className="track-status-label">{indicator.label}</span>
+          {/* Always rendered so the chevron stays pinned right either way. */}
+          <span className="track-status-age">{latest ? timeAgo(latest.tst) : ''}</span>
+          <svg
+            className={`track-chevron${expanded ? ' open' : ''}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+
+        {indicator.note && <p className="track-panel-note">{indicator.note}</p>}
+
+        {expanded && latest && (
           <>
-            <p className="track-panel-title">Map unavailable</p>
-            <p className="track-panel-note">
-              The map could not start in this browser. The position below is
-              still live.
-            </p>
-            <pre className="track-panel-detail">{mapError}</pre>
-          </>
-        )}
-
-        {status === 'loading' && <p className="track-panel-title">Loading…</p>}
-
-        {status === 'denied' && (
-          <>
-            <p className="track-panel-title">Access removed</p>
-            <p className="track-panel-note">Your access was revoked. Reload to sign in again.</p>
-          </>
-        )}
-
-        {status === 'error' && (
-          <>
-            <p className="track-panel-title">Feed unavailable</p>
-            <p className="track-panel-note">Retrying every 30 seconds.</p>
-          </>
-        )}
-
-        {status === 'ok' && !latest && (
-          <>
-            <p className="track-panel-title">No fixes yet</p>
-            <p className="track-panel-note">Waiting for the first location from OwnTracks.</p>
-          </>
-        )}
-
-        {status === 'ok' && latest && (
-          <>
-            <button
-              type="button"
-              className="track-status"
-              onClick={() => setExpanded((v) => !v)}
-              aria-expanded={expanded}
-              aria-label={expanded ? 'Hide details' : 'Show details'}
-            >
-              <span className={`track-dot track-dot-${state}`} />
-              <span className="track-status-label">
-                {state === 'live' ? 'Live' : state === 'stale' ? 'No recent fix' : 'Offline'}
-              </span>
-              <span className="track-status-age">{timeAgo(latest.tst)}</span>
-              <svg
-                className={`track-chevron${expanded ? ' open' : ''}`}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-            </button>
-
-            {expanded && (
             <dl className="track-stats">
               <div>
                 <dt>Position</dt>
@@ -369,13 +370,10 @@ export default function TrackMap({ email, role }: Props) {
                 <dd>{feet(feed?.elevationGainM ?? 0)} ft</dd>
               </div>
             </dl>
-            )}
 
-            {expanded && (
-              <button className="track-recenter" onClick={recenter}>
-                Recenter
-              </button>
-            )}
+            <button className="track-recenter" onClick={recenter}>
+              Recenter
+            </button>
           </>
         )}
 

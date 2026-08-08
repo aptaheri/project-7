@@ -133,7 +133,7 @@ export default async function handler(req: Request): Promise<Response> {
           end as step_m,
           case
             when palt is null or alt is null then 0
-            when alt - palt > ${GAIN_THRESHOLD_M} then alt - palt
+            when alt - palt > ${GAIN_THRESHOLD_M}::float8 then alt - palt
             else 0
           end as gain_m
         from ordered
@@ -179,9 +179,9 @@ export default async function handler(req: Request): Promise<Response> {
         from steps
       ),
       thinned as (
-        select distinct on (floor(cum_m / ${spacing})) tst, lat, lon
+        select distinct on (floor(cum_m / ${spacing}::float8)) tst, lat, lon
         from cumulative
-        order by floor(cum_m / ${spacing}), tst
+        order by floor(cum_m / ${spacing}::float8), tst
       )
       select lon, lat from thinned order by tst
     `) as unknown as TrailRow[]
