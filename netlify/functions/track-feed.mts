@@ -174,14 +174,20 @@ export default async function handler(req: Request): Promise<Response> {
           end as step_m
         from ordered
       ),
-      cumulative as (
-        select tst, lat, lon, sum(step_m) over (order by tst) as cum_m
+      bucketed as (
+        -- The slice index is computed once and referenced by name. Interpolating
+        -- the spacing twice would emit two different placeholders, and Postgres
+        -- rejects a DISTINCT ON whose expression does not textually match the
+        -- leading ORDER BY.
+        select
+          tst, lat, lon,
+          floor(sum(step_m) over (order by tst) / ${spacing}::float8) as slice
         from steps
       ),
       thinned as (
-        select distinct on (floor(cum_m / ${spacing}::float8)) tst, lat, lon
-        from cumulative
-        order by floor(cum_m / ${spacing}::float8), tst
+        select distinct on (slice) tst, lat, lon
+        from bucketed
+        order by slice, tst
       )
       select lon, lat from thinned order by tst
     `) as unknown as TrailRow[]
