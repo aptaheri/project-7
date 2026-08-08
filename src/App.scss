@@ -1,1 +1,71 @@
 // App-level styles
+
+// ── Error boundary ────────────────────────────────────────────────────────────
+
+.error-boundary {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #0a0a0f;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+}
+
+.error-boundary-card {
+  width: 100%;
+  max-width: 460px;
+  padding: 32px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+
+  h1 {
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0 0 12px;
+  }
+}
+
+.error-boundary-overline {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #4285f4;
+  margin: 0 0 14px;
+}
+
+.error-boundary-note {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0 0 16px;
+}
+
+.error-boundary-detail {
+  margin: 0 0 20px;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.4);
+  color: #f87171;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+}
+
+.error-boundary-button {
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(66, 133, 244, 0.4);
+  background: rgba(66, 133, 244, 0.15);
+  color: #7aa9f7;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+
+  &:hover { background: rgba(66, 133, 244, 0.28); color: #fff; }
+}

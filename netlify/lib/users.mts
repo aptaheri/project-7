@@ -86,6 +86,18 @@ export async function recordSignIn(email: string): Promise<Role> {
 export async function listViewers(): Promise<Viewer[]> {
   await ensureSchema()
   const sql = db()
+
+  // Bootstrap owners have a role whether or not they have ever signed in, so
+  // seed them here — otherwise the list silently omits people who do have
+  // access and looks like they were never granted it.
+  for (const email of bootstrapOwners()) {
+    await sql`
+      insert into viewers (email, role, granted_by)
+      values (${email}, 'owner', 'bootstrap')
+      on conflict (email) do update set role = 'owner', updated_at = now()
+    `
+  }
+
   return (await sql`
     select email, role, created_at, updated_at, granted_by
     from viewers
