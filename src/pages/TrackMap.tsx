@@ -77,6 +77,7 @@ export default function TrackMap({ email, role, onSignOut }: Props) {
   const hasCenteredRef = useRef(false)
 
   const [mapReady, setMapReady] = useState(false)
+  const [mapError, setMapError] = useState<string | null>(null)
   const [feed, setFeed] = useState<Feed | null>(null)
   const [status, setStatus] = useState<Status>('loading')
 
@@ -128,14 +129,28 @@ export default function TrackMap({ email, role, onSignOut }: Props) {
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
 
-    const map = new mapboxgl.Map({
-      container: containerRef.current,
-      style: 'mapbox://styles/mapbox/satellite-streets-v12',
-      projection: 'globe',
-      center: [20, 41],
-      zoom: 2.5,
-    })
+    // Mapbox throws outright when WebGL is unavailable — blocked by a browser
+    // setting, an extension, or old hardware. Uncaught, that takes the whole
+    // React tree down and the visitor gets a blank page with no explanation.
+    let map: mapboxgl.Map
+    try {
+      map = new mapboxgl.Map({
+        container: containerRef.current,
+        style: 'mapbox://styles/mapbox/satellite-streets-v12',
+        projection: 'globe',
+        center: [20, 41],
+        zoom: 2.5,
+      })
+    } catch (error) {
+      console.error('map failed to initialise', error)
+      setMapError(
+        error instanceof Error ? error.message : 'This browser could not display the map.',
+      )
+      return
+    }
     mapRef.current = map
+
+    map.on('error', (e) => console.error('mapbox error', e.error ?? e))
 
     map.on('load', async () => {
       map.setFog({
@@ -148,7 +163,12 @@ export default function TrackMap({ email, role, onSignOut }: Props) {
 
       // Planned route, drawn muted so the travelled trail reads on top of it.
       const stages = await Promise.all(
-        STAGE_URLS.map((url) => fetch(url).then((r) => r.json() as Promise<GeoJSON.FeatureCollection>)),
+        STAGE_URLS.map((url) =>
+          fetch(url)
+            .then((r) => r.json() as Promise<GeoJSON.FeatureCollection>)
+            // One unreachable stage file should not stop the live trail drawing.
+            .catch((): GeoJSON.FeatureCollection => ({ type: 'FeatureCollection', features: [] })),
+        ),
       )
       map.addSource('route', {
         type: 'geojson',
@@ -234,6 +254,17 @@ export default function TrackMap({ email, role, onSignOut }: Props) {
       <div ref={containerRef} className="track-map" />
 
       <div className="track-panel">
+        {mapError && (
+          <>
+            <p className="track-panel-title">Map unavailable</p>
+            <p className="track-panel-note">
+              The map could not start in this browser. The position below is
+              still live.
+            </p>
+            <pre className="track-panel-detail">{mapError}</pre>
+          </>
+        )}
+
         {status === 'loading' && <p className="track-panel-title">Loading…</p>}
 
         {status === 'denied' && (

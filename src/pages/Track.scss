@@ -279,3 +279,14 @@
     width: auto;
   }
 }
+
+.track-panel-detail {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.4);
+  color: #f87171;
+  font-size: 11px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
