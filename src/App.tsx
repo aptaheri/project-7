@@ -5,6 +5,7 @@ import MapView from './MapView'
 import About from './pages/About'
 import Donate from './pages/Donate'
 import Admin from './pages/Admin'
+import Track from './pages/Track'
 import './App.scss'
 
 export default function App() {
@@ -17,6 +18,7 @@ export default function App() {
         <Route path="/about" element={<About />} />
         <Route path="/donate" element={<Donate />} />
         <Route path="/7c-editor" element={<Admin />} />
+        <Route path="/track" element={<Track />} />
       </Routes>
     </BrowserRouter>
   )

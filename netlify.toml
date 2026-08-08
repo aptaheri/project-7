@@ -1,0 +1,24 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# API routes are declared here rather than in public/_redirects so they are
+# matched before the SPA catch-all (`/* /index.html 200`).
+[[redirects]]
+  from = "/api/owntracks"
+  to = "/.netlify/functions/owntracks"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/track"
+  to = "/.netlify/functions/track-feed"
+  status = 200
+  force = true

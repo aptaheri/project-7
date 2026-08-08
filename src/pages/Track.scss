@@ -1,0 +1,181 @@
+.track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: calc(100vh - 64px);
+  background: #0a0a0f;
+}
+
+.track-map {
+  position: absolute;
+  inset: 0;
+}
+
+// ── Status panel ──────────────────────────────────────────────────────────────
+
+.track-panel {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 2;
+  width: 260px;
+  padding: 18px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(10, 10, 15, 0.82);
+  backdrop-filter: blur(12px);
+  color: #fff;
+  font-family: system-ui, sans-serif;
+}
+
+.track-panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.track-panel-note {
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 8px 0 0;
+
+  code {
+    font-size: 12px;
+    color: #4285f4;
+  }
+}
+
+.track-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.track-status-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.track-status-age {
+  margin-left: auto;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.track-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.track-dot-live {
+  background: #22d3a6;
+  box-shadow: 0 0 0 3px rgba(34, 211, 166, 0.2);
+}
+
+.track-dot-stale {
+  background: #f5a623;
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.2);
+}
+
+.track-dot-offline {
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+
+.track-stats {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  dt {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  dd {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255, 255, 255, 0.9);
+  }
+}
+
+.track-recenter {
+  margin-top: 18px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(66, 133, 244, 0.4);
+  background: rgba(66, 133, 244, 0.12);
+  color: #7aa9f7;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background: rgba(66, 133, 244, 0.22);
+    color: #fff;
+  }
+}
+
+// ── Live position marker ──────────────────────────────────────────────────────
+
+.track-marker {
+  position: relative;
+  width: 18px;
+  height: 18px;
+}
+
+.track-marker-dot {
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: #22d3a6;
+  border: 2px solid #fff;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
+}
+
+.track-marker-pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(34, 211, 166, 0.45);
+  animation: track-pulse 2s ease-out infinite;
+}
+
+@keyframes track-pulse {
+  0%   { transform: scale(0.6); opacity: 0.8; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track-marker-pulse { animation: none; }
+}
+
+@media (max-width: 600px) {
+  .track-panel {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+}
