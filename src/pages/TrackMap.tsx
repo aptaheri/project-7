@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import ElevationChart from '../components/ElevationChart'
 import { BACKFILL_BLUE, LIVE_BLUE, ROUTE_RED } from '../lib/mapColors'
+import {
+  compass, dateIn, daylight, fahrenheit, mph, timeIn, weatherDescription,
+} from '../lib/conditions'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
@@ -66,6 +69,16 @@ interface Feed {
   } | null
   backfillTrail: [number, number][]
   backfillKm: number
+  local: {
+    sunriseUtc: string | null
+    sunsetUtc: string | null
+    weather: {
+      temperatureC: number
+      windKph: number
+      windDirection: number
+      code: number
+    } | null
+  } | null
   trailPoints: number
   mode: Mode
   devices?: string[]
@@ -74,7 +87,7 @@ interface Feed {
 type Status = 'loading' | 'ok' | 'denied' | 'error'
 
 /** Panels swap rather than stack; add a name here to nest another screen. */
-type PanelView = 'main' | 'elevation' | 'device' | 'day'
+type PanelView = 'main' | 'elevation' | 'device' | 'local' | 'day'
 
 interface DaySummary {
   date: string
@@ -567,6 +580,20 @@ export default function TrackMap({ role }: Props) {
               </svg>
             </button>
 
+            {feed?.timezone && (
+              <button
+                type="button"
+                className="track-nav-row"
+                onClick={() => setView('local')}
+              >
+                <span className="track-nav-label">Local</span>
+                <span className="track-nav-value">{timeIn(feed.timezone)}</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </button>
+            )}
+
             <button
               type="button"
               className="track-nav-row"
@@ -678,6 +705,85 @@ export default function TrackMap({ role }: Props) {
             </>
           )
         })()}
+
+        {expanded && view === 'local' && (
+          <>
+            <div className="track-subhead">
+              <button
+                type="button"
+                className="track-back"
+                onClick={() => setView('main')}
+                aria-label="Back to stats"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+              </button>
+              <span className="track-subhead-title">Where he is</span>
+            </div>
+
+            <dl className="track-stats">
+              <div>
+                <dt>Local time</dt>
+                <dd>{feed?.timezone ? timeIn(feed.timezone) : '—'}</dd>
+              </div>
+              <div>
+                <dt>Date</dt>
+                <dd>{feed?.timezone ? dateIn(feed.timezone) : '—'}</dd>
+              </div>
+              <div title="Timezone taken from his coordinates, not the server">
+                <dt>Timezone</dt>
+                <dd>{feed?.timezone?.split('/').pop()?.replace(/_/g, ' ') ?? '—'}</dd>
+              </div>
+              <div>
+                <dt>Sunrise</dt>
+                <dd>
+                  {feed?.local?.sunriseUtc && feed.timezone
+                    ? timeIn(feed.timezone, new Date(feed.local.sunriseUtc))
+                    : '—'}
+                </dd>
+              </div>
+              <div>
+                <dt>Sunset</dt>
+                <dd>
+                  {feed?.local?.sunsetUtc && feed.timezone
+                    ? timeIn(feed.timezone, new Date(feed.local.sunsetUtc))
+                    : '—'}
+                </dd>
+              </div>
+              {(() => {
+                const left = daylight(
+                  feed?.local?.sunriseUtc ?? null,
+                  feed?.local?.sunsetUtc ?? null,
+                )
+                return left ? (
+                  <div>
+                    <dt>{left.label}</dt>
+                    <dd>{left.value}</dd>
+                  </div>
+                ) : null
+              })()}
+              {feed?.local?.weather && (
+                <>
+                  <div>
+                    <dt>Weather</dt>
+                    <dd>{weatherDescription(feed.local.weather.code)}</dd>
+                  </div>
+                  <div>
+                    <dt>Temperature</dt>
+                    <dd>{fahrenheit(feed.local.weather.temperatureC)}</dd>
+                  </div>
+                  <div title="Direction the wind is coming from">
+                    <dt>Wind</dt>
+                    <dd>
+                      {mph(feed.local.weather.windKph)} {compass(feed.local.weather.windDirection)}
+                    </dd>
+                  </div>
+                </>
+              )}
+            </dl>
+          </>
+        )}
 
         {expanded && view === 'device' && (
           <>

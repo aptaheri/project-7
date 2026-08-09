@@ -4,6 +4,8 @@ import { db, ensureSchema } from '../lib/db.mts'
 import { currentSession } from '../lib/session.mts'
 import { canViewTrack, normalizeEmail } from '../lib/users.mts'
 import { currentLeg } from '../lib/itinerary.mts'
+import { localConditions } from '../lib/local.mts'
+import type { LocalConditions } from '../lib/local.mts'
 import type { CurrentLeg } from '../lib/itinerary.mts'
 import type { Role } from '../lib/session.mts'
 
@@ -178,6 +180,8 @@ interface Payload {
   /** Reconstructed riding from before the tracker existed. Drawn dashed. */
   backfillTrail: [number, number][]
   backfillKm: number
+  /** Sun times and weather where he is. */
+  local: LocalConditions | null
   trailPoints: number
   mode: 'production' | 'test'
   /** Owners only: every device seen, so a misconfigured test list is visible. */
@@ -261,6 +265,7 @@ export default async function handler(req: Request): Promise<Response> {
         leg: null,
         backfillTrail: [],
         backfillKm: 0,
+        local: null,
         trailPoints: 0,
         mode,
         ...(isOwner ? { devices: await knownDevices(sql) } : {}),
@@ -663,6 +668,7 @@ export default async function handler(req: Request): Promise<Response> {
       leg: currentLeg([latest.lon, latest.lat], today),
       backfillTrail,
       backfillKm,
+      local: await localConditions(latest.lat, latest.lon),
       trailPoints: trail.length,
       mode,
       ...(isOwner ? { devices: await knownDevices(sql) } : {}),
