@@ -94,11 +94,10 @@ function freshness(iso: string): 'live' | 'stale' | 'offline' {
 }
 
 interface Props {
-  email: string
   role: string
 }
 
-export default function TrackMap({ email, role }: Props) {
+export default function TrackMap({ role }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const markerRef = useRef<mapboxgl.Marker | null>(null)
@@ -495,13 +494,6 @@ export default function TrackMap({ email, role }: Props) {
           <p className="track-devices">Devices seen: {feed.devices.join(', ')}</p>
         )}
 
-        {/* Signing out lives in the navbar; this just says who you are. */}
-        {expanded && view === 'main' && (
-          <div className="track-account">
-            <span className="track-account-email">{email}</span>
-            {role === 'owner' && <span className="track-account-role">Owner</span>}
-          </div>
-        )}
       </div>
     </div>
   )

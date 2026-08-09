@@ -210,39 +210,9 @@
   justify-content: center;
 }
 
-// ── Account footer ────────────────────────────────────────────────────────────
-
-.track-account {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 12px;
-}
-
-.track-account-email {
-  color: rgba(255, 255, 255, 0.45);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.track-account-role {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 2px 6px;
-  border-radius: 999px;
-  background: rgba(66, 133, 244, 0.18);
-  color: #7aa9f7;
-  flex-shrink: 0;
-}
-
+// Used by the awaiting-approval screen, where the navbar's sign-out is not
+// enough — that is the case where you signed in with the wrong account.
 .track-signout {
-  margin-left: auto;
   padding: 5px 10px;
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.14);
