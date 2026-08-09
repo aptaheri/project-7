@@ -115,6 +115,7 @@ interface StatsRow {
   distance_m: number
   today_m: number
   points: number
+  points_today: number
 }
 
 /**
@@ -160,6 +161,7 @@ interface Payload {
   latest: LatestRow | null
   trail: [number, number][]
   count: number
+  countToday: number
   distanceKm: number
   distanceTodayKm: number
   /** IANA zone the day boundary was taken from, for labelling. */
@@ -248,6 +250,7 @@ export default async function handler(req: Request): Promise<Response> {
         latest: null,
         trail: [],
         count: 0,
+        countToday: 0,
         distanceKm: 0,
         distanceTodayKm: 0,
         timezone: null,
@@ -297,11 +300,12 @@ export default async function handler(req: Request): Promise<Response> {
       select
         coalesce(sum(step_m), 0)::float8 as distance_m,
         coalesce(sum(step_m) filter (where local_date = ${today}::date), 0)::float8 as today_m,
-        count(*)::int as points
+        count(*)::int as points,
+        count(*) filter (where local_date = ${today}::date)::int as points_today
       from steps
     `) as unknown as StatsRow[]
 
-    const stats = statsRows[0] ?? { distance_m: 0, today_m: 0, points: 0 }
+    const stats = statsRows[0] ?? { distance_m: 0, today_m: 0, points: 0, points_today: 0 }
 
     // Spacing scales with the route so the payload stays flat whether he has
     // ridden 10 km or 50,000.
@@ -648,6 +652,7 @@ export default async function handler(req: Request): Promise<Response> {
       latest,
       trail,
       count: stats.points,
+      countToday: stats.points_today,
       distanceKm: stats.distance_m / 1000,
       distanceTodayKm: stats.today_m / 1000,
       timezone: zone,

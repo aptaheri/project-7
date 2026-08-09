@@ -46,6 +46,7 @@ interface Feed {
   trail: [number, number][]
   /** Every stored fix, not the thinned trail. */
   count: number
+  countToday: number
   distanceKm: number
   distanceTodayKm: number
   timezone: string | null
@@ -555,11 +556,11 @@ export default function TrackMap({ role }: Props) {
             <button
               type="button"
               className="track-nav-row"
-              onClick={() => setView('device')}
+              onClick={() => setView('elevation')}
             >
-              <span className="track-nav-label">Device</span>
+              <span className="track-nav-label">Elevation</span>
               <span className="track-nav-value">
-                {latest.batt === null ? '—' : `${latest.batt}%`}
+                {latest.alt === null ? '—' : `${feet(latest.alt)} ft`}
               </span>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M9 18l6-6-6-6" />
@@ -569,11 +570,11 @@ export default function TrackMap({ role }: Props) {
             <button
               type="button"
               className="track-nav-row"
-              onClick={() => setView('elevation')}
+              onClick={() => setView('device')}
             >
-              <span className="track-nav-label">Elevation</span>
+              <span className="track-nav-label">Device</span>
               <span className="track-nav-value">
-                {latest.alt === null ? '—' : `${feet(latest.alt)} ft`}
+                {latest.acc === null ? '—' : `±${feet(latest.acc)} ft`}
               </span>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M9 18l6-6-6-6" />
@@ -709,12 +710,12 @@ export default function TrackMap({ role }: Props) {
                 <dt>Phone battery</dt>
                 <dd>{latest?.batt == null ? '—' : `${latest.batt}%`}</dd>
               </div>
-              <div title="Two-character tracker id set in OwnTracks">
-                <dt>Tracker</dt>
-                <dd>{latest?.tid ?? '—'}</dd>
+              <div title="Fixes recorded so far today">
+                <dt>Fixes today</dt>
+                <dd>{(feed?.countToday ?? 0).toLocaleString()}</dd>
               </div>
-              <div title="Fixes stored, measured only">
-                <dt>Fixes</dt>
+              <div title="Every measured fix since tracking began">
+                <dt>Fixes all time</dt>
                 <dd>{(feed?.count ?? 0).toLocaleString()}</dd>
               </div>
             </dl>
