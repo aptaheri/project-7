@@ -1,0 +1,7732 @@
+{
+  "year": 2026,
+  "stages": [
+    {
+      "id": "1",
+      "title": "EUROPE",
+      "miles": 5331,
+      "bikeDays": 58
+    },
+    {
+      "id": "1a",
+      "title": "THE STANS",
+      "miles": 1895,
+      "bikeDays": 22
+    },
+    {
+      "id": "2",
+      "title": "AUSTRALIA",
+      "miles": 3405,
+      "bikeDays": 37
+    },
+    {
+      "id": "3",
+      "title": "SOUTH AMERICA",
+      "miles": 4739,
+      "bikeDays": 49
+    },
+    {
+      "id": "4",
+      "title": "AFRICA",
+      "miles": 6376,
+      "bikeDays": 77
+    },
+    {
+      "id": "5",
+      "title": "ASIA",
+      "miles": 5493,
+      "bikeDays": 58
+    },
+    {
+      "id": "6",
+      "title": "NORTH AMERICA",
+      "miles": 4290,
+      "bikeDays": 42
+    },
+    {
+      "id": "7",
+      "title": "ANTARCTICA",
+      "miles": 1150,
+      "bikeDays": 69,
+      "parsed": false
+    }
+  ],
+  "days": [
+    {
+      "day": 1,
+      "date": "2026-08-01",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Lisbon",
+      "to": "Nazaré",
+      "miles": 99,
+      "note": "Pra ia do Guincho Tire Dip",
+      "fromCoords": null,
+      "toCoords": [
+        -9.0677509,
+        39.6015562
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 2,
+      "date": "2026-08-02",
+      "stage": "1",
+      "kind": "rest",
+      "from": null,
+      "to": "Nazaré",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        -9.0677509,
+        39.6015562
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 3,
+      "date": "2026-08-03",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Nazaré",
+      "to": "Mira",
+      "miles": 71,
+      "note": "",
+      "fromCoords": [
+        -9.0677509,
+        39.6015562
+      ],
+      "toCoords": [
+        -8.7381261,
+        40.4287977
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 4,
+      "date": "2026-08-04",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Mira",
+      "to": "Porto",
+      "miles": 63,
+      "note": "",
+      "fromCoords": [
+        -8.7381261,
+        40.4287977
+      ],
+      "toCoords": [
+        -8.6291053,
+        41.1579438
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 5,
+      "date": "2026-08-05",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Porto",
+      "to": "Pontevedra",
+      "miles": 111,
+      "note": "",
+      "fromCoords": [
+        -8.6291053,
+        41.1579438
+      ],
+      "toCoords": [
+        -8.6446202,
+        42.4298846
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 6,
+      "date": "2026-08-06",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Pontevedra",
+      "to": "A Coruña",
+      "miles": 84,
+      "note": "",
+      "fromCoords": [
+        -8.6446202,
+        42.4298846
+      ],
+      "toCoords": [
+        -8.4103923,
+        43.3637626
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 7,
+      "date": "2026-08-07",
+      "stage": "1",
+      "kind": "rest",
+      "from": null,
+      "to": "A Coruña",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        -8.4103923,
+        43.3637626
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 8,
+      "date": "2026-08-08",
+      "stage": "1",
+      "kind": "rest",
+      "from": null,
+      "to": "A Coruña",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        -8.4103923,
+        43.3637626
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 9,
+      "date": "2026-08-09",
+      "stage": "1",
+      "kind": "ride",
+      "from": "A Coruña",
+      "to": "Burela",
+      "miles": 86,
+      "note": "",
+      "fromCoords": [
+        -8.4103923,
+        43.3637626
+      ],
+      "toCoords": [
+        -7.3605628,
+        43.661982
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 10,
+      "date": "2026-08-10",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Burela",
+      "to": "Puerto de Vega",
+      "miles": 47,
+      "note": "",
+      "fromCoords": [
+        -7.3605628,
+        43.661982
+      ],
+      "toCoords": [
+        -6.6483467,
+        43.5627804
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 11,
+      "date": "2026-08-11",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Puerto de Vega",
+      "to": "Oviedo",
+      "miles": 70,
+      "note": "",
+      "fromCoords": [
+        -6.6483467,
+        43.5627804
+      ],
+      "toCoords": [
+        -5.8485461,
+        43.3622522
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 12,
+      "date": "2026-08-12",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Oviedo",
+      "to": "Riaño",
+      "miles": 69,
+      "note": "Solar Eclipse",
+      "fromCoords": [
+        -5.8485461,
+        43.3622522
+      ],
+      "toCoords": [
+        -5.0058951,
+        42.9764192
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 13,
+      "date": "2026-08-13",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Riaño",
+      "to": "Burgos",
+      "miles": 105,
+      "note": "",
+      "fromCoords": [
+        -5.0058951,
+        42.9764192
+      ],
+      "toCoords": [
+        -3.6893545,
+        42.3504659
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 14,
+      "date": "2026-08-14",
+      "stage": "1",
+      "kind": "rest",
+      "from": null,
+      "to": "Burgos",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        -3.6893545,
+        42.3504659
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 15,
+      "date": "2026-08-15",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Burgos",
+      "to": "Soria",
+      "miles": 88,
+      "note": "",
+      "fromCoords": [
+        -3.6893545,
+        42.3504659
+      ],
+      "toCoords": [
+        -2.4790872,
+        41.766436
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 16,
+      "date": "2026-08-16",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Soria",
+      "to": "Trasmoz",
+      "miles": 49,
+      "note": "",
+      "fromCoords": [
+        -2.4790872,
+        41.766436
+      ],
+      "toCoords": [
+        -1.7225575,
+        41.826404
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 17,
+      "date": "2026-08-17",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Trasmoz",
+      "to": "Erla",
+      "miles": 56,
+      "note": "",
+      "fromCoords": [
+        -1.7225575,
+        41.826404
+      ],
+      "toCoords": [
+        -0.9492193,
+        42.1169172
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 18,
+      "date": "2026-08-18",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Erla",
+      "to": "Canfranc",
+      "miles": 75,
+      "note": "Hotel Santa Cristina TR Pyr enees",
+      "fromCoords": [
+        -0.9492193,
+        42.1169172
+      ],
+      "toCoords": [
+        -0.5254869,
+        42.71649
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 19,
+      "date": "2026-08-19",
+      "stage": "1",
+      "kind": "rest",
+      "from": null,
+      "to": "Canfranc",
+      "miles": null,
+      "note": "Pyrenees",
+      "fromCoords": null,
+      "toCoords": [
+        -0.5254869,
+        42.71649
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 20,
+      "date": "2026-08-20",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Canfranc",
+      "to": "Pau",
+      "miles": 58,
+      "note": "Pyrenees",
+      "fromCoords": [
+        -0.5254869,
+        42.71649
+      ],
+      "toCoords": [
+        -0.370797,
+        43.2951
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 21,
+      "date": "2026-08-21",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Pau",
+      "to": "Solomiac",
+      "miles": 88,
+      "note": "",
+      "fromCoords": [
+        -0.370797,
+        43.2951
+      ],
+      "toCoords": [
+        0.897811,
+        43.80531
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 22,
+      "date": "2026-08-22",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Solomiac",
+      "to": "Rieupeyroux",
+      "miles": 89,
+      "note": "",
+      "fromCoords": [
+        0.897811,
+        43.80531
+      ],
+      "toCoords": [
+        2.236322,
+        44.306225
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 23,
+      "date": "2026-08-23",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Rieupeyroux",
+      "to": "Mende",
+      "miles": 94,
+      "note": "",
+      "fromCoords": [
+        2.236322,
+        44.306225
+      ],
+      "toCoords": [
+        3.5014879,
+        44.5179297
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 24,
+      "date": "2026-08-24",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Mende",
+      "to": "Tence",
+      "miles": 83,
+      "note": "",
+      "fromCoords": [
+        3.5014879,
+        44.5179297
+      ],
+      "toCoords": [
+        4.2904534,
+        45.1144854
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 25,
+      "date": "2026-08-25",
+      "stage": "1",
+      "kind": "rest",
+      "from": null,
+      "to": "Tence",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        4.2904534,
+        45.1144854
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 26,
+      "date": "2026-08-26",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Tence",
+      "to": "Chambéry",
+      "miles": 107,
+      "note": "",
+      "fromCoords": [
+        4.2904534,
+        45.1144854
+      ],
+      "toCoords": [
+        5.917781,
+        45.564601
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 27,
+      "date": "2026-08-27",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Chambéry",
+      "to": "Aosta",
+      "miles": 112,
+      "note": "Alps",
+      "fromCoords": [
+        5.917781,
+        45.564601
+      ],
+      "toCoords": [
+        7.3130948,
+        45.7350508
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 28,
+      "date": "2026-08-28",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Aosta",
+      "to": "Saxon",
+      "miles": 56,
+      "note": "Alps",
+      "fromCoords": [
+        7.3130948,
+        45.7350508
+      ],
+      "toCoords": [
+        7.1788401,
+        46.1513081
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 29,
+      "date": "2026-08-29",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Saxon",
+      "to": "Zermatt",
+      "miles": 58,
+      "note": "Alps",
+      "fromCoords": [
+        7.1788401,
+        46.1513081
+      ],
+      "toCoords": [
+        7.749117,
+        46.0207133
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 30,
+      "date": "2026-08-30",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Zermatt",
+      "to": "Lauterbrunnen",
+      "miles": 101,
+      "note": "19/6 Alps",
+      "fromCoords": [
+        7.749117,
+        46.0207133
+      ],
+      "toCoords": [
+        7.9090981,
+        46.5935058
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 31,
+      "date": "2026-08-31",
+      "stage": "1",
+      "kind": "rest",
+      "from": null,
+      "to": "Lauterbrunnen",
+      "miles": null,
+      "note": "Alps",
+      "fromCoords": null,
+      "toCoords": [
+        7.9090981,
+        46.5935058
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 32,
+      "date": "2026-09-01",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Lauterbrunnen",
+      "to": "Andermatt",
+      "miles": 69,
+      "note": "Alps",
+      "fromCoords": [
+        7.9090981,
+        46.5935058
+      ],
+      "toCoords": [
+        8.5935627,
+        46.6339116
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 33,
+      "date": "2026-09-02",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Andermatt",
+      "to": "Glarus Nord",
+      "miles": 65,
+      "note": "Klausen Pass",
+      "fromCoords": [
+        8.5935627,
+        46.6339116
+      ],
+      "toCoords": [
+        9.0673318,
+        47.0994786
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 34,
+      "date": "2026-09-03",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Glarus Nord",
+      "to": "Davos",
+      "miles": 58,
+      "note": "Alps",
+      "fromCoords": [
+        9.0673318,
+        47.0994786
+      ],
+      "toCoords": [
+        9.8359701,
+        46.8027453
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 35,
+      "date": "2026-09-04",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Davos",
+      "to": "Innsbruck",
+      "miles": 109,
+      "note": "Alps",
+      "fromCoords": [
+        9.8359701,
+        46.8027453
+      ],
+      "toCoords": [
+        11.3910349,
+        47.2675322
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 36,
+      "date": "2026-09-05",
+      "stage": "1",
+      "kind": "rest",
+      "from": null,
+      "to": "Innsbruck",
+      "miles": null,
+      "note": "Tune Up 1 @ Bike Point Radsport",
+      "fromCoords": null,
+      "toCoords": [
+        11.3910349,
+        47.2675322
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 37,
+      "date": "2026-09-06",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Innsbruck",
+      "to": "Merano",
+      "miles": 70,
+      "note": "Dolomites",
+      "fromCoords": [
+        11.3910349,
+        47.2675322
+      ],
+      "toCoords": [
+        11.1525785,
+        46.6711489
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 38,
+      "date": "2026-09-07",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Merano",
+      "to": "Fonzaso",
+      "miles": 91,
+      "note": "Dolomites",
+      "fromCoords": [
+        11.1525785,
+        46.6711489
+      ],
+      "toCoords": [
+        11.8011092,
+        46.0167828
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 39,
+      "date": "2026-09-08",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Fonzaso",
+      "to": "Venice",
+      "miles": 61,
+      "note": "",
+      "fromCoords": [
+        11.8011092,
+        46.0167828
+      ],
+      "toCoords": [
+        12.3159547,
+        45.440379
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 40,
+      "date": "2026-09-09",
+      "stage": "1",
+      "kind": "rest",
+      "from": null,
+      "to": "Venice",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        12.3159547,
+        45.440379
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 41,
+      "date": "2026-09-10",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Venice",
+      "to": "Duino",
+      "miles": 83,
+      "note": "",
+      "fromCoords": [
+        12.3159547,
+        45.440379
+      ],
+      "toCoords": [
+        13.6044065,
+        45.7733884
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 42,
+      "date": "2026-09-11",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Duino",
+      "to": "Cesarica",
+      "miles": 132,
+      "note": "",
+      "fromCoords": [
+        13.6044065,
+        45.7733884
+      ],
+      "toCoords": [
+        15.0213211,
+        44.5648438
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 43,
+      "date": "2026-09-12",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Cesarica",
+      "to": "Split",
+      "miles": 133,
+      "note": "",
+      "fromCoords": [
+        15.0213211,
+        44.5648438
+      ],
+      "toCoords": [
+        16.4435148,
+        43.5147118
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 44,
+      "date": "2026-09-13",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Split",
+      "to": "Dubrovnik",
+      "miles": 135,
+      "note": "",
+      "fromCoords": [
+        16.4435148,
+        43.5147118
+      ],
+      "toCoords": [
+        18.0944238,
+        42.6506606
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 45,
+      "date": "2026-09-14",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Dubrovnik",
+      "to": "Petrovac",
+      "miles": 69,
+      "note": "",
+      "fromCoords": [
+        18.0944238,
+        42.6506606
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 46,
+      "date": "2026-09-15",
+      "stage": "1",
+      "kind": "rest",
+      "from": null,
+      "to": "Petrovac",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 47,
+      "date": "2026-09-16",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Petrovac",
+      "to": "Elbasan",
+      "miles": 124,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        20.0822631,
+        41.1113835
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 48,
+      "date": "2026-09-17",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Elbasan",
+      "to": "Florina",
+      "miles": 119,
+      "note": "",
+      "fromCoords": [
+        20.0822631,
+        41.1113835
+      ],
+      "toCoords": [
+        21.4131222,
+        40.7845262
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 49,
+      "date": "2026-09-18",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Florina",
+      "to": "Thessaloniki",
+      "miles": 104,
+      "note": "",
+      "fromCoords": [
+        21.4131222,
+        40.7845262
+      ],
+      "toCoords": [
+        22.9444191,
+        40.6400629
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 50,
+      "date": "2026-09-19",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Thessaloniki",
+      "to": "Kavala",
+      "miles": 104,
+      "note": "(via 2) Tire Rotation",
+      "fromCoords": [
+        22.9444191,
+        40.6400629
+      ],
+      "toCoords": [
+        24.4148129,
+        40.9366961
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 51,
+      "date": "2026-09-20",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Kavala",
+      "to": "Alexandroupoli",
+      "miles": 99,
+      "note": "",
+      "fromCoords": [
+        24.4148129,
+        40.9366961
+      ],
+      "toCoords": [
+        25.8740938,
+        40.8456352
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 52,
+      "date": "2026-09-21",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Alexandroupoli",
+      "to": "Tekirdağ",
+      "miles": 96,
+      "note": "",
+      "fromCoords": [
+        25.8740938,
+        40.8456352
+      ],
+      "toCoords": [
+        27.511674,
+        40.9780919
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 53,
+      "date": "2026-09-22",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Tekirdağ",
+      "to": "Istanbul",
+      "miles": 88,
+      "note": "",
+      "fromCoords": [
+        27.511674,
+        40.9780919
+      ],
+      "toCoords": [
+        28.9783589,
+        41.0082376
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 54,
+      "date": "2026-09-23",
+      "stage": "1",
+      "kind": "rest",
+      "from": null,
+      "to": "Istanbul",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        28.9783589,
+        41.0082376
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 55,
+      "date": "2026-09-24",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Istanbul",
+      "to": "Kuzuluk",
+      "miles": 108,
+      "note": "(via O - 7)",
+      "fromCoords": [
+        28.9783589,
+        41.0082376
+      ],
+      "toCoords": [
+        30.6418,
+        40.6282
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 56,
+      "date": "2026-09-25",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Kuzuluk",
+      "to": "Beypazari",
+      "miles": 103,
+      "note": "",
+      "fromCoords": [
+        30.6418,
+        40.6282
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 57,
+      "date": "2026-09-26",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Beypazari",
+      "to": "Bala",
+      "miles": 104,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        33.123771,
+        39.553374
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 58,
+      "date": "2026-09-27",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Bala",
+      "to": "Göreme",
+      "miles": 138,
+      "note": "Cappadocia",
+      "fromCoords": [
+        33.123771,
+        39.553374
+      ],
+      "toCoords": [
+        34.828889,
+        38.643056
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 59,
+      "date": "2026-09-28",
+      "stage": "1",
+      "kind": "rest",
+      "from": null,
+      "to": "Göreme",
+      "miles": null,
+      "note": "Cappadocia",
+      "fromCoords": null,
+      "toCoords": [
+        34.828889,
+        38.643056
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 60,
+      "date": "2026-09-29",
+      "stage": "1",
+      "kind": "rest",
+      "from": null,
+      "to": "Göreme",
+      "miles": null,
+      "note": "Cappadocia",
+      "fromCoords": null,
+      "toCoords": [
+        34.828889,
+        38.643056
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 61,
+      "date": "2026-09-30",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Göreme",
+      "to": "Gemerek",
+      "miles": 93,
+      "note": "",
+      "fromCoords": [
+        34.828889,
+        38.643056
+      ],
+      "toCoords": [
+        36.071732,
+        39.184872
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 62,
+      "date": "2026-10-01",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Gemerek",
+      "to": "Zara",
+      "miles": 117,
+      "note": "",
+      "fromCoords": [
+        36.071732,
+        39.184872
+      ],
+      "toCoords": [
+        37.757236,
+        39.898445
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 63,
+      "date": "2026-10-02",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Zara",
+      "to": "Pinarlar",
+      "miles": 100,
+      "note": "",
+      "fromCoords": [
+        37.757236,
+        39.898445
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 64,
+      "date": "2026-10-03",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Pinarlar",
+      "to": "Trabzon",
+      "miles": 109,
+      "note": "Tune Up 2 @ Babu loglu Bi sikletcilik",
+      "fromCoords": null,
+      "toCoords": [
+        39.7167633,
+        41.0026969
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 65,
+      "date": "2026-10-04",
+      "stage": "1",
+      "kind": "rest",
+      "from": null,
+      "to": "Trabzon",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        39.7167633,
+        41.0026969
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 66,
+      "date": "2026-10-05",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Trabzon",
+      "to": "Hopa",
+      "miles": 106,
+      "note": "",
+      "fromCoords": [
+        39.7167633,
+        41.0026969
+      ],
+      "toCoords": [
+        41.419843,
+        41.394618
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 67,
+      "date": "2026-10-06",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Hopa",
+      "to": "Akhaltsikhe",
+      "miles": 119,
+      "note": "",
+      "fromCoords": [
+        41.419843,
+        41.394618
+      ],
+      "toCoords": [
+        42.9824876,
+        41.6414204
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 68,
+      "date": "2026-10-07",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Akhaltsikhe",
+      "to": "Tsalka",
+      "miles": 101,
+      "note": "Hotel Tsalka",
+      "fromCoords": [
+        42.9824876,
+        41.6414204
+      ],
+      "toCoords": [
+        44.0906451,
+        41.5993233
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 69,
+      "date": "2026-10-08",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Tsalka",
+      "to": "Gazakh",
+      "miles": 98,
+      "note": "Border: 7274 3pm",
+      "fromCoords": [
+        44.0906451,
+        41.5993233
+      ],
+      "toCoords": [
+        45.3516331,
+        41.0971074
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 70,
+      "date": "2026-10-09",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Gazakh",
+      "to": "Ganja",
+      "miles": 70,
+      "note": "",
+      "fromCoords": [
+        45.3516331,
+        41.0971074
+      ],
+      "toCoords": [
+        46.3723313,
+        40.6878581
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 71,
+      "date": "2026-10-10",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Ganja",
+      "to": "Agsu",
+      "miles": 119,
+      "note": "",
+      "fromCoords": [
+        46.3723313,
+        40.6878581
+      ],
+      "toCoords": [
+        48.3918135,
+        40.566698
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 72,
+      "date": "2026-10-11",
+      "stage": "1",
+      "kind": "ride",
+      "from": "Agsu",
+      "to": "Baku",
+      "miles": 118,
+      "note": "Mayak Beach Tire Dip",
+      "fromCoords": [
+        48.3918135,
+        40.566698
+      ],
+      "toCoords": [
+        50.1197805,
+        40.5178548
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 73,
+      "date": "2026-10-12",
+      "stage": "1",
+      "kind": "rest",
+      "from": null,
+      "to": "Baku",
+      "miles": null,
+      "note": "erbaija n",
+      "fromCoords": null,
+      "toCoords": [
+        50.1197805,
+        40.5178548
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 74,
+      "date": "2026-10-13",
+      "stage": "1a",
+      "kind": "travel",
+      "from": null,
+      "to": null,
+      "miles": null,
+      "note": "Flex Travel Day: Caspian Sea Ferry to Aktau, Kazakhstan",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 75,
+      "date": "2026-10-14",
+      "stage": "1a",
+      "kind": "travel",
+      "from": null,
+      "to": null,
+      "miles": null,
+      "note": "Flex Travel Day: Caspian Sea Ferry to Aktau, Kazakhstan",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 76,
+      "date": "2026-10-15",
+      "stage": "1a",
+      "kind": "travel",
+      "from": null,
+      "to": null,
+      "miles": null,
+      "note": "Flex Travel Day: Caspian Sea Ferry to Aktau, Kazakhstan",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 77,
+      "date": "2026-10-16",
+      "stage": "1a",
+      "kind": "travel",
+      "from": null,
+      "to": null,
+      "miles": null,
+      "note": "Flex Travel Day: Caspian Sea Ferry to Aktau, Kazakhstan",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 78,
+      "date": "2026-10-17",
+      "stage": "1a",
+      "kind": "travel",
+      "from": null,
+      "to": null,
+      "miles": null,
+      "note": "Flex Travel Day: Caspian Sea Ferry to Aktau, Kazakhstan",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 79,
+      "date": "2026-10-18",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Fort - Shevchenko",
+      "to": "Aktau",
+      "miles": 84,
+      "note": "Akku Hotel Tire Dip",
+      "fromCoords": null,
+      "toCoords": [
+        52.0512267,
+        43.8918157
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 80,
+      "date": "2026-10-19",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Aktau",
+      "to": "Shetpe",
+      "miles": 96,
+      "note": "Kazak hstan via A - 33",
+      "fromCoords": [
+        52.0512267,
+        43.8918157
+      ],
+      "toCoords": [
+        52.0731993,
+        43.5185404
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 81,
+      "date": "2026-10-20",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Shetpe",
+      "to": "Say - Otes",
+      "miles": 80,
+      "note": "Aisha Bibi Café Hotel",
+      "fromCoords": [
+        52.0731993,
+        43.5185404
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 82,
+      "date": "2026-10-21",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Say - Otes",
+      "to": "Beyneu",
+      "miles": 116,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        51.2120512,
+        43.671863
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 83,
+      "date": "2026-10-22",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Beyneu",
+      "to": "Karakalpakia",
+      "miles": 69,
+      "note": "",
+      "fromCoords": [
+        51.2120512,
+        43.671863
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 84,
+      "date": "2026-10-23",
+      "stage": "1a",
+      "kind": "rest",
+      "from": null,
+      "to": "Karakalpakia",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 85,
+      "date": "2026-10-24",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Karakalpakia",
+      "to": "Jasliq",
+      "miles": 88,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 86,
+      "date": "2026-10-25",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Jasliq",
+      "to": "Qońirat",
+      "miles": 99,
+      "note": "Hotel Kungrad Tire Rotation",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 87,
+      "date": "2026-10-26",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Qońirat",
+      "to": "Nazarkhan",
+      "miles": 92,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 88,
+      "date": "2026-10-27",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Nazarkhan",
+      "to": "Turtkul",
+      "miles": 86,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 89,
+      "date": "2026-10-28",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Turtkul",
+      "to": "Uch - Uchak",
+      "miles": 70,
+      "note": "Kemping Sarimoy",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 90,
+      "date": "2026-10-29",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Uch - Uchak",
+      "to": "Gazli",
+      "miles": 100,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 91,
+      "date": "2026-10-30",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Gazli",
+      "to": "Bukhara",
+      "miles": 66,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        64.4568648,
+        39.7682591
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 92,
+      "date": "2026-10-31",
+      "stage": "1a",
+      "kind": "rest",
+      "from": null,
+      "to": "Bukhara",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        64.4568648,
+        39.7682591
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 93,
+      "date": "2026-11-01",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Bukhara",
+      "to": "Mirbazar",
+      "miles": 105,
+      "note": "",
+      "fromCoords": [
+        64.4568648,
+        39.7682591
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 94,
+      "date": "2026-11-02",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Mirbazar",
+      "to": "Samarkand",
+      "miles": 66,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        66.9653502,
+        39.6507963
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 95,
+      "date": "2026-11-03",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Samarkand",
+      "to": "Jizzakh",
+      "miles": 65,
+      "note": "",
+      "fromCoords": [
+        66.9653502,
+        39.6507963
+      ],
+      "toCoords": [
+        67.4430724,
+        39.835811
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 96,
+      "date": "2026-11-04",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Jizzakh",
+      "to": "Shirin",
+      "miles": 74,
+      "note": "",
+      "fromCoords": [
+        67.4430724,
+        39.835811
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 97,
+      "date": "2026-11-05",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Shirin",
+      "to": "Gulshan",
+      "miles": 91,
+      "note": "Tajiki stan",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 98,
+      "date": "2026-11-06",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Gulshan",
+      "to": "Namangan",
+      "miles": 71,
+      "note": "Tajikistan",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 99,
+      "date": "2026-11-07",
+      "stage": "1a",
+      "kind": "rest",
+      "from": null,
+      "to": "Namangan",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 100,
+      "date": "2026-11-08",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Namangan",
+      "to": "Kara - Köl",
+      "miles": 91,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 101,
+      "date": "2026-11-09",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Kara - Köl",
+      "to": "Toluk",
+      "miles": 103,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 102,
+      "date": "2026-11-10",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Toluk",
+      "to": "Kyzart",
+      "miles": 101,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 103,
+      "date": "2026-11-11",
+      "stage": "1a",
+      "kind": "ride",
+      "from": "Kyzart",
+      "to": "Balykchy",
+      "miles": 82,
+      "note": "Issyk Kul (lake) Tire Dip",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 104,
+      "date": "2026-11-12",
+      "stage": "1a",
+      "kind": "rest",
+      "from": null,
+      "to": "Balykchy",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 105,
+      "date": "2026-11-13",
+      "stage": "2",
+      "kind": "travel",
+      "from": null,
+      "to": null,
+      "miles": null,
+      "note": "Travel Day: Flight to Dubai, UAE",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 106,
+      "date": "2026-11-14",
+      "stage": "2",
+      "kind": "travel",
+      "from": null,
+      "to": null,
+      "miles": null,
+      "note": "Travel Day: Flight to Perth, Australia",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 107,
+      "date": "2026-11-15",
+      "stage": "2",
+      "kind": "rest",
+      "from": null,
+      "to": "Perth",
+      "miles": null,
+      "note": "Dennis Lightfoot – Tune Up 3 @ Glen Parker Cycles",
+      "fromCoords": null,
+      "toCoords": [
+        115.7543761,
+        -31.9709363
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 108,
+      "date": "2026-11-16",
+      "stage": "2",
+      "kind": "rest",
+      "from": null,
+      "to": "Perth",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        115.7543761,
+        -31.9709363
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 109,
+      "date": "2026-11-17",
+      "stage": "2",
+      "kind": "rest",
+      "from": null,
+      "to": "Perth",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        115.7543761,
+        -31.9709363
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 110,
+      "date": "2026-11-18",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Perth",
+      "to": "Lake Clifton",
+      "miles": 65,
+      "note": "Swa nbourne Beach Tire Dip",
+      "fromCoords": [
+        115.7543761,
+        -31.9709363
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 111,
+      "date": "2026-11-19",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Lake Clifton",
+      "to": "Yallingup",
+      "miles": 95,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 112,
+      "date": "2026-11-20",
+      "stage": "2",
+      "kind": "rest",
+      "from": null,
+      "to": "Yallingup",
+      "miles": null,
+      "note": "Cape Naturaliste",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 113,
+      "date": "2026-11-21",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Yallingup",
+      "to": "Be edelup",
+      "miles": 97,
+      "note": "via Karridale",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 114,
+      "date": "2026-11-22",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Beedelup",
+      "to": "Walpole",
+      "miles": 88,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        115.8557031,
+        -34.4100211
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 115,
+      "date": "2026-11-23",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Walpole",
+      "to": "Albany",
+      "miles": 75,
+      "note": "",
+      "fromCoords": [
+        115.8557031,
+        -34.4100211
+      ],
+      "toCoords": [
+        116.7313496,
+        -34.9761838
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 116,
+      "date": "2026-11-24",
+      "stage": "2",
+      "kind": "rest",
+      "from": null,
+      "to": "Albany",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        116.7313496,
+        -34.9761838
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 117,
+      "date": "2026-11-25",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Albany",
+      "to": "Boxwood Hill",
+      "miles": 76,
+      "note": "",
+      "fromCoords": [
+        116.7313496,
+        -34.9761838
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 118,
+      "date": "2026-11-26",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Boxwood Hill",
+      "to": "Ravensthorpe",
+      "miles": 107,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        118.7502404,
+        -34.3657676
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 119,
+      "date": "2026-11-27",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Ravensthorpe",
+      "to": "Esperance",
+      "miles": 116,
+      "note": "",
+      "fromCoords": [
+        118.7502404,
+        -34.3657676
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 120,
+      "date": "2026-11-28",
+      "stage": "2",
+      "kind": "rest",
+      "from": null,
+      "to": "Esperance",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 121,
+      "date": "2026-11-29",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Esperance",
+      "to": "Salmon Gums",
+      "miles": 66,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 122,
+      "date": "2026-11-30",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Salmon Gums",
+      "to": "Norseman",
+      "miles": 60,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        120.0470727,
+        -33.5817351
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 123,
+      "date": "2026-12-01",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Norseman",
+      "to": "Balladonia",
+      "miles": 119,
+      "note": "Balladonia Hotel TR",
+      "fromCoords": [
+        120.0470727,
+        -33.5817351
+      ],
+      "toCoords": [
+        121.8896205,
+        -33.8608027
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 124,
+      "date": "2026-12-02",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Balladonia",
+      "to": "Cocklebiddy",
+      "miles": 152,
+      "note": "90 Mile Str aight",
+      "fromCoords": [
+        121.8896205,
+        -33.8608027
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 125,
+      "date": "2026-12-03",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Cocklebiddy",
+      "to": "Madura",
+      "miles": 57,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        127.0226578,
+        -31.8987024
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 126,
+      "date": "2026-12-04",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Madura",
+      "to": "Eucla",
+      "miles": 112,
+      "note": "",
+      "fromCoords": [
+        127.0226578,
+        -31.8987024
+      ],
+      "toCoords": [
+        128.8835431,
+        -31.6750185
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 127,
+      "date": "2026-12-05",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Eucla",
+      "to": "Nullarbor",
+      "miles": 84,
+      "note": "Nullar bor Plain",
+      "fromCoords": [
+        128.8835431,
+        -31.6750185
+      ],
+      "toCoords": [
+        131.2804154,
+        -31.3672977
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 128,
+      "date": "2026-12-06",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Nullarbor",
+      "to": "Yalata",
+      "miles": 98,
+      "note": "",
+      "fromCoords": [
+        131.2804154,
+        -31.3672977
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 129,
+      "date": "2026-12-07",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Yalata",
+      "to": "Ceduna",
+      "miles": 128,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        133.6763107,
+        -32.1260285
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 130,
+      "date": "2026-12-08",
+      "stage": "2",
+      "kind": "rest",
+      "from": null,
+      "to": "Ceduna",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        133.6763107,
+        -32.1260285
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 131,
+      "date": "2026-12-09",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Ceduna",
+      "to": "Poochera",
+      "miles": 86,
+      "note": "",
+      "fromCoords": [
+        133.6763107,
+        -32.1260285
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 132,
+      "date": "2026-12-10",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Poochera",
+      "to": "Kimba",
+      "miles": 108,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 133,
+      "date": "2026-12-11",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Kimba",
+      "to": "Port Augusta",
+      "miles": 97,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 134,
+      "date": "2026-12-12",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Port Augusta",
+      "to": "Snowtown",
+      "miles": 99,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 135,
+      "date": "2026-12-13",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Snowtown",
+      "to": "Adelaide",
+      "miles": 93,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        138.6007456,
+        -34.9284989
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 136,
+      "date": "2026-12-14",
+      "stage": "2",
+      "kind": "rest",
+      "from": null,
+      "to": "Adelaide",
+      "miles": null,
+      "note": "Tune Up 4 @ Bike Society or BMCR",
+      "fromCoords": null,
+      "toCoords": [
+        138.6007456,
+        -34.9284989
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 137,
+      "date": "2026-12-15",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Adelaide",
+      "to": "Coomandook",
+      "miles": 85,
+      "note": "",
+      "fromCoords": [
+        138.6007456,
+        -34.9284989
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 138,
+      "date": "2026-12-16",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Coomandook",
+      "to": "Willalooka",
+      "miles": 80,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 139,
+      "date": "2026-12-17",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Willalooka",
+      "to": "Mount Gambier",
+      "miles": 110,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 140,
+      "date": "2026-12-18",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Mount Gambier",
+      "to": "Portland",
+      "miles": 64,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        140.7806761,
+        -37.8284406
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 141,
+      "date": "2026-12-19",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Portland",
+      "to": "Warrnambool",
+      "miles": 61,
+      "note": "",
+      "fromCoords": [
+        140.7806761,
+        -37.8284406
+      ],
+      "toCoords": [
+        141.6405228,
+        -38.2679978
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 142,
+      "date": "2026-12-20",
+      "stage": "2",
+      "kind": "rest",
+      "from": null,
+      "to": "Warrnambool",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        141.6405228,
+        -38.2679978
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 143,
+      "date": "2026-12-21",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Warrnambool",
+      "to": "Princetown",
+      "miles": 54,
+      "note": "Great Ocean Rd",
+      "fromCoords": [
+        141.6405228,
+        -38.2679978
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 144,
+      "date": "2026-12-22",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Princetown",
+      "to": "Lorne",
+      "miles": 75,
+      "note": "Great Ocean Rd",
+      "fromCoords": null,
+      "toCoords": [
+        143.9738066,
+        -38.5368534
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 145,
+      "date": "2026-12-23",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Lorne",
+      "to": "Melbourne",
+      "miles": 92,
+      "note": "Great Ocean Rd",
+      "fromCoords": [
+        143.9738066,
+        -38.5368534
+      ],
+      "toCoords": [
+        144.9630576,
+        -37.8136276
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 146,
+      "date": "2026-12-24",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Melbourne",
+      "to": "Baw Baw Village",
+      "miles": 98,
+      "note": "Aus. Alps",
+      "fromCoords": [
+        144.9630576,
+        -37.8136276
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 147,
+      "date": "2026-12-25",
+      "stage": "2",
+      "kind": "rest",
+      "from": null,
+      "to": "Baw Baw Village",
+      "miles": null,
+      "note": "Aus. Alps",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 148,
+      "date": "2026-12-26",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Baw Baw Village",
+      "to": "Bairnsdale",
+      "miles": 139,
+      "note": "Aus. Alps",
+      "fromCoords": null,
+      "toCoords": [
+        148.5509232,
+        -37.7573064
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 149,
+      "date": "2026-12-27",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Bairnsdale",
+      "to": "Cann River",
+      "miles": 107,
+      "note": "",
+      "fromCoords": [
+        148.5509232,
+        -37.7573064
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 150,
+      "date": "2026-12-28",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Cann River",
+      "to": "B ermagui",
+      "miles": 126,
+      "note": "via Wapengo Blue Pool",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 151,
+      "date": "2026-12-29",
+      "stage": "2",
+      "kind": "ride",
+      "from": "B erma gui",
+      "to": "Ulladulla",
+      "miles": 96,
+      "note": "Tire Rotation",
+      "fromCoords": null,
+      "toCoords": [
+        150.4714615,
+        -35.3569715
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 152,
+      "date": "2026-12-30",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Ulladulla",
+      "to": "Kiama",
+      "miles": 65,
+      "note": "",
+      "fromCoords": [
+        150.4714615,
+        -35.3569715
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 153,
+      "date": "2026-12-31",
+      "stage": "2",
+      "kind": "ride",
+      "from": "Kiama",
+      "to": "Sydney",
+      "miles": 75,
+      "note": "Bondi Beach Tire Dip",
+      "fromCoords": null,
+      "toCoords": [
+        151.2703991,
+        -33.8891201
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 154,
+      "date": "2027-01-01",
+      "stage": "2",
+      "kind": "rest",
+      "from": null,
+      "to": "Sydney",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        151.2703991,
+        -33.8891201
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 155,
+      "date": "2027-01-02",
+      "stage": "2",
+      "kind": "rest",
+      "from": null,
+      "to": "Sydney",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        151.2703991,
+        -33.8891201
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 156,
+      "date": "2027-01-03",
+      "stage": "2",
+      "kind": "rest",
+      "from": null,
+      "to": "Sydney",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        151.2703991,
+        -33.8891201
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 157,
+      "date": "2027-01-04",
+      "stage": "3",
+      "kind": "travel",
+      "from": null,
+      "to": null,
+      "miles": null,
+      "note": "Travel Day: Flight to Santiago, Chile",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 158,
+      "date": "2027-01-05",
+      "stage": "3",
+      "kind": "travel",
+      "from": null,
+      "to": null,
+      "miles": null,
+      "note": "Travel Day: Flight to Guayaquil, Ecuador",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 159,
+      "date": "2027-01-06",
+      "stage": "3",
+      "kind": "rest",
+      "from": null,
+      "to": "Salinas",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 160,
+      "date": "2027-01-07",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Salinas",
+      "to": "Consuelo",
+      "miles": 71,
+      "note": "Playa del M ar Bravo Tire Dip",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 161,
+      "date": "2027-01-08",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Consuelo",
+      "to": "Puerto Inca",
+      "miles": 71,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 162,
+      "date": "2027-01-09",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Puerto Inca",
+      "to": "Cuenca",
+      "miles": 79,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        -79.0058965,
+        -2.9001285
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 163,
+      "date": "2027-01-10",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Cuenca",
+      "to": "Saraguro",
+      "miles": 88,
+      "note": "",
+      "fromCoords": [
+        -79.0058965,
+        -2.9001285
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 164,
+      "date": "2027-01-11",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Saraguro",
+      "to": "Vilcabamba",
+      "miles": 68,
+      "note": "Andes",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 165,
+      "date": "2027-01-12",
+      "stage": "3",
+      "kind": "rest",
+      "from": null,
+      "to": "Vilcabamba",
+      "miles": null,
+      "note": "Andes",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 166,
+      "date": "2027-01-13",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Vilcabamba",
+      "to": "Zumba",
+      "miles": 79,
+      "note": "Andes",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 167,
+      "date": "2027-01-14",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Zumba",
+      "to": "San Ignacio",
+      "miles": 45,
+      "note": "Andes",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 168,
+      "date": "2027-01-15",
+      "stage": "3",
+      "kind": "ride",
+      "from": "San Ignacio",
+      "to": "Chamaya",
+      "miles": 79,
+      "note": "Andes",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 169,
+      "date": "2027-01-16",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Chamaya",
+      "to": "Llama",
+      "miles": 116,
+      "note": "Andes",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 170,
+      "date": "2027-01-17",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Llama",
+      "to": "Chiclayo",
+      "miles": 75,
+      "note": "Andes",
+      "fromCoords": null,
+      "toCoords": [
+        -79.845161,
+        -6.7712768
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 171,
+      "date": "2027-01-18",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Chiclayo",
+      "to": "Pacasmayo",
+      "miles": 65,
+      "note": "",
+      "fromCoords": [
+        -79.845161,
+        -6.7712768
+      ],
+      "toCoords": [
+        -79.5193162,
+        -7.4088536
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 172,
+      "date": "2027-01-19",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Pacasmayo",
+      "to": "Trujillo",
+      "miles": 73,
+      "note": "Tune Up 5 @ TRX Bikes or Gato Bike",
+      "fromCoords": [
+        -79.5193162,
+        -7.4088536
+      ],
+      "toCoords": [
+        -79.0257381,
+        -8.1157846
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 173,
+      "date": "2027-01-20",
+      "stage": "3",
+      "kind": "rest",
+      "from": null,
+      "to": "Trujillo",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        -79.0257381,
+        -8.1157846
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 174,
+      "date": "2027-01-21",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Trujillo",
+      "to": "Tortuga",
+      "miles": 107,
+      "note": "",
+      "fromCoords": [
+        -79.0257381,
+        -8.1157846
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 175,
+      "date": "2027-01-22",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Tortug a",
+      "to": "Barranca",
+      "miles": 125,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 176,
+      "date": "2027-01-23",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Barranca",
+      "to": "Lima",
+      "miles": 118,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        -77.0430886,
+        -12.0466888
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 177,
+      "date": "2027-01-24",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Lima",
+      "to": "Asia",
+      "miles": 70,
+      "note": "",
+      "fromCoords": [
+        -77.0430886,
+        -12.0466888
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 178,
+      "date": "2027-01-25",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Asia",
+      "to": "Huacachina",
+      "miles": 121,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 179,
+      "date": "2027-01-26",
+      "stage": "3",
+      "kind": "rest",
+      "from": null,
+      "to": "Huacachina",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 180,
+      "date": "2027-01-27",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Huacachina",
+      "to": "Nazca",
+      "miles": 91,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        -74.9438318,
+        -14.8283179
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 181,
+      "date": "2027-01-28",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Nazca",
+      "to": "Puquio",
+      "miles": 97,
+      "note": "",
+      "fromCoords": [
+        -74.9438318,
+        -14.8283179
+      ],
+      "toCoords": [
+        -74.1269322,
+        -14.6900941
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 182,
+      "date": "2027-01-29",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Puquio",
+      "to": "Pampachiri",
+      "miles": 100,
+      "note": "Tire Rotation",
+      "fromCoords": [
+        -74.1269322,
+        -14.6900941
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 183,
+      "date": "2027-01-30",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Pampachiri",
+      "to": "Andahuaylas",
+      "miles": 67,
+      "note": "Andes",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 184,
+      "date": "2027-01-31",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Anda huaylas",
+      "to": "Pacaypata",
+      "miles": 81,
+      "note": "Andes",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 185,
+      "date": "2027-02-01",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Paca ypata",
+      "to": "Vitcos",
+      "miles": 78,
+      "note": "Hotel sixpac manco Andes",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 186,
+      "date": "2027-02-02",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Vitcos",
+      "to": "Ollantaytambo",
+      "miles": 106,
+      "note": "Andes",
+      "fromCoords": null,
+      "toCoords": [
+        -72.9379362,
+        -13.1120354
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 187,
+      "date": "2027-02-03",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Ollantaytambo",
+      "to": "Cusco",
+      "miles": 38,
+      "note": "Andes",
+      "fromCoords": [
+        -72.9379362,
+        -13.1120354
+      ],
+      "toCoords": [
+        -71.9674626,
+        -13.53195
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 188,
+      "date": "2027-02-04",
+      "stage": "3",
+      "kind": "rest",
+      "from": null,
+      "to": "Cusco",
+      "miles": null,
+      "note": "Machu Picchu",
+      "fromCoords": null,
+      "toCoords": [
+        -71.9674626,
+        -13.53195
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 189,
+      "date": "2027-02-05",
+      "stage": "3",
+      "kind": "rest",
+      "from": null,
+      "to": "Cusco",
+      "miles": null,
+      "note": "Machu Picchu",
+      "fromCoords": null,
+      "toCoords": [
+        -71.9674626,
+        -13.53195
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 190,
+      "date": "2027-02-06",
+      "stage": "3",
+      "kind": "rest",
+      "from": null,
+      "to": "Cusco",
+      "miles": null,
+      "note": "Machu Picchu",
+      "fromCoords": null,
+      "toCoords": [
+        -71.9674626,
+        -13.53195
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 191,
+      "date": "2027-02-07",
+      "stage": "3",
+      "kind": "rest",
+      "from": null,
+      "to": "Cusco",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        -71.9674626,
+        -13.53195
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 192,
+      "date": "2027-02-08",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Cusco",
+      "to": "Marangani",
+      "miles": 94,
+      "note": "Andes",
+      "fromCoords": [
+        -71.9674626,
+        -13.53195
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 193,
+      "date": "2027-02-09",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Marangani",
+      "to": "Juliaca",
+      "miles": 120,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 194,
+      "date": "2027-02-10",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Juliaca",
+      "to": "Pomata",
+      "miles": 92,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 195,
+      "date": "2027-02-11",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Pomata",
+      "to": "La Paz",
+      "miles": 104,
+      "note": "Tune Up 6 @ BIKECENTER",
+      "fromCoords": null,
+      "toCoords": [
+        -68.1212091,
+        -16.494359
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 196,
+      "date": "2027-02-12",
+      "stage": "3",
+      "kind": "rest",
+      "from": null,
+      "to": "La Paz",
+      "miles": null,
+      "note": "Road of Death",
+      "fromCoords": null,
+      "toCoords": [
+        -68.1212091,
+        -16.494359
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 197,
+      "date": "2027-02-13",
+      "stage": "3",
+      "kind": "rest",
+      "from": null,
+      "to": "La Paz",
+      "miles": null,
+      "note": "Valle de las Animas",
+      "fromCoords": null,
+      "toCoords": [
+        -68.1212091,
+        -16.494359
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 198,
+      "date": "2027-02-14",
+      "stage": "3",
+      "kind": "rest",
+      "from": null,
+      "to": "La Paz",
+      "miles": null,
+      "note": "Super Bowl",
+      "fromCoords": null,
+      "toCoords": [
+        -68.1212091,
+        -16.494359
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 199,
+      "date": "2027-02-15",
+      "stage": "3",
+      "kind": "ride",
+      "from": "La Paz",
+      "to": "Caracollo",
+      "miles": 118,
+      "note": "",
+      "fromCoords": [
+        -68.1212091,
+        -16.494359
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 200,
+      "date": "2027-02-16",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Caracollo",
+      "to": "Cochabamba",
+      "miles": 119,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        -64.8633533,
+        -17.7576975
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 201,
+      "date": "2027-02-17",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Cochabamba",
+      "to": "Pojo",
+      "miles": 121,
+      "note": "Hotel Ramirez Andes",
+      "fromCoords": [
+        -64.8633533,
+        -17.7576975
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 202,
+      "date": "2027-02-18",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Pojo",
+      "to": "Samaip ata",
+      "miles": 114,
+      "note": "Andes",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 203,
+      "date": "2027-02-19",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Samaipata",
+      "to": "Santa Cruz de la Sierra",
+      "miles": 76,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 204,
+      "date": "2027-02-20",
+      "stage": "3",
+      "kind": "rest",
+      "from": null,
+      "to": "Santa Cruz de la Sierra",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 205,
+      "date": "2027-02-21",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Santa Cruz",
+      "to": "Pozo del Tigre",
+      "miles": 88,
+      "note": "",
+      "fromCoords": [
+        -63.1925079,
+        -17.798072
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 206,
+      "date": "2027-02-22",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Pozo del Tigre",
+      "to": "San José de Chiquitos",
+      "miles": 87,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        -61.981918,
+        -17.609921
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 207,
+      "date": "2027-02-23",
+      "stage": "3",
+      "kind": "ride",
+      "from": "San José de Chiquitos",
+      "to": "Aguas Calientes",
+      "miles": 104,
+      "note": "",
+      "fromCoords": [
+        -61.981918,
+        -17.609921
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 208,
+      "date": "2027-02-24",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Aguas Calientes",
+      "to": "Puerto Suárez",
+      "miles": 124,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        -59.498531,
+        -18.46133
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 209,
+      "date": "2027-02-25",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Puerto Suárez",
+      "to": "Porto Carrero",
+      "miles": 89,
+      "note": "Ecolodge",
+      "fromCoords": [
+        -59.498531,
+        -18.46133
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 210,
+      "date": "2027-02-26",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Porto Carrero",
+      "to": "Ana s tácio",
+      "miles": 104,
+      "note": "Tire Rotation",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 211,
+      "date": "2027-02-27",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Anas táci o",
+      "to": "Campo Grande",
+      "miles": 86,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        -55.8054279,
+        -20.4841569
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 212,
+      "date": "2027-02-28",
+      "stage": "3",
+      "kind": "rest",
+      "from": null,
+      "to": "Campo Grande",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        -55.8054279,
+        -20.4841569
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 213,
+      "date": "2027-03-01",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Campo Grande",
+      "to": "Água Clara",
+      "miles": 119,
+      "note": "",
+      "fromCoords": [
+        -55.8054279,
+        -20.4841569
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 214,
+      "date": "2027-03-02",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Água Clara",
+      "to": "Andradina",
+      "miles": 109,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 215,
+      "date": "2027-03-03",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Andradina",
+      "to": "Lins",
+      "miles": 124,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 216,
+      "date": "2027-03-04",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Lins",
+      "to": "Botucatu",
+      "miles": 123,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        -49.7467491,
+        -21.6732591
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 217,
+      "date": "2027-03-05",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Botucatu",
+      "to": "Barueri",
+      "miles": 132,
+      "note": "SP - 300, SP - 312",
+      "fromCoords": [
+        -49.7467491,
+        -21.6732591
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 218,
+      "date": "2027-03-06",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Barueri",
+      "to": "São Sebastião",
+      "miles": 138,
+      "note": "via SP - 098",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 219,
+      "date": "2027-03-07",
+      "stage": "3",
+      "kind": "ride",
+      "from": "São Sebastião",
+      "to": "Tarituba",
+      "miles": 123,
+      "note": "Pousada das Flores",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 220,
+      "date": "2027-03-08",
+      "stage": "3",
+      "kind": "ride",
+      "from": "Tarituba",
+      "to": "Rio de Janeiro",
+      "miles": 123,
+      "note": "Ipanema Tire Dip (Leblon)",
+      "fromCoords": null,
+      "toCoords": [
+        -43.2047975,
+        -22.987064
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 221,
+      "date": "2027-03-09",
+      "stage": "3",
+      "kind": "rest",
+      "from": null,
+      "to": "Rio de Janeiro",
+      "miles": null,
+      "note": "Tune Up 7 @ Modern Bike (Copacabana)",
+      "fromCoords": null,
+      "toCoords": [
+        -43.2047975,
+        -22.987064
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 222,
+      "date": "2027-03-10",
+      "stage": "3",
+      "kind": "rest",
+      "from": null,
+      "to": "Rio de Janeiro",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        -43.2047975,
+        -22.987064
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 223,
+      "date": "2027-03-11",
+      "stage": "4",
+      "kind": "travel",
+      "from": null,
+      "to": null,
+      "miles": null,
+      "note": "Travel Day: Flight to Madrid, Spain",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 224,
+      "date": "2027-03-12",
+      "stage": "4",
+      "kind": "travel",
+      "from": null,
+      "to": null,
+      "miles": null,
+      "note": "Travel Day: Flight to Dakar, Senegal",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 225,
+      "date": "2027-03-13",
+      "stage": "4",
+      "kind": "rest",
+      "from": null,
+      "to": "Dakar",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 226,
+      "date": "2027-03-14",
+      "stage": "4",
+      "kind": "rest",
+      "from": null,
+      "to": "Dakar",
+      "miles": null,
+      "note": "Kraken Pub Tire Dip @ sunset",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 227,
+      "date": "2027-03-15",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Dakar",
+      "to": "Fatick",
+      "miles": 96,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        -16.4111425,
+        14.3390167
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 228,
+      "date": "2027-03-16",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Fatick",
+      "to": "Kaffrine",
+      "miles": 65,
+      "note": "",
+      "fromCoords": [
+        -16.4111425,
+        14.3390167
+      ],
+      "toCoords": [
+        -15.5498756,
+        14.1043968
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 229,
+      "date": "2027-03-17",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Kaffrine",
+      "to": "Tambacounda",
+      "miles": 133,
+      "note": "",
+      "fromCoords": [
+        -15.5498756,
+        14.1043968
+      ],
+      "toCoords": [
+        -13.6710059,
+        13.7725888
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 230,
+      "date": "2027-03-18",
+      "stage": "4",
+      "kind": "rest",
+      "from": null,
+      "to": "Tambacounda",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        -13.6710059,
+        13.7725888
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 231,
+      "date": "2027-03-19",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Tambacounda",
+      "to": "Koundara",
+      "miles": 120,
+      "note": "Guinea",
+      "fromCoords": [
+        -13.6710059,
+        13.7725888
+      ],
+      "toCoords": [
+        -13.3067562,
+        12.4894021
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 232,
+      "date": "2027-03-20",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Koundara",
+      "to": "Tiankoi",
+      "miles": 61,
+      "note": "Guinea",
+      "fromCoords": [
+        -13.3067562,
+        12.4894021
+      ],
+      "toCoords": [
+        -13.068045,
+        11.801194
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 233,
+      "date": "2027-03-21",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Tiankoi",
+      "to": "Labé",
+      "miles": 96,
+      "note": "Guinea",
+      "fromCoords": [
+        -13.068045,
+        11.801194
+      ],
+      "toCoords": [
+        -12.2891314,
+        11.3232042
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 234,
+      "date": "2027-03-22",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Labé",
+      "to": "Mamou",
+      "miles": 92,
+      "note": "Guinea",
+      "fromCoords": [
+        -12.2891314,
+        11.3232042
+      ],
+      "toCoords": [
+        -12.0832543,
+        10.3785237
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 235,
+      "date": "2027-03-23",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Mamou",
+      "to": "Kindia",
+      "miles": 82,
+      "note": "Guinea",
+      "fromCoords": [
+        -12.0832543,
+        10.3785237
+      ],
+      "toCoords": [
+        -12.8629885,
+        10.0406725
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 236,
+      "date": "2027-03-24",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Kindia",
+      "to": "Forécariah",
+      "miles": 84,
+      "note": "Guinea",
+      "fromCoords": [
+        -12.8629885,
+        10.0406725
+      ],
+      "toCoords": [
+        -13.0904353,
+        9.4344715
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 237,
+      "date": "2027-03-25",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Forécariah",
+      "to": "Port Loko",
+      "miles": 60,
+      "note": "Sierra Leone",
+      "fromCoords": [
+        -13.0904353,
+        9.4344715
+      ],
+      "toCoords": [
+        -12.7854613,
+        8.766514
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 238,
+      "date": "2027-03-26",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Port Loko",
+      "to": "Freetown",
+      "miles": 74,
+      "note": "Sierra Leone",
+      "fromCoords": [
+        -12.7854613,
+        8.766514
+      ],
+      "toCoords": [
+        -13.2354918,
+        8.4870803
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 239,
+      "date": "2027-03-27",
+      "stage": "4",
+      "kind": "rest",
+      "from": null,
+      "to": "Freetown",
+      "miles": null,
+      "note": "Sierra Leone",
+      "fromCoords": null,
+      "toCoords": [
+        -13.2354918,
+        8.4870803
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 240,
+      "date": "2027-03-28",
+      "stage": "4",
+      "kind": "rest",
+      "from": null,
+      "to": "Freetown",
+      "miles": null,
+      "note": "Sierra Leone Easter",
+      "fromCoords": null,
+      "toCoords": [
+        -13.2354918,
+        8.4870803
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 241,
+      "date": "2027-03-29",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Freetown",
+      "to": "Moyamba",
+      "miles": 95,
+      "note": "Sierra Leone via south loop",
+      "fromCoords": [
+        -13.2354918,
+        8.4870803
+      ],
+      "toCoords": [
+        -12.4333255,
+        8.1600523
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 242,
+      "date": "2027-03-30",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Moyamba",
+      "to": "Bo",
+      "miles": 68,
+      "note": "Sierra Leone",
+      "fromCoords": [
+        -12.4333255,
+        8.1600523
+      ],
+      "toCoords": [
+        -11.7409946,
+        7.9551791
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 243,
+      "date": "2027-03-31",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Bo",
+      "to": "Zimmi",
+      "miles": 66,
+      "note": "Sierra Leone via Koribondo",
+      "fromCoords": [
+        -11.7409946,
+        7.9551791
+      ],
+      "toCoords": [
+        -11.3062382,
+        7.3139328
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 244,
+      "date": "2027-04-01",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Zimmi",
+      "to": "Monrovia",
+      "miles": 107,
+      "note": "Sierra Leone Liberia Tire Rotation",
+      "fromCoords": [
+        -11.3062382,
+        7.3139328
+      ],
+      "toCoords": [
+        -10.8073698,
+        6.3156068
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 245,
+      "date": "2027-04-02",
+      "stage": "4",
+      "kind": "rest",
+      "from": null,
+      "to": "Monrovia",
+      "miles": null,
+      "note": "Liberia",
+      "fromCoords": null,
+      "toCoords": [
+        -10.8073698,
+        6.3156068
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 246,
+      "date": "2027-04-03",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Monrovia",
+      "to": "Gbarnga",
+      "miles": 121,
+      "note": "Liberia",
+      "fromCoords": [
+        -10.8073698,
+        6.3156068
+      ],
+      "toCoords": [
+        -9.4728244,
+        7.0024321
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 247,
+      "date": "2027-04-04",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Gbarnga",
+      "to": "Yekepa",
+      "miles": 86,
+      "note": "Liberia",
+      "fromCoords": [
+        -9.4728244,
+        7.0024321
+      ],
+      "toCoords": [
+        -8.5363982,
+        7.5790498
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 248,
+      "date": "2027-04-05",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Yekepa",
+      "to": "Danané",
+      "miles": 71,
+      "note": "Liberia Côte d'Ivoire",
+      "fromCoords": [
+        -8.5363982,
+        7.5790498
+      ],
+      "toCoords": [
+        -8.1447804,
+        7.2676037
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 249,
+      "date": "2027-04-06",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Danané",
+      "to": "Duékoué",
+      "miles": 90,
+      "note": "Côte d'Ivoire",
+      "fromCoords": [
+        -8.1447804,
+        7.2676037
+      ],
+      "toCoords": [
+        -7.3624598,
+        6.7473801
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 250,
+      "date": "2027-04-07",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Duékoué",
+      "to": "Daloa",
+      "miles": 66,
+      "note": "Côte d'Ivoire",
+      "fromCoords": [
+        -7.3624598,
+        6.7473801
+      ],
+      "toCoords": [
+        -6.4396888,
+        6.8883341
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 251,
+      "date": "2027-04-08",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Daloa",
+      "to": "Yamoussoukro",
+      "miles": 86,
+      "note": "Côte d'Ivoire",
+      "fromCoords": [
+        -6.4396888,
+        6.8883341
+      ],
+      "toCoords": [
+        -5.2743629,
+        6.8162741
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 252,
+      "date": "2027-04-09",
+      "stage": "4",
+      "kind": "rest",
+      "from": null,
+      "to": "Yamoussoukro",
+      "miles": null,
+      "note": "Côte d'Ivoire",
+      "fromCoords": null,
+      "toCoords": [
+        -5.2743629,
+        6.8162741
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 253,
+      "date": "2027-04-10",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Yamoussoukro",
+      "to": "Abidjan",
+      "miles": 145,
+      "note": "Côte d'Ivoire",
+      "fromCoords": [
+        -5.2743629,
+        6.8162741
+      ],
+      "toCoords": [
+        -4.019603,
+        5.3252258
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 254,
+      "date": "2027-04-11",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Abidjan",
+      "to": "Elubo",
+      "miles": 110,
+      "note": "Côte d'Ivoire",
+      "fromCoords": [
+        -4.019603,
+        5.3252258
+      ],
+      "toCoords": [
+        -2.7721149,
+        5.2883507
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 255,
+      "date": "2027-04-12",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Elubo",
+      "to": "Takoradi",
+      "miles": 85,
+      "note": "",
+      "fromCoords": [
+        -2.7721149,
+        5.2883507
+      ],
+      "toCoords": [
+        -1.7830973,
+        4.9015794
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 256,
+      "date": "2027-04-13",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Takoradi",
+      "to": "Cape Coast",
+      "miles": 49,
+      "note": "",
+      "fromCoords": [
+        -1.7830973,
+        4.9015794
+      ],
+      "toCoords": [
+        -1.2689394,
+        5.1230574
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 257,
+      "date": "2027-04-14",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Cape Coast",
+      "to": "Accra",
+      "miles": 88,
+      "note": "",
+      "fromCoords": [
+        -1.2689394,
+        5.1230574
+      ],
+      "toCoords": [
+        -0.1974306,
+        5.5592846
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 258,
+      "date": "2027-04-15",
+      "stage": "4",
+      "kind": "rest",
+      "from": null,
+      "to": "Accra",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        -0.1974306,
+        5.5592846
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 259,
+      "date": "2027-04-16",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Accra",
+      "to": "Lomé",
+      "miles": 121,
+      "note": "",
+      "fromCoords": [
+        -0.1974306,
+        5.5592846
+      ],
+      "toCoords": [
+        1.2196502,
+        6.1295577
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 260,
+      "date": "2027-04-17",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Lomé",
+      "to": "Cotonou",
+      "miles": 95,
+      "note": "",
+      "fromCoords": [
+        1.2196502,
+        6.1295577
+      ],
+      "toCoords": [
+        2.4277995,
+        6.3562425
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 261,
+      "date": "2027-04-18",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Contonou",
+      "to": "Lagos",
+      "miles": 76,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 262,
+      "date": "2027-04-19",
+      "stage": "4",
+      "kind": "rest",
+      "from": null,
+      "to": "Lagos",
+      "miles": null,
+      "note": "Tune Up 8/ Tires @ Simba Planet (south one)",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 263,
+      "date": "2027-04-20",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Lagos",
+      "to": "Ore",
+      "miles": 131,
+      "note": "via A1, Sagamu",
+      "fromCoords": null,
+      "toCoords": [
+        4.8779969,
+        6.7518524
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 264,
+      "date": "2027-04-21",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Ore",
+      "to": "Agbor",
+      "miles": 107,
+      "note": "Royal Courtyard Hotel, Good Foo d",
+      "fromCoords": [
+        4.8779969,
+        6.7518524
+      ],
+      "toCoords": [
+        6.1817726,
+        6.2576112
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 265,
+      "date": "2027-04-22",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Agbor",
+      "to": "Enugu",
+      "miles": 111,
+      "note": "",
+      "fromCoords": [
+        6.1817726,
+        6.2576112
+      ],
+      "toCoords": [
+        7.5138947,
+        6.4482701
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 266,
+      "date": "2027-04-23",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Enugu",
+      "to": "Ikom",
+      "miles": 136,
+      "note": "",
+      "fromCoords": [
+        7.5138947,
+        6.4482701
+      ],
+      "toCoords": [
+        8.7205877,
+        5.9616504
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 267,
+      "date": "2027-04-24",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Ikom",
+      "to": "Nguti",
+      "miles": 101,
+      "note": "",
+      "fromCoords": [
+        8.7205877,
+        5.9616504
+      ],
+      "toCoords": [
+        9.4172728,
+        5.3371805
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 268,
+      "date": "2027-04-25",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Nguti",
+      "to": "Nkongsamba",
+      "miles": 107,
+      "note": "",
+      "fromCoords": [
+        9.4172728,
+        5.3371805
+      ],
+      "toCoords": [
+        9.9353318,
+        4.9741169
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 269,
+      "date": "2027-04-26",
+      "stage": "4",
+      "kind": "rest",
+      "from": null,
+      "to": "Nkongsamba",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        9.9353318,
+        4.9741169
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 270,
+      "date": "2027-04-27",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Nkongsamba",
+      "to": "Bangangté",
+      "miles": 60,
+      "note": "",
+      "fromCoords": [
+        9.9353318,
+        4.9741169
+      ],
+      "toCoords": [
+        10.5239867,
+        5.1443561
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 271,
+      "date": "2027-04-28",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Bangangté",
+      "to": "Bafia",
+      "miles": 77,
+      "note": "Auberge le Mazerolle",
+      "fromCoords": [
+        10.5239867,
+        5.1443561
+      ],
+      "toCoords": [
+        11.2240441,
+        4.7546039
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 272,
+      "date": "2027-04-29",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Bafia",
+      "to": "Batchenga",
+      "miles": 69,
+      "note": "",
+      "fromCoords": [
+        11.2240441,
+        4.7546039
+      ],
+      "toCoords": [
+        11.6450084,
+        4.2846263
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 273,
+      "date": "2027-04-30",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Batchenga",
+      "to": "Nanga-Eboko",
+      "miles": 64,
+      "note": "",
+      "fromCoords": [
+        11.6450084,
+        4.2846263
+      ],
+      "toCoords": [
+        12.3750266,
+        4.6740235
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 274,
+      "date": "2027-05-01",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Nanga-Eboko",
+      "to": "Bertoua",
+      "miles": 107,
+      "note": "",
+      "fromCoords": [
+        12.3750266,
+        4.6740235
+      ],
+      "toCoords": [
+        13.6767958,
+        4.5791946
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 275,
+      "date": "2027-05-02",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Bertoua",
+      "to": "Batouri",
+      "miles": 56,
+      "note": "",
+      "fromCoords": [
+        13.6767958,
+        4.5791946
+      ],
+      "toCoords": [
+        14.3617343,
+        4.4354347
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 276,
+      "date": "2027-05-03",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Batouri",
+      "to": "Kenzou",
+      "miles": 65,
+      "note": "",
+      "fromCoords": [
+        14.3617343,
+        4.4354347
+      ],
+      "toCoords": [
+        15.0294415,
+        4.1757741
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 277,
+      "date": "2027-05-04",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Kenzou",
+      "to": "Berbérati",
+      "miles": 63,
+      "note": "R",
+      "fromCoords": [
+        15.0294415,
+        4.1757741
+      ],
+      "toCoords": [
+        15.7879371,
+        4.2571092
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 278,
+      "date": "2027-05-05",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Berbérati",
+      "to": "Carnot",
+      "miles": 59,
+      "note": "R",
+      "fromCoords": [
+        15.7879371,
+        4.2571092
+      ],
+      "toCoords": [
+        15.8789403,
+        4.9404212
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 279,
+      "date": "2027-05-06",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Carnot",
+      "to": "Gadzi",
+      "miles": 70,
+      "note": "R",
+      "fromCoords": [
+        15.8789403,
+        4.9404212
+      ],
+      "toCoords": [
+        16.7048163,
+        4.7791368
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 280,
+      "date": "2027-05-07",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Gadzi",
+      "to": "Boda",
+      "miles": 74,
+      "note": "R",
+      "fromCoords": [
+        16.7048163,
+        4.7791368
+      ],
+      "toCoords": [
+        17.4647284,
+        4.3209601
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 281,
+      "date": "2027-05-08",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Boda",
+      "to": "Mbaïki",
+      "miles": 52,
+      "note": "R",
+      "fromCoords": [
+        17.4647284,
+        4.3209601
+      ],
+      "toCoords": [
+        17.9828138,
+        3.8665018
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 282,
+      "date": "2027-05-09",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Mbaïki",
+      "to": "Bangui",
+      "miles": 68,
+      "note": "R Ledger Plaza Bangui Tire Rotation",
+      "fromCoords": [
+        17.9828138,
+        3.8665018
+      ],
+      "toCoords": [
+        18.5827765,
+        4.362156
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 283,
+      "date": "2027-05-10",
+      "stage": "4",
+      "kind": "rest",
+      "from": null,
+      "to": "Bangui",
+      "miles": null,
+      "note": "R",
+      "fromCoords": null,
+      "toCoords": [
+        18.5827765,
+        4.362156
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 284,
+      "date": "2027-05-11",
+      "stage": "4",
+      "kind": "rest",
+      "from": null,
+      "to": "Bangui",
+      "miles": null,
+      "note": "R",
+      "fromCoords": null,
+      "toCoords": [
+        18.5827765,
+        4.362156
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 285,
+      "date": "2027-05-12",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Bangui",
+      "to": "Boketa",
+      "miles": 66,
+      "note": "R Ubangi River Crossing",
+      "fromCoords": [
+        18.5827765,
+        4.362156
+      ],
+      "toCoords": [
+        18.866667,
+        3.783333
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 286,
+      "date": "2027-05-13",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Boketa",
+      "to": "Gemena",
+      "miles": 89,
+      "note": "",
+      "fromCoords": [
+        18.866667,
+        3.783333
+      ],
+      "toCoords": [
+        19.7770261,
+        3.2515532
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 287,
+      "date": "2027-05-14",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Gemena",
+      "to": "Akula",
+      "miles": 73,
+      "note": "",
+      "fromCoords": [
+        19.7770261,
+        3.2515532
+      ],
+      "toCoords": [
+        20.1834431,
+        2.3780262
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 288,
+      "date": "2027-05-15",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Akula",
+      "to": "Mbokutu",
+      "miles": 50,
+      "note": "Mongala River Crossing",
+      "fromCoords": [
+        20.1834431,
+        2.3780262
+      ],
+      "toCoords": [
+        20.694367,
+        2.1955531
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 289,
+      "date": "2027-05-16",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Mbokutu",
+      "to": "Lisala",
+      "miles": 61,
+      "note": "",
+      "fromCoords": [
+        20.694367,
+        2.1955531
+      ],
+      "toCoords": [
+        21.4872092,
+        2.1701072
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 290,
+      "date": "2027-05-17",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Lisala",
+      "to": "Bumba",
+      "miles": 96,
+      "note": "",
+      "fromCoords": [
+        21.4872092,
+        2.1701072
+      ],
+      "toCoords": [
+        22.4708685,
+        2.1961772
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 291,
+      "date": "2027-05-18",
+      "stage": "4",
+      "kind": "rest",
+      "from": null,
+      "to": "Bumba",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        22.4708685,
+        2.1961772
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 292,
+      "date": "2027-05-19",
+      "stage": "4",
+      "kind": "rest",
+      "from": null,
+      "to": "Bumba",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        22.4708685,
+        2.1961772
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 293,
+      "date": "2027-05-20",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Bumba",
+      "to": "Bunduki",
+      "miles": 71,
+      "note": "",
+      "fromCoords": [
+        22.4708685,
+        2.1961772
+      ],
+      "toCoords": [
+        23.3049491,
+        2.4922198
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 294,
+      "date": "2027-05-21",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Bunduki",
+      "to": "Dulia",
+      "miles": 78,
+      "note": "",
+      "fromCoords": [
+        23.3049491,
+        2.4922198
+      ],
+      "toCoords": [
+        24.13799,
+        2.9602248
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 295,
+      "date": "2027-05-22",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Dulia",
+      "to": "Buta",
+      "miles": 48,
+      "note": "",
+      "fromCoords": [
+        24.13799,
+        2.9602248
+      ],
+      "toCoords": [
+        24.7499112,
+        2.8045317
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 296,
+      "date": "2027-05-23",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Buta",
+      "to": "Titule",
+      "miles": 79,
+      "note": "",
+      "fromCoords": [
+        24.7499112,
+        2.8045317
+      ],
+      "toCoords": [
+        25.5266578,
+        3.2736229
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 297,
+      "date": "2027-05-24",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Titule",
+      "to": "Dingila",
+      "miles": 51,
+      "note": "",
+      "fromCoords": [
+        25.5266578,
+        3.2736229
+      ],
+      "toCoords": [
+        26.0591205,
+        3.6524312
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 298,
+      "date": "2027-05-25",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Dingila",
+      "to": "Poko",
+      "miles": 96,
+      "note": "",
+      "fromCoords": [
+        26.0591205,
+        3.6524312
+      ],
+      "toCoords": [
+        26.8969234,
+        3.1360123
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 299,
+      "date": "2027-05-26",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Poko",
+      "to": "Isiro",
+      "miles": 81,
+      "note": "",
+      "fromCoords": [
+        26.8969234,
+        3.1360123
+      ],
+      "toCoords": [
+        27.6082774,
+        2.7722364
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 300,
+      "date": "2027-05-27",
+      "stage": "4",
+      "kind": "rest",
+      "from": null,
+      "to": "Isiro",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        27.6082774,
+        2.7722364
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 301,
+      "date": "2027-05-28",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Isiro",
+      "to": "Ndubala",
+      "miles": 70,
+      "note": "",
+      "fromCoords": [
+        27.6082774,
+        2.7722364
+      ],
+      "toCoords": [
+        28.397289,
+        2.768303
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 302,
+      "date": "2027-05-29",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Ndubala",
+      "to": "Gombari",
+      "miles": 62,
+      "note": "",
+      "fromCoords": [
+        28.397289,
+        2.768303
+      ],
+      "toCoords": [
+        29.0401738,
+        2.7044942
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 303,
+      "date": "2027-05-30",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Gombari",
+      "to": "Durba",
+      "miles": 75,
+      "note": "",
+      "fromCoords": [
+        29.0401738,
+        2.7044942
+      ],
+      "toCoords": [
+        29.5629662,
+        3.1292486
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 304,
+      "date": "2027-05-31",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Durba",
+      "to": "Bo",
+      "miles": 53,
+      "note": "",
+      "fromCoords": [
+        29.5629662,
+        3.1292486
+      ],
+      "toCoords": [
+        -11.7409946,
+        7.9551791
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 305,
+      "date": "2027-06-01",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Bo",
+      "to": "Aru",
+      "miles": 59,
+      "note": "Ituri Province",
+      "fromCoords": [
+        -11.7409946,
+        7.9551791
+      ],
+      "toCoords": [
+        30.8384093,
+        2.8590231
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 306,
+      "date": "2027-06-02",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Aru",
+      "to": "Pakwach",
+      "miles": 72,
+      "note": "via Pawor",
+      "fromCoords": [
+        30.8384093,
+        2.8590231
+      ],
+      "toCoords": [
+        31.4948487,
+        2.460882
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 307,
+      "date": "2027-06-03",
+      "stage": "4",
+      "kind": "rest",
+      "from": null,
+      "to": "Pakwach",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        31.4948487,
+        2.460882
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 308,
+      "date": "2027-06-04",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Pakwach",
+      "to": "Kamdini",
+      "miles": 74,
+      "note": "Murchison NP",
+      "fromCoords": [
+        31.4948487,
+        2.460882
+      ],
+      "toCoords": [
+        32.3320088,
+        2.2458645
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 309,
+      "date": "2027-06-05",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Kamdini",
+      "to": "Lira",
+      "miles": 43,
+      "note": "",
+      "fromCoords": [
+        32.3320088,
+        2.2458645
+      ],
+      "toCoords": [
+        32.8902699,
+        2.2596365
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 310,
+      "date": "2027-06-06",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Lira",
+      "to": "Soroti",
+      "miles": 80,
+      "note": "",
+      "fromCoords": [
+        32.8902699,
+        2.2596365
+      ],
+      "toCoords": [
+        33.6287951,
+        1.729074
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 311,
+      "date": "2027-06-07",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Soroti",
+      "to": "Tororo",
+      "miles": 93,
+      "note": "",
+      "fromCoords": [
+        33.6287951,
+        1.729074
+      ],
+      "toCoords": [
+        34.1865669,
+        0.6782274
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 312,
+      "date": "2027-06-08",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Tororo",
+      "to": "Eldoret",
+      "miles": 88,
+      "note": "",
+      "fromCoords": [
+        34.1865669,
+        0.6782274
+      ],
+      "toCoords": [
+        35.2697802,
+        0.5142775
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 313,
+      "date": "2027-06-09",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Eldoret",
+      "to": "Nakuru",
+      "miles": 97,
+      "note": "Equator Crossing",
+      "fromCoords": [
+        35.2697802,
+        0.5142775
+      ],
+      "toCoords": [
+        36.080026,
+        -0.3030988
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 314,
+      "date": "2027-06-10",
+      "stage": "4",
+      "kind": "rest",
+      "from": null,
+      "to": "Nakuru",
+      "miles": null,
+      "note": "Lake Nakuru NP",
+      "fromCoords": null,
+      "toCoords": [
+        36.080026,
+        -0.3030988
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 315,
+      "date": "2027-06-11",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Nakuru",
+      "to": "Nairobi",
+      "miles": 99,
+      "note": "Tune Up 9/Tires @ Cycle Africa Bikes",
+      "fromCoords": [
+        36.080026,
+        -0.3030988
+      ],
+      "toCoords": [
+        36.8219462,
+        -1.2920659
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 316,
+      "date": "2027-06-12",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Nairobi",
+      "to": "Kibwezi",
+      "miles": 121,
+      "note": "",
+      "fromCoords": [
+        36.8219462,
+        -1.2920659
+      ],
+      "toCoords": [
+        37.967847,
+        -2.4105236
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 317,
+      "date": "2027-06-13",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Kibwezi",
+      "to": "Voi",
+      "miles": 85,
+      "note": "",
+      "fromCoords": [
+        37.967847,
+        -2.4105236
+      ],
+      "toCoords": [
+        38.5559336,
+        -3.3973104
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 318,
+      "date": "2027-06-14",
+      "stage": "4",
+      "kind": "ride",
+      "from": "Voi",
+      "to": "Mombasa",
+      "miles": 101,
+      "note": "Nyali Beach Tire Dip",
+      "fromCoords": [
+        38.5559336,
+        -3.3973104
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 319,
+      "date": "2027-06-15",
+      "stage": "4",
+      "kind": "rest",
+      "from": null,
+      "to": "Mombasa",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 320,
+      "date": "2027-06-16",
+      "stage": "5",
+      "kind": "travel",
+      "from": null,
+      "to": null,
+      "miles": null,
+      "note": "Travel Day: Flight to Mumbai, India",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 321,
+      "date": "2027-06-17",
+      "stage": "5",
+      "kind": "rest",
+      "from": null,
+      "to": "Mumbai",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        72.8607424,
+        19.1405254
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 322,
+      "date": "2027-06-18",
+      "stage": "5",
+      "kind": "rest",
+      "from": null,
+      "to": "Mumbai",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        72.8607424,
+        19.1405254
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 323,
+      "date": "2027-06-19",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Mumbai",
+      "to": "Shirol",
+      "miles": 69,
+      "note": "Juhu Beac h Tire Dip, Dreamm land Resort",
+      "fromCoords": [
+        72.8607424,
+        19.1405254
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 324,
+      "date": "2027-06-20",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Shirol",
+      "to": "Chandwad",
+      "miles": 86,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 325,
+      "date": "2027-06-21",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Chandwad",
+      "to": "Dhule",
+      "miles": 59,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        74.5910891,
+        20.5870515
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 326,
+      "date": "2027-06-22",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Dhule",
+      "to": "Julwania",
+      "miles": 80,
+      "note": "",
+      "fromCoords": [
+        74.5910891,
+        20.5870515
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 327,
+      "date": "2027-06-23",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Julwania",
+      "to": "Indore",
+      "miles": 85,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        75.8577258,
+        22.7195687
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 328,
+      "date": "2027-06-24",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Indore",
+      "to": "Bhopal",
+      "miles": 121,
+      "note": "",
+      "fromCoords": [
+        75.8577258,
+        22.7195687
+      ],
+      "toCoords": [
+        77.412615,
+        23.2599333
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 329,
+      "date": "2027-06-25",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Bhopal",
+      "to": "Sagar",
+      "miles": 105,
+      "note": "Tire Rotation",
+      "fromCoords": [
+        77.412615,
+        23.2599333
+      ],
+      "toCoords": [
+        78.2770021,
+        23.4536988
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 330,
+      "date": "2027-06-26",
+      "stage": "5",
+      "kind": "rest",
+      "from": null,
+      "to": "Sagar",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        78.2770021,
+        23.4536988
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 331,
+      "date": "2027-06-27",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Sagar",
+      "to": "Chhatarpur",
+      "miles": 101,
+      "note": "",
+      "fromCoords": [
+        78.2770021,
+        23.4536988
+      ],
+      "toCoords": [
+        79.5910058,
+        24.9167821
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 332,
+      "date": "2027-06-28",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Chhatarpur",
+      "to": "Banda",
+      "miles": 65,
+      "note": "",
+      "fromCoords": [
+        79.5910058,
+        24.9167821
+      ],
+      "toCoords": [
+        79.9084719,
+        25.3296547
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 333,
+      "date": "2027-06-29",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Banda",
+      "to": "Raebareli",
+      "miles": 93,
+      "note": "",
+      "fromCoords": [
+        79.9084719,
+        25.3296547
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 334,
+      "date": "2027-06-30",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Raebareli",
+      "to": "Basti",
+      "miles": 120,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        82.7629893,
+        26.8139844
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 335,
+      "date": "2027-07-01",
+      "stage": "5",
+      "kind": "rest",
+      "from": null,
+      "to": "Basti",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        82.7629893,
+        26.8139844
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 336,
+      "date": "2027-07-02",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Basti",
+      "to": "Siddharthanagar",
+      "miles": 73,
+      "note": "",
+      "fromCoords": [
+        82.7629893,
+        26.8139844
+      ],
+      "toCoords": [
+        83.2867678,
+        27.0938787
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 337,
+      "date": "2027-07-03",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Siddharthanagar",
+      "to": "Bharat pur",
+      "miles": 75,
+      "note": "",
+      "fromCoords": [
+        83.2867678,
+        27.0938787
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 338,
+      "date": "2027-07-04",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Bharatpur",
+      "to": "Kathmandu",
+      "miles": 93,
+      "note": "Tune Up 10 @ Pancbike",
+      "fromCoords": null,
+      "toCoords": [
+        85.3221634,
+        27.7103145
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 339,
+      "date": "2027-07-05",
+      "stage": "5",
+      "kind": "rest",
+      "from": null,
+      "to": "Kathmandu",
+      "miles": null,
+      "note": "China visa @ Kathmandu CVASC",
+      "fromCoords": null,
+      "toCoords": [
+        85.3221634,
+        27.7103145
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 340,
+      "date": "2027-07-06",
+      "stage": "5",
+      "kind": "rest",
+      "from": null,
+      "to": "Kathmandu",
+      "miles": null,
+      "note": "Replace AirTag Batteries",
+      "fromCoords": null,
+      "toCoords": [
+        85.3221634,
+        27.7103145
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 341,
+      "date": "2027-07-07",
+      "stage": "5",
+      "kind": "rest",
+      "from": null,
+      "to": "Kathmandu",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        85.3221634,
+        27.7103145
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 342,
+      "date": "2027-07-08",
+      "stage": "5",
+      "kind": "rest",
+      "from": null,
+      "to": "Kathmandu",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        85.3221634,
+        27.7103145
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 343,
+      "date": "2027-07-09",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Kathmandu",
+      "to": "Bh ulkot",
+      "miles": 58,
+      "note": "",
+      "fromCoords": [
+        85.3221634,
+        27.7103145
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 344,
+      "date": "2027-07-10",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Bh ulkot",
+      "to": "Mahadevsthan",
+      "miles": 79,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 345,
+      "date": "2027-07-11",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Mahadevsthan",
+      "to": "Bhojpur",
+      "miles": 75,
+      "note": "Hongku Resort",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 346,
+      "date": "2027-07-12",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Bhojpur",
+      "to": "Dharan",
+      "miles": 94,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 347,
+      "date": "2027-07-13",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Dharan",
+      "to": "Chalsa",
+      "miles": 122,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 348,
+      "date": "2027-07-14",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Chalsa",
+      "to": "Jaigaon",
+      "miles": 55,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 349,
+      "date": "2027-07-15",
+      "stage": "5",
+      "kind": "rest",
+      "from": null,
+      "to": "Jai gaon",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 350,
+      "date": "2027-07-16",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Jai gaon",
+      "to": "Chhukha",
+      "miles": 57,
+      "note": "Bhutan Tashi Yangchar Hotel",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 351,
+      "date": "2027-07-17",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Chhukha",
+      "to": "Paro",
+      "miles": 40,
+      "note": "Bhutan Golden Paddyfield",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 352,
+      "date": "2027-07-18",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Paro",
+      "to": "Thimphu",
+      "miles": 45,
+      "note": "Bhutan Hotel Gak yil Tiger’s Nest",
+      "fromCoords": null,
+      "toCoords": [
+        89.4169523,
+        27.4283009
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 353,
+      "date": "2027-07-19",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Thimphu",
+      "to": "Nubding",
+      "miles": 77,
+      "note": "Bhutan Gangtey Monastery",
+      "fromCoords": [
+        89.4169523,
+        27.4283009
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 354,
+      "date": "2027-07-20",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Nubding",
+      "to": "Chumey",
+      "miles": 71,
+      "note": "Bhutan Chumey Nature Resort",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 355,
+      "date": "2027-07-21",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Chumey",
+      "to": "Sengor",
+      "miles": 59,
+      "note": "Bhutan Tashi Gatshel Food and Lodge",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 356,
+      "date": "2027-07-22",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Sengor",
+      "to": "Mongar",
+      "miles": 53,
+      "note": "Bhutan Wangchuk Hotel",
+      "fromCoords": null,
+      "toCoords": [
+        91.0286955,
+        27.3622845
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 357,
+      "date": "2027-07-23",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Mongar",
+      "to": "Trashigang",
+      "miles": 52,
+      "note": "Bhutan Ling khar Lodge",
+      "fromCoords": [
+        91.0286955,
+        27.3622845
+      ],
+      "toCoords": [
+        91.4066356,
+        27.2598452
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 358,
+      "date": "2027-07-24",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Trashigang",
+      "to": "Wamrong",
+      "miles": 44,
+      "note": "Bhutan Deche n Wangdi Rest aur &Lodge",
+      "fromCoords": [
+        91.4066356,
+        27.2598452
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 359,
+      "date": "2027-07-25",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Wamrong",
+      "to": "Udal guri",
+      "miles": 108,
+      "note": "Bhutan via S iddhinathpur",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 360,
+      "date": "2027-07-26",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Udal guri",
+      "to": "Kuthari",
+      "miles": 82,
+      "note": "Diphlu River Lodge Tire Rotation",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 361,
+      "date": "2027-07-27",
+      "stage": "5",
+      "kind": "rest",
+      "from": null,
+      "to": "Kuthari",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 362,
+      "date": "2027-07-28",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Kuthari",
+      "to": "Naz ira",
+      "miles": 101,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 363,
+      "date": "2027-07-29",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Nazira",
+      "to": "Jairampur",
+      "miles": 107,
+      "note": "via 702C/1/24/315",
+      "fromCoords": null,
+      "toCoords": [
+        96.1672818,
+        27.2363752
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 364,
+      "date": "2027-07-30",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Jairampur",
+      "to": "Danai",
+      "miles": 130,
+      "note": "Pangsau Pass",
+      "fromCoords": [
+        96.1672818,
+        27.2363752
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 365,
+      "date": "2027-07-31",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Danai",
+      "to": "Myitkyina",
+      "miles": 117,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        96.2066896,
+        26.7166906
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 366,
+      "date": "2027-08-01",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Myitkyina",
+      "to": "Bhamo",
+      "miles": 120,
+      "note": "",
+      "fromCoords": [
+        96.2066896,
+        26.7166906
+      ],
+      "toCoords": [
+        97.3939224,
+        25.3867687
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 367,
+      "date": "2027-08-02",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Bhamo",
+      "to": "Ruili",
+      "miles": 86,
+      "note": "Ruili Gate",
+      "fromCoords": [
+        97.3939224,
+        25.3867687
+      ],
+      "toCoords": [
+        97.6074465,
+        23.8160302
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 368,
+      "date": "2027-08-03",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Ruili",
+      "to": "Baoshan",
+      "miles": 146,
+      "note": "",
+      "fromCoords": [
+        97.6074465,
+        23.8160302
+      ],
+      "toCoords": [
+        99.16181,
+        25.1120499
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 369,
+      "date": "2027-08-04",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Baoshan",
+      "to": "Dali",
+      "miles": 112,
+      "note": "",
+      "fromCoords": [
+        99.16181,
+        25.1120499
+      ],
+      "toCoords": [
+        100.26764,
+        25.6064799
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 370,
+      "date": "2027-08-05",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Dali",
+      "to": "Chuxiong Yi",
+      "miles": 109,
+      "note": "",
+      "fromCoords": [
+        100.26764,
+        25.6064799
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 371,
+      "date": "2027-08-06",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Chuxiong Yi",
+      "to": "Kunming",
+      "miles": 106,
+      "note": "Tune Up 11 @ Xiong Bro thers",
+      "fromCoords": null,
+      "toCoords": [
+        101.5276703,
+        25.0449495
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 372,
+      "date": "2027-08-07",
+      "stage": "5",
+      "kind": "rest",
+      "from": null,
+      "to": "Kunming",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        101.5276703,
+        25.0449495
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 373,
+      "date": "2027-08-08",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Kunming",
+      "to": "Datong Town",
+      "miles": 112,
+      "note": "",
+      "fromCoords": [
+        101.5276703,
+        25.0449495
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 374,
+      "date": "2027-08-09",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Datong Town",
+      "to": "Yanjiazhen",
+      "miles": 151,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 375,
+      "date": "2027-08-10",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Yanjiazhen",
+      "to": "Chashuping",
+      "miles": 101,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 376,
+      "date": "2027-08-11",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Chashuping",
+      "to": "Hexin Village",
+      "miles": 148,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 377,
+      "date": "2027-08-12",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Hexin Village",
+      "to": "Guilin",
+      "miles": 134,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        109.4012697,
+        24.3601347
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 378,
+      "date": "2027-08-13",
+      "stage": "5",
+      "kind": "rest",
+      "from": null,
+      "to": "Guilin",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        109.4012697,
+        24.3601347
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 379,
+      "date": "2027-08-14",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Guilin",
+      "to": "Laozhai",
+      "miles": 109,
+      "note": "",
+      "fromCoords": [
+        109.4012697,
+        24.3601347
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 380,
+      "date": "2027-08-15",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Laozhai",
+      "to": "Huaihua",
+      "miles": 105,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        109.7308596,
+        26.9642095
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 381,
+      "date": "2027-08-16",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Huaihua",
+      "to": "Guixiping",
+      "miles": 104,
+      "note": "",
+      "fromCoords": [
+        109.7308596,
+        26.9642095
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 382,
+      "date": "2027-08-17",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Guixiping",
+      "to": "Wulingyuan District",
+      "miles": 78,
+      "note": "Tire Rotation",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 383,
+      "date": "2027-08-18",
+      "stage": "5",
+      "kind": "rest",
+      "from": null,
+      "to": "Wulingyuan",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 384,
+      "date": "2027-08-19",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Wulingyuan",
+      "to": "Jinshi City",
+      "miles": 115,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 385,
+      "date": "2027-08-20",
+      "stage": "5",
+      "kind": "ride",
+      "from": "J inshi City",
+      "to": "Yueyang",
+      "miles": 104,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        113.12919,
+        29.3572799
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 386,
+      "date": "2027-08-21",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Yueyang",
+      "to": "Xiushui County",
+      "miles": 121,
+      "note": "(G353)",
+      "fromCoords": [
+        113.12919,
+        29.3572799
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 387,
+      "date": "2027-08-22",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Xiushui",
+      "to": "Nanchang",
+      "miles": 105,
+      "note": "(via Huanggangzhen and Zaoxixiang)",
+      "fromCoords": null,
+      "toCoords": [
+        115.8579399,
+        28.6820199
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 388,
+      "date": "2027-08-23",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Nanchang",
+      "to": "Yingtan",
+      "miles": 103,
+      "note": "(G320)",
+      "fromCoords": [
+        115.8579399,
+        28.6820199
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 389,
+      "date": "2027-08-24",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Yingtan",
+      "to": "Quzhou",
+      "miles": 141,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        117.981592,
+        28.4426377
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 390,
+      "date": "2027-08-25",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Quzhou",
+      "to": "Xianju County",
+      "miles": 139,
+      "note": "",
+      "fromCoords": [
+        117.981592,
+        28.4426377
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 391,
+      "date": "2027-08-26",
+      "stage": "5",
+      "kind": "ride",
+      "from": "Xianju County",
+      "to": "Taizhou",
+      "miles": 93,
+      "note": "Dongxia Sand Beach Tire Dip",
+      "fromCoords": null,
+      "toCoords": [
+        120.72881,
+        28.8468299
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 392,
+      "date": "2027-08-27",
+      "stage": "5",
+      "kind": "travel",
+      "from": null,
+      "to": null,
+      "miles": null,
+      "note": "Travel Day : Flight to Hong Kong, China",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 393,
+      "date": "2027-08-28",
+      "stage": "5",
+      "kind": "rest",
+      "from": null,
+      "to": "Hong Kong",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 394,
+      "date": "2027-08-29",
+      "stage": "5",
+      "kind": "rest",
+      "from": null,
+      "to": "Hong Kong",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 395,
+      "date": "2027-08-30",
+      "stage": "6",
+      "kind": "travel",
+      "from": null,
+      "to": null,
+      "miles": null,
+      "note": "Travel Day: Flight to Los Angeles, CA",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 396,
+      "date": "2027-08-31",
+      "stage": "6",
+      "kind": "rest",
+      "from": null,
+      "to": "Rest Day i n Los Angeles",
+      "miles": null,
+      "note": "Tune Up 12 @ C Street Bikes",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 397,
+      "date": "2027-09-01",
+      "stage": "6",
+      "kind": "rest",
+      "from": null,
+      "to": "Los Angeles",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 398,
+      "date": "2027-09-02",
+      "stage": "6",
+      "kind": "rest",
+      "from": null,
+      "to": "Los Angeles",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 399,
+      "date": "2027-09-03",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Santa Monica",
+      "to": "Santa Barbara",
+      "miles": 85,
+      "note": "SM Pier Tire Dip",
+      "fromCoords": null,
+      "toCoords": [
+        -119.698935,
+        34.420285
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 400,
+      "date": "2027-09-04",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Santa Barbara",
+      "to": "Morro Bay",
+      "miles": 128,
+      "note": "",
+      "fromCoords": [
+        -119.698935,
+        34.420285
+      ],
+      "toCoords": [
+        -120.8499924,
+        35.3659445
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 401,
+      "date": "2027-09-05",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Morro Bay",
+      "to": "Gorda",
+      "miles": 56,
+      "note": "",
+      "fromCoords": [
+        -120.8499924,
+        35.3659445
+      ],
+      "toCoords": [
+        -121.4459342,
+        35.8765304
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 402,
+      "date": "2027-09-06",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Gorda",
+      "to": "Monterey",
+      "miles": 67,
+      "note": "",
+      "fromCoords": [
+        -121.4459342,
+        35.8765304
+      ],
+      "toCoords": [
+        -121.8977688,
+        36.5972925
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 403,
+      "date": "2027-09-07",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Monterey",
+      "to": "Pescadero",
+      "miles": 78,
+      "note": "",
+      "fromCoords": [
+        -121.8977688,
+        36.5972925
+      ],
+      "toCoords": [
+        -122.3830152,
+        37.2551636
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 404,
+      "date": "2027-09-08",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Pescadero",
+      "to": "San Francisco",
+      "miles": 46,
+      "note": "",
+      "fromCoords": [
+        -122.3830152,
+        37.2551636
+      ],
+      "toCoords": [
+        -122.4194155,
+        37.7749295
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 405,
+      "date": "2027-09-09",
+      "stage": "6",
+      "kind": "rest",
+      "from": null,
+      "to": "San Francisco",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        -122.4194155,
+        37.7749295
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 406,
+      "date": "2027-09-10",
+      "stage": "6",
+      "kind": "ride",
+      "from": "San Francisco",
+      "to": "Timber Cove",
+      "miles": 95,
+      "note": "via Route 1",
+      "fromCoords": [
+        -122.4194155,
+        37.7749295
+      ],
+      "toCoords": [
+        -123.2653184,
+        38.5289387
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 407,
+      "date": "2027-09-11",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Timber Cove",
+      "to": "Mendocino",
+      "miles": 74,
+      "note": "",
+      "fromCoords": [
+        -123.2653184,
+        38.5289387
+      ],
+      "toCoords": [
+        -123.7994591,
+        39.3076744
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 408,
+      "date": "2027-09-12",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Mendocino",
+      "to": "Garberville",
+      "miles": 76,
+      "note": "Redwoods",
+      "fromCoords": [
+        -123.7994591,
+        39.3076744
+      ],
+      "toCoords": [
+        -123.79492,
+        40.1000828
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 409,
+      "date": "2027-09-13",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Garberville",
+      "to": "Arcata",
+      "miles": 75,
+      "note": "Redwoods",
+      "fromCoords": [
+        -123.79492,
+        40.1000828
+      ],
+      "toCoords": [
+        -124.0828396,
+        40.8665166
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 410,
+      "date": "2027-09-14",
+      "stage": "6",
+      "kind": "rest",
+      "from": null,
+      "to": "Arcata",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": [
+        -124.0828396,
+        40.8665166
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 411,
+      "date": "2027-09-15",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Arcata",
+      "to": "Redding",
+      "miles": 139,
+      "note": "",
+      "fromCoords": [
+        -124.0828396,
+        40.8665166
+      ],
+      "toCoords": [
+        -122.3836121,
+        40.5754129
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 412,
+      "date": "2027-09-16",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Redding",
+      "to": "Westwood",
+      "miles": 119,
+      "note": "via Lassen Volcanic Natl Park",
+      "fromCoords": [
+        -122.3836121,
+        40.5754129
+      ],
+      "toCoords": [
+        -121.0057931,
+        40.3059999
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 413,
+      "date": "2027-09-17",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Westwood",
+      "to": "Reno",
+      "miles": 109,
+      "note": "NV Tire Rotation",
+      "fromCoords": [
+        -121.0057931,
+        40.3059999
+      ],
+      "toCoords": [
+        -119.8142691,
+        39.529919
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 414,
+      "date": "2027-09-18",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Reno",
+      "to": "Middlegate",
+      "miles": 110,
+      "note": "NV NV",
+      "fromCoords": [
+        -119.8142691,
+        39.529919
+      ],
+      "toCoords": [
+        -118.02556,
+        39.28778
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 415,
+      "date": "2027-09-19",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Middlegate",
+      "to": "Eureka",
+      "miles": 133,
+      "note": "NV NV",
+      "fromCoords": [
+        -118.02556,
+        39.28778
+      ],
+      "toCoords": [
+        -115.9607803,
+        39.5124858
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 416,
+      "date": "2027-09-20",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Eureka",
+      "to": "Ely",
+      "miles": 79,
+      "note": "NV NV",
+      "fromCoords": [
+        -115.9607803,
+        39.5124858
+      ],
+      "toCoords": [
+        -114.874248,
+        39.2533328
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 417,
+      "date": "2027-09-21",
+      "stage": "6",
+      "kind": "rest",
+      "from": null,
+      "to": "Ely",
+      "miles": null,
+      "note": "NV",
+      "fromCoords": null,
+      "toCoords": [
+        -114.874248,
+        39.2533328
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 418,
+      "date": "2027-09-22",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Ely",
+      "to": "Delta",
+      "miles": 151,
+      "note": "NV UT",
+      "fromCoords": [
+        -114.874248,
+        39.2533328
+      ],
+      "toCoords": [
+        -112.57717,
+        39.3521777
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 419,
+      "date": "2027-09-23",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Delta",
+      "to": "Salina",
+      "miles": 70,
+      "note": "UT UT",
+      "fromCoords": [
+        -112.57717,
+        39.3521777
+      ],
+      "toCoords": [
+        -111.859925,
+        38.9577407
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 420,
+      "date": "2027-09-24",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Salina",
+      "to": "Green River",
+      "miles": 107,
+      "note": "UT UT",
+      "fromCoords": [
+        -111.859925,
+        38.9577407
+      ],
+      "toCoords": [
+        -110.1596352,
+        38.9955607
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 421,
+      "date": "2027-09-25",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Green River",
+      "to": "Grand Junction",
+      "miles": 102,
+      "note": "UT CO",
+      "fromCoords": [
+        -110.1596352,
+        38.9955607
+      ],
+      "toCoords": [
+        -108.5642809,
+        39.0689478
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 422,
+      "date": "2027-09-26",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Grand Junction",
+      "to": "Crested Butte",
+      "miles": 115,
+      "note": "CO CO Rockies",
+      "fromCoords": [
+        -108.5642809,
+        39.0689478
+      ],
+      "toCoords": [
+        -106.9878231,
+        38.8697146
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 423,
+      "date": "2027-09-27",
+      "stage": "6",
+      "kind": "rest",
+      "from": null,
+      "to": "Crested Butte",
+      "miles": null,
+      "note": "CO Tune Up 13 @ Big Al’s Bicycle Heaven",
+      "fromCoords": null,
+      "toCoords": [
+        -106.9878231,
+        38.8697146
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 424,
+      "date": "2027-09-28",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Crested Butte",
+      "to": "Cotopaxi",
+      "miles": 116,
+      "note": "CO CO Rockies",
+      "fromCoords": [
+        -106.9878231,
+        38.8697146
+      ],
+      "toCoords": [
+        -105.6867122,
+        38.3731692
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 425,
+      "date": "2027-09-29",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Cotopaxi",
+      "to": "Rocky Ford",
+      "miles": 123,
+      "note": "CO CO Rockies",
+      "fromCoords": [
+        -105.6867122,
+        38.3731692
+      ],
+      "toCoords": [
+        -103.7202274,
+        38.052508
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 426,
+      "date": "2027-09-30",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Rocky Ford",
+      "to": "Holly",
+      "miles": 94,
+      "note": "CO CO",
+      "fromCoords": [
+        -103.7202274,
+        38.052508
+      ],
+      "toCoords": [
+        -102.122685,
+        38.0522337
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 427,
+      "date": "2027-10-01",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Holly",
+      "to": "Dodge City",
+      "miles": 125,
+      "note": "CO KS",
+      "fromCoords": [
+        -102.122685,
+        38.0522337
+      ],
+      "toCoords": [
+        -100.018797,
+        37.7560487
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 428,
+      "date": "2027-10-02",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Dodge City",
+      "to": "Medicine Lodge",
+      "miles": 106,
+      "note": "KS KS",
+      "fromCoords": [
+        -100.018797,
+        37.7560487
+      ],
+      "toCoords": [
+        -98.580361,
+        37.2811339
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 429,
+      "date": "2027-10-03",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Medicine Lodge",
+      "to": "Winfield",
+      "miles": 93,
+      "note": "KS KS",
+      "fromCoords": [
+        -98.580361,
+        37.2811339
+      ],
+      "toCoords": [
+        -96.9955918,
+        37.2397486
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 430,
+      "date": "2027-10-04",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Winfield",
+      "to": "Independence",
+      "miles": 87,
+      "note": "KS KS",
+      "fromCoords": [
+        -96.9955918,
+        37.2397486
+      ],
+      "toCoords": [
+        -95.7083131,
+        37.2242358
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 431,
+      "date": "2027-10-05",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Independence",
+      "to": "Pittsburg",
+      "miles": 68,
+      "note": "KS KS",
+      "fromCoords": [
+        -95.7083131,
+        37.2242358
+      ],
+      "toCoords": [
+        -94.70496,
+        37.410884
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 432,
+      "date": "2027-10-06",
+      "stage": "6",
+      "kind": "rest",
+      "from": null,
+      "to": "Pittsburg",
+      "miles": null,
+      "note": "KS",
+      "fromCoords": null,
+      "toCoords": [
+        -94.70496,
+        37.410884
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 433,
+      "date": "2027-10-07",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Pittsburg",
+      "to": "Marshfield",
+      "miles": 107,
+      "note": "KS MO via Fair Grove",
+      "fromCoords": [
+        -94.70496,
+        37.410884
+      ],
+      "toCoords": [
+        -92.9024067,
+        37.3372552
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 434,
+      "date": "2027-10-08",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Marshfield",
+      "to": "Eminence",
+      "miles": 106,
+      "note": "MO MO",
+      "fromCoords": [
+        -92.9024067,
+        37.3372552
+      ],
+      "toCoords": [
+        -91.357635,
+        37.1506044
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 435,
+      "date": "2027-10-09",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Eminence",
+      "to": "Sikeston",
+      "miles": 121,
+      "note": "MO MO Tire Rotation",
+      "fromCoords": [
+        -91.357635,
+        37.1506044
+      ],
+      "toCoords": [
+        -89.5878579,
+        36.876719
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 436,
+      "date": "2027-10-10",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Sikeston",
+      "to": "Dawson Springs",
+      "miles": 125,
+      "note": "MO KY",
+      "fromCoords": [
+        -89.5878579,
+        36.876719
+      ],
+      "toCoords": [
+        -87.6925074,
+        37.1672684
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 437,
+      "date": "2027-10-11",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Dawson Springs",
+      "to": "Elizabethtown",
+      "miles": 125,
+      "note": "KY KY via 62",
+      "fromCoords": [
+        -87.6925074,
+        37.1672684
+      ],
+      "toCoords": [
+        -85.8712385,
+        37.7043065
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 438,
+      "date": "2027-10-12",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Elizabethtown",
+      "to": "Lexington",
+      "miles": 85,
+      "note": "KY KY",
+      "fromCoords": [
+        -85.8712385,
+        37.7043065
+      ],
+      "toCoords": [
+        -84.5152662,
+        38.0389091
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 439,
+      "date": "2027-10-13",
+      "stage": "6",
+      "kind": "rest",
+      "from": null,
+      "to": "Lexington",
+      "miles": null,
+      "note": "KY",
+      "fromCoords": null,
+      "toCoords": [
+        -84.5152662,
+        38.0389091
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 440,
+      "date": "2027-10-14",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Lexington",
+      "to": "Huntington",
+      "miles": 132,
+      "note": "KY WV via 60",
+      "fromCoords": [
+        -84.5152662,
+        38.0389091
+      ],
+      "toCoords": [
+        -82.4451746,
+        38.4191481
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 441,
+      "date": "2027-10-15",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Huntington",
+      "to": "Ivydale",
+      "miles": 104,
+      "note": "WV WV via 60, 119, 4",
+      "fromCoords": [
+        -82.4451746,
+        38.4191481
+      ],
+      "toCoords": [
+        -81.0348297,
+        38.5356548
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 442,
+      "date": "2027-10-16",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Ivydale",
+      "to": "Grafton",
+      "miles": 122,
+      "note": "WV WV via 4, 19, 50",
+      "fromCoords": [
+        -81.0348297,
+        38.5356548
+      ],
+      "toCoords": [
+        -80.0189659,
+        39.3409249
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 443,
+      "date": "2027-10-17",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Grafton",
+      "to": "Cumberland",
+      "miles": 93,
+      "note": "WV via 50, 219, 135, 220",
+      "fromCoords": [
+        -80.0189659,
+        39.3409249
+      ],
+      "toCoords": [
+        -78.7625185,
+        39.6528654
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 444,
+      "date": "2027-10-18",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Cumberland",
+      "to": "Harrisburg",
+      "miles": 136,
+      "note": "via I- 68 alts, 522, 30, 11",
+      "fromCoords": [
+        -78.7625185,
+        39.6528654
+      ],
+      "toCoords": [
+        -76.8867008,
+        40.2731911
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 445,
+      "date": "2027-10-19",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Harrisburg",
+      "to": "Washington",
+      "miles": 120,
+      "note": "via 322, 422, 222, 22, 57",
+      "fromCoords": [
+        -76.8867008,
+        40.2731911
+      ],
+      "toCoords": [
+        -74.9796117,
+        40.7584159
+      ],
+      "needsReview": false
+    },
+    {
+      "day": 446,
+      "date": "2027-10-20",
+      "stage": "6",
+      "kind": "ride",
+      "from": "Washington",
+      "to": "New York",
+      "miles": 88,
+      "note": "Grand Ferry Park Tire Dip",
+      "fromCoords": [
+        -74.9796117,
+        40.7584159
+      ],
+      "toCoords": null,
+      "needsReview": true
+    },
+    {
+      "day": 447,
+      "date": "2027-10-21",
+      "stage": "7",
+      "kind": "rest",
+      "from": null,
+      "to": "Dix Hills",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 448,
+      "date": "2027-10-22",
+      "stage": "7",
+      "kind": "rest",
+      "from": null,
+      "to": "Dix Hills",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 449,
+      "date": "2027-10-23",
+      "stage": "7",
+      "kind": "rest",
+      "from": null,
+      "to": "Dix Hills",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 450,
+      "date": "2027-10-24",
+      "stage": "7",
+      "kind": "rest",
+      "from": null,
+      "to": "Dix Hills",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 451,
+      "date": "2027-10-25",
+      "stage": "7",
+      "kind": "rest",
+      "from": null,
+      "to": "Dix Hills",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 452,
+      "date": "2027-10-26",
+      "stage": "7",
+      "kind": "travel",
+      "from": null,
+      "to": null,
+      "miles": null,
+      "note": "Travel Day: Flight to Santiago, Chile",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 453,
+      "date": "2027-10-27",
+      "stage": "7",
+      "kind": "travel",
+      "from": null,
+      "to": null,
+      "miles": null,
+      "note": "Travel Day: Flight to Punta Arenas, Chile",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 454,
+      "date": "2027-10-28",
+      "stage": "7",
+      "kind": "rest",
+      "from": null,
+      "to": "Punta Arenas",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 455,
+      "date": "2027-10-29",
+      "stage": "7",
+      "kind": "rest",
+      "from": null,
+      "to": "Punta Arenas",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 456,
+      "date": "2027-10-30",
+      "stage": "7",
+      "kind": "rest",
+      "from": null,
+      "to": "Punta Arenas",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 457,
+      "date": "2027-10-31",
+      "stage": "7",
+      "kind": "rest",
+      "from": null,
+      "to": "Punta Arenas",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 458,
+      "date": "2027-11-01",
+      "stage": "7",
+      "kind": "rest",
+      "from": null,
+      "to": "Punta Arenas",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 459,
+      "date": "2027-11-02",
+      "stage": "7",
+      "kind": "travel",
+      "from": null,
+      "to": null,
+      "miles": null,
+      "note": "Travel Day: Flight to Union Glacier, Antarctica",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 460,
+      "date": "2027-11-03",
+      "stage": "7",
+      "kind": "rest",
+      "from": null,
+      "to": "Union Glacier",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 461,
+      "date": "2027-11-04",
+      "stage": "7",
+      "kind": "rest",
+      "from": null,
+      "to": "Union Glacier",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 462,
+      "date": "2027-11-05",
+      "stage": "7",
+      "kind": "rest",
+      "from": null,
+      "to": "Union Glacier",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 463,
+      "date": "2027-11-06",
+      "stage": "7",
+      "kind": "rest",
+      "from": null,
+      "to": "Union Glacier",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 464,
+      "date": "2027-11-07",
+      "stage": "7",
+      "kind": "ride",
+      "from": "Day 1 - AM Flight",
+      "to": "Leverett Glacier",
+      "miles": null,
+      "note": "start @ 1 7 mi/day",
+      "fromCoords": null,
+      "toCoords": [
+        168.477718,
+        -79.410265
+      ],
+      "needsReview": true
+    },
+    {
+      "day": 487,
+      "date": "2027-11-30",
+      "stage": "7",
+      "kind": "other",
+      "from": null,
+      "to": null,
+      "miles": null,
+      "note": "Day 24 – Arrive South Pole, Food Drop #2 at 400 - mile mark",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 488,
+      "date": "2027-12-01",
+      "stage": "7",
+      "kind": "rest",
+      "from": null,
+      "to": "South Pole",
+      "miles": null,
+      "note": "",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    },
+    {
+      "day": 533,
+      "date": "2028-01-15",
+      "stage": "7",
+      "kind": "other",
+      "from": null,
+      "to": null,
+      "miles": null,
+      "note": "Day 7 0 - Arrive Hercules Inlet",
+      "fromCoords": null,
+      "toCoords": null,
+      "needsReview": false
+    }
+  ]
+}
