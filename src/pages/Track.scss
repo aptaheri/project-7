@@ -277,8 +277,9 @@
   .track-panel {
     top: 76px;
     left: 12px;
-    right: 12px;
-    width: auto;
+    right: auto;
+    width: 232px;
+    max-width: calc(100vw - 24px);
   }
 
   // Collapsed, the panel is a single status strip; give the tap target room.

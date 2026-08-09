@@ -427,7 +427,7 @@ export default function TrackMap({ role }: Props) {
   function recenter() {
     const map = mapRef.current
     if (!map || !feed?.latest) return
-    map.flyTo({ center: [feed.latest.lon, feed.latest.lat], zoom: 11, duration: 1200 })
+    map.flyTo({ center: [feed.latest.lon, feed.latest.lat], zoom: 13.5, duration: 1200 })
   }
 
   const latest = feed?.latest ?? null
@@ -789,7 +789,9 @@ export default function TrackMap({ role }: Props) {
         )}
 
         {expanded && view === 'main' && role === 'owner' && feed?.devices && feed.devices.length > 0 && (
-          <p className="track-devices">Devices seen: {feed.devices.join(', ')}</p>
+          <p className="track-devices">
+            Devices: {feed.devices.map((d) => d.replace(/^owntracks\//, '')).join(', ')}
+          </p>
         )}
 
       </div>
