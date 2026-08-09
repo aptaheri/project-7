@@ -142,6 +142,8 @@ interface TrailRow {
 interface DaySummary {
   /** Local calendar date, YYYY-MM-DD. */
   date: string
+  /** True when the day is reconstructed rather than recorded. */
+  reconstructed: boolean
   distanceKm: number
   /** First fix to last fix. Includes stops, which is what was asked for. */
   elapsedSeconds: number
@@ -507,7 +509,8 @@ export default async function handler(req: Request): Promise<Response> {
           local_date,
           coalesce(sum(step_m), 0)::float8 as distance_m,
           extract(epoch from (max(tst) - min(tst)))::float8 as elapsed_s,
-          count(*)::int as fixes
+          count(*)::int as fixes,
+          bool_or(source = 'backfill') as reconstructed
         from steps
         group by local_date
       ),
@@ -521,7 +524,7 @@ export default async function handler(req: Request): Promise<Response> {
       )
       select
         to_char(t.local_date, 'YYYY-MM-DD') as date,
-        t.distance_m, t.elapsed_s, t.fixes,
+        t.distance_m, t.elapsed_s, t.fixes, t.reconstructed,
         f.lat as start_lat, f.lon as start_lon,
         l.lat as end_lat, l.lon as end_lon
       from totals t
@@ -533,6 +536,7 @@ export default async function handler(req: Request): Promise<Response> {
       distance_m: number
       elapsed_s: number
       fixes: number
+      reconstructed: boolean
       start_lat: number
       start_lon: number
       end_lat: number
@@ -596,6 +600,7 @@ export default async function handler(req: Request): Promise<Response> {
       const alts = altsByDay.get(d.date) ?? []
       return {
         date: d.date,
+        reconstructed: d.reconstructed,
         distanceKm: d.distance_m / 1000,
         elapsedSeconds: d.elapsed_s,
         fixes: d.fixes,

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import ElevationChart from '../components/ElevationChart'
-import { LIVE_BLUE, ROUTE_RED } from '../lib/mapColors'
+import { BACKFILL_BLUE, LIVE_BLUE, ROUTE_RED } from '../lib/mapColors'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
@@ -77,6 +77,7 @@ type PanelView = 'main' | 'elevation' | 'day'
 
 interface DaySummary {
   date: string
+  reconstructed: boolean
   distanceKm: number
   elapsedSeconds: number
   fixes: number
@@ -289,10 +290,10 @@ export default function TrackMap({ role }: Props) {
         source: 'backfill',
         layout: { 'line-cap': 'butt', 'line-join': 'round' },
         paint: {
-          'line-color': LIVE_BLUE,
-          'line-width': 3,
-          'line-opacity': 0.55,
-          'line-dasharray': [2, 2],
+          'line-color': BACKFILL_BLUE,
+          'line-width': 3.5,
+          'line-opacity': 0.9,
+          'line-dasharray': [2, 1.8],
         },
       })
 
@@ -329,9 +330,13 @@ export default function TrackMap({ role }: Props) {
         source: 'days',
         paint: {
           'circle-radius': 6,
-          'circle-color': '#ffffff',
+          'circle-color': [
+            'case', ['get', 'reconstructed'], 'rgba(10,10,15,0.9)', '#ffffff',
+          ],
           'circle-stroke-width': 3,
-          'circle-stroke-color': LIVE_BLUE,
+          'circle-stroke-color': [
+            'case', ['get', 'reconstructed'], BACKFILL_BLUE, LIVE_BLUE,
+          ],
         },
       })
 
@@ -386,7 +391,7 @@ export default function TrackMap({ role }: Props) {
       type: 'FeatureCollection',
       features: feed.days.map((d) => ({
         type: 'Feature',
-        properties: { date: d.date },
+        properties: { date: d.date, reconstructed: d.reconstructed },
         geometry: { type: 'Point', coordinates: d.end },
       })),
     })
@@ -617,7 +622,15 @@ export default function TrackMap({ role }: Props) {
                   </svg>
                 </button>
                 <span className="track-subhead-title">{formatDay(day.date)}</span>
+                {day.reconstructed && <span className="track-test-badge">Reconstructed</span>}
               </div>
+
+              {day.reconstructed && (
+                <p className="track-panel-note">
+                  Inferred from the planned route and his own account. Distances
+                  are estimates and there is no elevation data.
+                </p>
+              )}
 
               <dl className="track-stats">
                 <div>
@@ -628,10 +641,13 @@ export default function TrackMap({ role }: Props) {
                   <dt>Elapsed</dt>
                   <dd>{duration(day.elapsedSeconds)}</dd>
                 </div>
-                <div>
-                  <dt>Elevation gain</dt>
-                  <dd>{feet(day.gainM)} ft</dd>
-                </div>
+                {!day.reconstructed && (
+                  <div>
+                    <dt>Elevation gain</dt>
+                    <dd>{feet(day.gainM)} ft</dd>
+                  </div>
+                )}
+                {!day.reconstructed && (
                 <div>
                   <dt>Net</dt>
                   <dd>
@@ -640,14 +656,19 @@ export default function TrackMap({ role }: Props) {
                       : `${day.netM >= 0 ? '+' : '−'}${feet(Math.abs(day.netM))} ft`}
                   </dd>
                 </div>
-                <div>
-                  <dt>High</dt>
-                  <dd>{day.highM == null ? '—' : `${feet(day.highM)} ft`}</dd>
-                </div>
-                <div>
-                  <dt>Low</dt>
-                  <dd>{day.lowM == null ? '—' : `${feet(day.lowM)} ft`}</dd>
-                </div>
+                )}
+                {!day.reconstructed && (
+                  <div>
+                    <dt>High</dt>
+                    <dd>{day.highM == null ? '—' : `${feet(day.highM)} ft`}</dd>
+                  </div>
+                )}
+                {!day.reconstructed && (
+                  <div>
+                    <dt>Low</dt>
+                    <dd>{day.lowM == null ? '—' : `${feet(day.lowM)} ft`}</dd>
+                  </div>
+                )}
                 <div>
                   <dt>Fixes</dt>
                   <dd>{day.fixes.toLocaleString()}</dd>

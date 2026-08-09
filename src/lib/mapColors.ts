@@ -11,3 +11,11 @@ export const ROUTE_RED = '#E31A28'
 
 /** Ground actually ridden, and the live position marker. */
 export const LIVE_BLUE = '#4285f4'
+
+/**
+ * Reconstructed riding from before the tracker existed.
+ *
+ * A paler blue, and drawn dashed: related to the measured track because he did
+ * ride it, but visibly not the same kind of evidence.
+ */
+export const BACKFILL_BLUE = '#8ab4f8'
