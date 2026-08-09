@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
+import ElevationChart from '../components/ElevationChart'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
@@ -49,6 +50,7 @@ interface Feed {
   timezone: string | null
   elevationGainM: number
   netTodayM: number | null
+  profileToday: { m: number; alt: number }[]
   trailPoints: number
   mode: Mode
   devices?: string[]
@@ -110,6 +112,9 @@ export default function TrackMap({ email, role }: Props) {
   // Owners can look at their own test phone instead of the live rider. The
   // choice survives reloads so a debugging session is not lost on refresh, and
   // production is always the default for everyone else.
+  // The profile is opt-in: it is the tallest thing in the panel and most
+  // viewers only want to know where he is.
+  const [showProfile, setShowProfile] = useState(false)
   const [mode, setMode] = useState<Mode>(() =>
     role === 'owner' && localStorage.getItem(MODE_KEY) === 'test' ? 'test' : 'production',
   )
@@ -409,6 +414,26 @@ export default function TrackMap({ email, role }: Props) {
                 </dd>
               </div>
             </dl>
+
+            <button
+              type="button"
+              className="track-profile-toggle"
+              onClick={() => setShowProfile((v) => !v)}
+              aria-expanded={showProfile}
+            >
+              <span>Elevation profile</span>
+              <svg
+                className={`track-chevron${showProfile ? ' open' : ''}`}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+
+            {showProfile && <ElevationChart points={feed?.profileToday ?? []} />}
 
             <button className="track-recenter" onClick={recenter}>
               Recenter

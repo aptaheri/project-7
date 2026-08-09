@@ -41,6 +41,9 @@ const ELEVATION_SAMPLE_M = 100
 /** Fixes averaged at each end of the day to take the net change off jitter. */
 const NET_ENDPOINT_FIXES = 5
 
+/** Points in the day's elevation profile. Enough to read, small enough to poll. */
+const PROFILE_POINTS = 120
+
 /**
  * Total ascent over a series of altitudes, ignoring wobble under the threshold.
  *
@@ -137,6 +140,8 @@ interface Payload {
   elevationGainM: number
   /** Height now versus the start of his local day. Null if he has not ridden. */
   netTodayM: number | null
+  /** Today's ride profile: metres travelled against smoothed altitude. */
+  profileToday: { m: number; alt: number }[]
   trailPoints: number
   mode: 'production' | 'test'
   /** Owners only: every device seen, so a misconfigured test list is visible. */
@@ -213,6 +218,7 @@ export default async function handler(req: Request): Promise<Response> {
         timezone: null,
         elevationGainM: 0,
         netTodayM: null,
+        profileToday: [],
         trailPoints: 0,
         mode,
         ...(isOwner ? { devices: await knownDevices(sql) } : {}),
@@ -369,6 +375,50 @@ export default async function handler(req: Request): Promise<Response> {
 
     const netTodayM = netRows[0]?.net_m ?? null
 
+    // The day's profile, thinned to a fixed number of points so the payload
+    // stays the same size whether he rode 5 miles or 150.
+    const profileSpacing = Math.max(50, stats.today_m / PROFILE_POINTS)
+    const profileRows = (await sql`
+      with ordered as (
+        select
+          tst, lat, lon,
+          avg(alt) over (
+            order by tst
+            rows between ${ALTITUDE_SMOOTHING} preceding and ${ALTITUDE_SMOOTHING} following
+          ) as alt_s,
+          lag(lat) over (order by tst) as plat,
+          lag(lon) over (order by tst) as plon
+        from locations
+        where (device = any(${devices}::text[])) = ${isTest}::boolean
+          and (tst at time zone ${zone}::text)::date = ${today}::date
+      ),
+      steps as (
+        select
+          tst, alt_s,
+          case when plat is null then 0 else
+            2 * 6371000 * asin(least(1, sqrt(
+              power(sin(radians(lat - plat) / 2), 2) +
+              cos(radians(plat)) * cos(radians(lat)) *
+              power(sin(radians(lon - plon) / 2), 2)
+            )))
+          end as step_m
+        from ordered
+      ),
+      cumulative as (
+        select tst, alt_s, sum(step_m) over (order by tst) as cum_m from steps
+      ),
+      sampled as (
+        select
+          floor(cum_m / ${profileSpacing}::float8) as slice,
+          max(cum_m)::float8 as m,
+          avg(alt_s)::float8 as alt
+        from cumulative
+        where alt_s is not null
+        group by 1
+      )
+      select m, alt from sampled order by slice
+    `) as unknown as { m: number; alt: number }[]
+
     const trail: [number, number][] = trailRows.map((r) => [r.lon, r.lat])
 
     // The newest fix can fall inside an already-represented slice, which would
@@ -387,6 +437,7 @@ export default async function handler(req: Request): Promise<Response> {
       timezone: zone,
       elevationGainM,
       netTodayM,
+      profileToday: profileRows,
       trailPoints: trail.length,
       mode,
       ...(isOwner ? { devices: await knownDevices(sql) } : {}),
