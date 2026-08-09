@@ -11,8 +11,20 @@ export interface LocalConditions {
   sunsetUtc: string | null
   weather: {
     temperatureC: number
+    feelsLikeC: number | null
+    humidity: number | null
+    /** Millimetres in the last hour. */
+    precipitationMm: number | null
     windKph: number
+    windGustKph: number | null
     windDirection: number
+    uvIndex: number | null
+    cloudCover: number | null
+    isDay: boolean | null
+    /** Chance of rain today, from the daily forecast. */
+    rainChance: number | null
+    highC: number | null
+    lowC: number | null
     code: number
   } | null
 }
@@ -93,25 +105,42 @@ async function fetchWeather(
   try {
     const url =
       `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-      '&current=temperature_2m,wind_speed_10m,wind_direction_10m,weather_code'
+      '&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,' +
+      'weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,uv_index,' +
+      'cloud_cover,is_day' +
+      '&daily=precipitation_probability_max,temperature_2m_max,temperature_2m_min' +
+      '&forecast_days=1&timezone=auto'
     const res = await fetch(url, { signal: AbortSignal.timeout(3000) })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
 
     const body = (await res.json()) as {
-      current?: {
-        temperature_2m?: number
-        wind_speed_10m?: number
-        wind_direction_10m?: number
-        weather_code?: number
-      }
+      current?: Record<string, number | undefined>
+      daily?: Record<string, (number | null)[] | undefined>
     }
     const c = body.current
     if (!c || typeof c.temperature_2m !== 'number') throw new Error('no current weather')
 
+    const daily = body.daily
+    const first = (key: string) => {
+      const value = daily?.[key]?.[0]
+      return typeof value === 'number' ? value : null
+    }
+    const num = (key: string) => (typeof c[key] === 'number' ? (c[key] as number) : null)
+
     const value = {
       temperatureC: c.temperature_2m,
+      feelsLikeC: num('apparent_temperature'),
+      humidity: num('relative_humidity_2m'),
+      precipitationMm: num('precipitation'),
       windKph: c.wind_speed_10m ?? 0,
+      windGustKph: num('wind_gusts_10m'),
       windDirection: c.wind_direction_10m ?? 0,
+      uvIndex: num('uv_index'),
+      cloudCover: num('cloud_cover'),
+      isDay: c.is_day === undefined ? null : c.is_day === 1,
+      rainChance: first('precipitation_probability_max'),
+      highC: first('temperature_2m_max'),
+      lowC: first('temperature_2m_min'),
       code: c.weather_code ?? 0,
     }
     weatherCache = { at: Date.now(), key, value }

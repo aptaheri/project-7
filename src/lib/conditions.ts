@@ -69,6 +69,39 @@ export function dateIn(timezone: string, at = new Date()): string {
   }).format(at)
 }
 
+/** Bearing from one coordinate to another, in degrees from north. */
+export function bearing(from: [number, number], to: [number, number]): number {
+  const rad = Math.PI / 180
+  const dLon = (to[0] - from[0]) * rad
+  const lat1 = from[1] * rad
+  const lat2 = to[1] * rad
+  const y = Math.sin(dLon) * Math.cos(lat2)
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon)
+  return (Math.atan2(y, x) / rad + 360) % 360
+}
+
+/**
+ * The wind as a cyclist experiences it, given the way he is pointing.
+ *
+ * Wind direction is reported as where the wind comes FROM, so a wind from the
+ * same bearing he is travelling towards is a headwind. The component along his
+ * direction of travel is what he feels; the rest pushes him sideways.
+ */
+export function windRelativeToHeading(
+  windFromDegrees: number,
+  windKph: number,
+  headingDegrees: number,
+): { label: string; kph: number } {
+  let offset = Math.abs(windFromDegrees - headingDegrees) % 360
+  if (offset > 180) offset = 360 - offset
+
+  const along = windKph * Math.cos(offset * (Math.PI / 180))
+
+  if (offset <= 45) return { label: 'Headwind', kph: Math.abs(along) }
+  if (offset >= 135) return { label: 'Tailwind', kph: Math.abs(along) }
+  return { label: 'Crosswind', kph: windKph * Math.sin(offset * (Math.PI / 180)) }
+}
+
 /**
  * How much daylight is left, or how long until the sun comes up.
  *

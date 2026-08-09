@@ -3,7 +3,8 @@ import mapboxgl from 'mapbox-gl'
 import ElevationChart from '../components/ElevationChart'
 import { BACKFILL_BLUE, LIVE_BLUE, ROUTE_RED } from '../lib/mapColors'
 import {
-  compass, dateIn, daylight, fahrenheit, mph, timeIn, weatherDescription,
+  bearing, compass, dateIn, daylight, fahrenheit, mph, timeIn,
+  weatherDescription, windRelativeToHeading,
 } from '../lib/conditions'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
@@ -74,8 +75,18 @@ interface Feed {
     sunsetUtc: string | null
     weather: {
       temperatureC: number
+      feelsLikeC: number | null
+      humidity: number | null
+      precipitationMm: number | null
       windKph: number
+      windGustKph: number | null
       windDirection: number
+      uvIndex: number | null
+      cloudCover: number | null
+      isDay: boolean | null
+      rainChance: number | null
+      highC: number | null
+      lowC: number | null
       code: number
     } | null
   } | null
@@ -801,22 +812,86 @@ export default function TrackMap({ role }: Props) {
             </div>
 
             {feed?.local?.weather ? (
-              <dl className="track-stats">
-                <div>
-                  <dt>Conditions</dt>
-                  <dd>{weatherDescription(feed.local.weather.code)}</dd>
-                </div>
-                <div>
-                  <dt>Temperature</dt>
-                  <dd>{fahrenheit(feed.local.weather.temperatureC)}</dd>
-                </div>
-                <div title="The direction the wind is blowing from">
-                  <dt>Wind</dt>
-                  <dd>
-                    {mph(feed.local.weather.windKph)} from {compass(feed.local.weather.windDirection)}
-                  </dd>
-                </div>
-              </dl>
+              (() => {
+                const w = feed.local.weather
+                // His direction of travel turns wind direction into the thing a
+                // cyclist actually cares about. Two trail points give the
+                // bearing; a stationary rider has no meaningful heading.
+                const trail = feed.trail
+                const heading =
+                  trail.length >= 2
+                    ? bearing(trail[trail.length - 2], trail[trail.length - 1])
+                    : null
+                const relative =
+                  heading !== null && w.windKph > 1
+                    ? windRelativeToHeading(w.windDirection, w.windKph, heading)
+                    : null
+
+                return (
+                  <dl className="track-stats">
+                    <div>
+                      <dt>Conditions</dt>
+                      <dd>{weatherDescription(w.code)}</dd>
+                    </div>
+                    <div>
+                      <dt>Temperature</dt>
+                      <dd>{fahrenheit(w.temperatureC)}</dd>
+                    </div>
+                    {w.feelsLikeC !== null && (
+                      <div title="Apparent temperature, allowing for humidity and wind">
+                        <dt>Feels like</dt>
+                        <dd>{fahrenheit(w.feelsLikeC)}</dd>
+                      </div>
+                    )}
+                    {w.highC !== null && w.lowC !== null && (
+                      <div>
+                        <dt>High / low</dt>
+                        <dd>{fahrenheit(w.highC)} / {fahrenheit(w.lowC)}</dd>
+                      </div>
+                    )}
+                    <div title="The direction the wind is blowing from">
+                      <dt>Wind</dt>
+                      <dd>{mph(w.windKph)} from {compass(w.windDirection)}</dd>
+                    </div>
+                    {relative && (
+                      <div title="The wind along his direction of travel">
+                        <dt>{relative.label}</dt>
+                        <dd>{mph(relative.kph)}</dd>
+                      </div>
+                    )}
+                    {w.windGustKph !== null && w.windGustKph > w.windKph + 1 && (
+                      <div>
+                        <dt>Gusting</dt>
+                        <dd>{mph(w.windGustKph)}</dd>
+                      </div>
+                    )}
+                    {w.humidity !== null && (
+                      <div>
+                        <dt>Humidity</dt>
+                        <dd>{Math.round(w.humidity)}%</dd>
+                      </div>
+                    )}
+                    {w.rainChance !== null && (
+                      <div title="Chance of precipitation today">
+                        <dt>Rain chance</dt>
+                        <dd>{Math.round(w.rainChance)}%</dd>
+                      </div>
+                    )}
+                    {w.precipitationMm !== null && w.precipitationMm > 0 && (
+                      <div title="Fallen in the last hour">
+                        <dt>Rain now</dt>
+                        <dd>{w.precipitationMm.toFixed(1)} mm</dd>
+                      </div>
+                    )}
+                    {w.uvIndex !== null && w.isDay !== false && (
+                      <div title="Worth knowing on a long day in the sun">
+                        <dt>UV index</dt>
+                        <dd>{w.uvIndex.toFixed(1)}</dd>
+                      </div>
+                    )}
+                  </dl>
+                )
+              })()
             ) : (
               <p className="track-panel-note">Weather is unavailable right now.</p>
             )}
