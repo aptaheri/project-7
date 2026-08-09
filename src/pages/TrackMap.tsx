@@ -48,6 +48,7 @@ interface Feed {
   distanceTodayKm: number
   timezone: string | null
   elevationGainM: number
+  netTodayM: number | null
   trailPoints: number
   mode: Mode
   devices?: string[]
@@ -398,6 +399,14 @@ export default function TrackMap({ email, role }: Props) {
               <div>
                 <dt>Elevation gain</dt>
                 <dd>{feet(feed?.elevationGainM ?? 0)} ft</dd>
+              </div>
+              <div title="Height now versus the start of his local day">
+                <dt>Net today</dt>
+                <dd>
+                  {feed?.netTodayM == null
+                    ? '—'
+                    : `${feed.netTodayM >= 0 ? '+' : '−'}${feet(Math.abs(feed.netTodayM))} ft`}
+                </dd>
               </div>
             </dl>
 

@@ -38,6 +38,9 @@ const ALTITUDE_SMOOTHING = 4
 /** Altitudes are sampled this far apart along the route, not per fix. */
 const ELEVATION_SAMPLE_M = 100
 
+/** Fixes averaged at each end of the day to take the net change off jitter. */
+const NET_ENDPOINT_FIXES = 5
+
 /**
  * Total ascent over a series of altitudes, ignoring wobble under the threshold.
  *
@@ -132,6 +135,8 @@ interface Payload {
   /** IANA zone the day boundary was taken from, for labelling. */
   timezone: string | null
   elevationGainM: number
+  /** Height now versus the start of his local day. Null if he has not ridden. */
+  netTodayM: number | null
   trailPoints: number
   mode: 'production' | 'test'
   /** Owners only: every device seen, so a misconfigured test list is visible. */
@@ -207,6 +212,7 @@ export default async function handler(req: Request): Promise<Response> {
         distanceTodayKm: 0,
         timezone: null,
         elevationGainM: 0,
+        netTodayM: null,
         trailPoints: 0,
         mode,
         ...(isOwner ? { devices: await knownDevices(sql) } : {}),
@@ -343,6 +349,26 @@ export default async function handler(req: Request): Promise<Response> {
       GAIN_THRESHOLD_M,
     )
 
+    // Net change is deliberately end-minus-start rather than accumulated: it
+    // answers "is he higher than this morning", which cumulative gain cannot,
+    // and averaging both ends makes it immune to the jitter that made gain hard.
+    const netRows = (await sql`
+      with today_fixes as (
+        select tst, alt
+        from locations
+        where (device = any(${devices}::text[])) = ${isTest}::boolean
+          and (tst at time zone ${zone}::text)::date = ${today}::date
+          and alt is not null
+      )
+      select (
+        (select avg(alt) from (select alt from today_fixes order by tst desc limit ${NET_ENDPOINT_FIXES}) l)
+        -
+        (select avg(alt) from (select alt from today_fixes order by tst asc limit ${NET_ENDPOINT_FIXES}) f)
+      )::float8 as net_m
+    `) as unknown as { net_m: number | null }[]
+
+    const netTodayM = netRows[0]?.net_m ?? null
+
     const trail: [number, number][] = trailRows.map((r) => [r.lon, r.lat])
 
     // The newest fix can fall inside an already-represented slice, which would
@@ -360,6 +386,7 @@ export default async function handler(req: Request): Promise<Response> {
       distanceTodayKm: stats.today_m / 1000,
       timezone: zone,
       elevationGainM,
+      netTodayM,
       trailPoints: trail.length,
       mode,
       ...(isOwner ? { devices: await knownDevices(sql) } : {}),
