@@ -279,7 +279,6 @@ export default async function handler(req: Request): Promise<Response> {
         from locations
         where (device = any(${devices}::text[])) = ${isTest}::boolean
           and source = 'device'
-        and source = 'device'
       ),
       steps as (
         select
@@ -328,7 +327,6 @@ export default async function handler(req: Request): Promise<Response> {
         from locations
         where (device = any(${devices}::text[])) = ${isTest}::boolean
           and source = 'device'
-        and source = 'device'
       ),
       steps as (
         select
@@ -376,7 +374,6 @@ export default async function handler(req: Request): Promise<Response> {
         from locations
         where (device = any(${devices}::text[])) = ${isTest}::boolean
           and source = 'device'
-        and source = 'device'
       ),
       steps as (
         select
@@ -417,7 +414,6 @@ export default async function handler(req: Request): Promise<Response> {
         from locations
         where (device = any(${devices}::text[])) = ${isTest}::boolean
           and source = 'device'
-        and source = 'device'
           and (tst at time zone ${zone}::text)::date = ${today}::date
           and alt is not null
       )
@@ -446,7 +442,6 @@ export default async function handler(req: Request): Promise<Response> {
         from locations
         where (device = any(${devices}::text[])) = ${isTest}::boolean
           and source = 'device'
-        and source = 'device'
           and (tst at time zone ${zone}::text)::date = ${today}::date
       ),
       steps as (
@@ -483,18 +478,17 @@ export default async function handler(req: Request): Promise<Response> {
     const dayRows = (await sql`
       with ordered as (
         select
-          tst, lat, lon,
+          tst, lat, lon, source,
           (tst at time zone ${zone}::text)::date as local_date,
           lag(lat) over (order by tst) as plat,
           lag(lon) over (order by tst) as plon
         from locations
-        where (device = any(${devices}::text[])) = ${isTest}::boolean
-          and source = 'device'
-        and source = 'device'
+        where ((device = any(${devices}::text[])) = ${isTest}::boolean and source = 'device')
+           or source = 'backfill'
       ),
       steps as (
         select
-          tst, lat, lon, local_date,
+          tst, lat, lon, local_date, source,
           case when plat is null then 0 else
             2 * 6371000 * asin(least(1, sqrt(
               power(sin(radians(lat - plat) / 2), 2) +
@@ -559,7 +553,6 @@ export default async function handler(req: Request): Promise<Response> {
         from locations
         where (device = any(${devices}::text[])) = ${isTest}::boolean
           and source = 'device'
-        and source = 'device'
       ),
       steps as (
         select
