@@ -73,7 +73,7 @@ interface Feed {
 type Status = 'loading' | 'ok' | 'denied' | 'error'
 
 /** Panels swap rather than stack; add a name here to nest another screen. */
-type PanelView = 'main' | 'elevation' | 'day'
+type PanelView = 'main' | 'elevation' | 'device' | 'day'
 
 interface DaySummary {
   date: string
@@ -526,46 +526,46 @@ export default function TrackMap({ role }: Props) {
         {expanded && view === 'main' && latest && (
           <>
             <dl className="track-stats">
-              <div>
-                <dt>Position</dt>
-                <dd>{latest.lat.toFixed(5)}, {latest.lon.toFixed(5)}</dd>
-              </div>
               {latest.vel !== null && (
                 <div>
                   <dt>Speed</dt>
                   <dd>{Math.round(latest.vel * MILES_PER_KM)} mph</dd>
                 </div>
               )}
-              {latest.batt !== null && (
-                <div>
-                  <dt>Phone battery</dt>
-                  <dd>{latest.batt}%</dd>
-                </div>
-              )}
-              {latest.acc !== null && (
-                <div>
-                  <dt>Accuracy</dt>
-                  <dd>±{feet(latest.acc)} ft</dd>
-                </div>
-              )}
               <div title={feed?.timezone ? `Day boundary: ${feed.timezone}` : undefined}>
                 <dt>Today</dt>
                 <dd>{miles(feed?.distanceTodayKm ?? 0)} mi</dd>
               </div>
-              <div>
+              {/* Everything ridden since Lisbon, measured and reconstructed
+                  together. The split stays in the tooltip rather than a row. */}
+              <div
+                title={
+                  (feed?.backfillKm ?? 0) > 0
+                    ? `${miles(feed?.distanceKm ?? 0)} mi tracked, ${miles(feed?.backfillKm ?? 0)} mi reconstructed from before the tracker existed`
+                    : undefined
+                }
+              >
                 <dt>Total</dt>
-                <dd>{miles(feed?.distanceKm ?? 0)} mi</dd>
+                <dd>{miles((feed?.distanceKm ?? 0) + (feed?.backfillKm ?? 0))} mi</dd>
               </div>
-              {(feed?.backfillKm ?? 0) > 0 && (
-                <div title="Reconstructed from the planned route and his own account — not measured">
-                  <dt>Reconstructed</dt>
-                  <dd>{miles(feed?.backfillKm ?? 0)} mi</dd>
-                </div>
-              )}
             </dl>
 
             {/* Opens a replacement view rather than growing the panel, which on
                 a phone would push it past the height of the screen. */}
+            <button
+              type="button"
+              className="track-nav-row"
+              onClick={() => setView('device')}
+            >
+              <span className="track-nav-label">Device</span>
+              <span className="track-nav-value">
+                {latest.batt === null ? '—' : `${latest.batt}%`}
+              </span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
+
             <button
               type="button"
               className="track-nav-row"
@@ -677,6 +677,49 @@ export default function TrackMap({ role }: Props) {
             </>
           )
         })()}
+
+        {expanded && view === 'device' && (
+          <>
+            <div className="track-subhead">
+              <button
+                type="button"
+                className="track-back"
+                onClick={() => setView('main')}
+                aria-label="Back to stats"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+              </button>
+              <span className="track-subhead-title">Device</span>
+            </div>
+
+            <dl className="track-stats">
+              <div>
+                <dt>Position</dt>
+                <dd>
+                  {latest ? `${latest.lat.toFixed(5)}, ${latest.lon.toFixed(5)}` : '—'}
+                </dd>
+              </div>
+              <div>
+                <dt>Accuracy</dt>
+                <dd>{latest?.acc == null ? '—' : `±${feet(latest.acc)} ft`}</dd>
+              </div>
+              <div>
+                <dt>Phone battery</dt>
+                <dd>{latest?.batt == null ? '—' : `${latest.batt}%`}</dd>
+              </div>
+              <div title="Two-character tracker id set in OwnTracks">
+                <dt>Tracker</dt>
+                <dd>{latest?.tid ?? '—'}</dd>
+              </div>
+              <div title="Fixes stored, measured only">
+                <dt>Fixes</dt>
+                <dd>{(feed?.count ?? 0).toLocaleString()}</dd>
+              </div>
+            </dl>
+          </>
+        )}
 
         {expanded && view === 'elevation' && (
           <>
