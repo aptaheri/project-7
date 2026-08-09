@@ -19,9 +19,10 @@ interface MapItem {
 }
 
 /**
- * The Map menu always lists every destination. Ones the visitor cannot reach
- * are disabled rather than hidden, so the site does not silently change shape
- * depending on who is looking at it.
+ * Destinations a visitor could reach by gaining access are listed but disabled,
+ * so the site does not silently change shape. Sharing is different: it is
+ * owner-only administration that would never become available to a viewer, so
+ * advertising it just raises a question with no answer.
  */
 function mapItems(me: Me | null): MapItem[] {
   const authed = me?.authenticated === true
@@ -43,12 +44,7 @@ function mapItems(me: Me | null): MapItem[] {
       enabled: canView,
       reason: locked ?? 'Viewer access required',
     },
-    {
-      label: 'Sharing',
-      to: '/track/sharing',
-      enabled: isOwner,
-      reason: locked ?? 'Owners only',
-    },
+    ...(isOwner ? [{ label: 'Sharing', to: '/track/sharing', enabled: true }] : []),
   ]
 }
 
