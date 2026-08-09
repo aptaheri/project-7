@@ -87,7 +87,7 @@ interface Feed {
 type Status = 'loading' | 'ok' | 'denied' | 'error'
 
 /** Panels swap rather than stack; add a name here to nest another screen. */
-type PanelView = 'main' | 'elevation' | 'device' | 'local' | 'day'
+type PanelView = 'main' | 'elevation' | 'time' | 'weather' | 'device' | 'day'
 
 interface DaySummary {
   date: string
@@ -584,10 +584,27 @@ export default function TrackMap({ role }: Props) {
               <button
                 type="button"
                 className="track-nav-row"
-                onClick={() => setView('local')}
+                onClick={() => setView('time')}
               >
-                <span className="track-nav-label">Local</span>
+                <span className="track-nav-label">Time</span>
                 <span className="track-nav-value">{timeIn(feed.timezone)}</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </button>
+            )}
+
+            {/* Only offered when the lookup actually returned something. */}
+            {feed?.local?.weather && (
+              <button
+                type="button"
+                className="track-nav-row"
+                onClick={() => setView('weather')}
+              >
+                <span className="track-nav-label">Weather</span>
+                <span className="track-nav-value">
+                  {fahrenheit(feed.local.weather.temperatureC)}
+                </span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <path d="M9 18l6-6-6-6" />
                 </svg>
@@ -706,7 +723,7 @@ export default function TrackMap({ role }: Props) {
           )
         })()}
 
-        {expanded && view === 'local' && (
+        {expanded && view === 'time' && (
           <>
             <div className="track-subhead">
               <button
@@ -719,7 +736,7 @@ export default function TrackMap({ role }: Props) {
                   <path d="M15 18l-6-6 6-6" />
                 </svg>
               </button>
-              <span className="track-subhead-title">Where he is</span>
+              <span className="track-subhead-title">Time</span>
             </div>
 
             <dl className="track-stats">
@@ -763,25 +780,46 @@ export default function TrackMap({ role }: Props) {
                   </div>
                 ) : null
               })()}
-              {feed?.local?.weather && (
-                <>
-                  <div>
-                    <dt>Weather</dt>
-                    <dd>{weatherDescription(feed.local.weather.code)}</dd>
-                  </div>
-                  <div>
-                    <dt>Temperature</dt>
-                    <dd>{fahrenheit(feed.local.weather.temperatureC)}</dd>
-                  </div>
-                  <div title="Direction the wind is coming from">
-                    <dt>Wind</dt>
-                    <dd>
-                      {mph(feed.local.weather.windKph)} {compass(feed.local.weather.windDirection)}
-                    </dd>
-                  </div>
-                </>
-              )}
             </dl>
+          </>
+        )}
+
+        {expanded && view === 'weather' && (
+          <>
+            <div className="track-subhead">
+              <button
+                type="button"
+                className="track-back"
+                onClick={() => setView('main')}
+                aria-label="Back to stats"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+              </button>
+              <span className="track-subhead-title">Weather</span>
+            </div>
+
+            {feed?.local?.weather ? (
+              <dl className="track-stats">
+                <div>
+                  <dt>Conditions</dt>
+                  <dd>{weatherDescription(feed.local.weather.code)}</dd>
+                </div>
+                <div>
+                  <dt>Temperature</dt>
+                  <dd>{fahrenheit(feed.local.weather.temperatureC)}</dd>
+                </div>
+                <div title="The direction the wind is blowing from">
+                  <dt>Wind</dt>
+                  <dd>
+                    {mph(feed.local.weather.windKph)} from {compass(feed.local.weather.windDirection)}
+                  </dd>
+                </div>
+              </dl>
+            ) : (
+              <p className="track-panel-note">Weather is unavailable right now.</p>
+            )}
           </>
         )}
 
