@@ -137,6 +137,21 @@ interface TrailRow {
   lat: number
 }
 
+interface DaySummary {
+  /** Local calendar date, YYYY-MM-DD. */
+  date: string
+  distanceKm: number
+  /** First fix to last fix. Includes stops, which is what was asked for. */
+  elapsedSeconds: number
+  fixes: number
+  start: [number, number]
+  end: [number, number]
+  gainM: number
+  netM: number | null
+  highM: number | null
+  lowM: number | null
+}
+
 interface Payload {
   latest: LatestRow | null
   trail: [number, number][]
@@ -150,6 +165,8 @@ interface Payload {
   netTodayM: number | null
   /** Today's ride profile: metres travelled against smoothed altitude. */
   profileToday: { m: number; alt: number }[]
+  /** One entry per riding day, oldest first. */
+  days: DaySummary[]
   trailPoints: number
   mode: 'production' | 'test'
   /** Owners only: every device seen, so a misconfigured test list is visible. */
@@ -227,6 +244,7 @@ export default async function handler(req: Request): Promise<Response> {
         elevationGainM: 0,
         netTodayM: null,
         profileToday: [],
+        days: [],
         trailPoints: 0,
         mode,
         ...(isOwner ? { devices: await knownDevices(sql) } : {}),
@@ -435,6 +453,136 @@ export default async function handler(req: Request): Promise<Response> {
       select m, alt from sampled order by slice
     `) as unknown as { m: number; alt: number }[]
 
+    // --- Per-day summaries -------------------------------------------------
+    // Days are bucketed in the rider's current local zone. He does not ride
+    // through local midnight, so a zone change mid-trip shifts at most the
+    // boundary of the day he crossed on.
+    const dayRows = (await sql`
+      with ordered as (
+        select
+          tst, lat, lon,
+          (tst at time zone ${zone}::text)::date as local_date,
+          lag(lat) over (order by tst) as plat,
+          lag(lon) over (order by tst) as plon
+        from locations
+        where (device = any(${devices}::text[])) = ${isTest}::boolean
+      ),
+      steps as (
+        select
+          tst, lat, lon, local_date,
+          case when plat is null then 0 else
+            2 * 6371000 * asin(least(1, sqrt(
+              power(sin(radians(lat - plat) / 2), 2) +
+              cos(radians(plat)) * cos(radians(lat)) *
+              power(sin(radians(lon - plon) / 2), 2)
+            )))
+          end as step_m
+        from ordered
+      ),
+      totals as (
+        select
+          local_date,
+          coalesce(sum(step_m), 0)::float8 as distance_m,
+          extract(epoch from (max(tst) - min(tst)))::float8 as elapsed_s,
+          count(*)::int as fixes
+        from steps
+        group by local_date
+      ),
+      first_fix as (
+        select distinct on (local_date) local_date, lat, lon
+        from steps order by local_date, tst asc
+      ),
+      last_fix as (
+        select distinct on (local_date) local_date, lat, lon
+        from steps order by local_date, tst desc
+      )
+      select
+        to_char(t.local_date, 'YYYY-MM-DD') as date,
+        t.distance_m, t.elapsed_s, t.fixes,
+        f.lat as start_lat, f.lon as start_lon,
+        l.lat as end_lat, l.lon as end_lon
+      from totals t
+      join first_fix f on f.local_date = t.local_date
+      join last_fix l on l.local_date = t.local_date
+      order by t.local_date
+    `) as unknown as {
+      date: string
+      distance_m: number
+      elapsed_s: number
+      fixes: number
+      start_lat: number
+      start_lon: number
+      end_lat: number
+      end_lon: number
+    }[]
+
+    // Altitude sampled per day, so each day's climb is measured the same way as
+    // the running total rather than by a cruder shortcut.
+    const dayAltRows = (await sql`
+      with ordered as (
+        select
+          tst, lat, lon,
+          (tst at time zone ${zone}::text)::date as local_date,
+          avg(alt) over (
+            order by tst
+            rows between ${ALTITUDE_SMOOTHING} preceding and ${ALTITUDE_SMOOTHING} following
+          ) as alt_s,
+          lag(lat) over (order by tst) as plat,
+          lag(lon) over (order by tst) as plon
+        from locations
+        where (device = any(${devices}::text[])) = ${isTest}::boolean
+      ),
+      steps as (
+        select
+          tst, local_date, alt_s,
+          case when plat is null then 0 else
+            2 * 6371000 * asin(least(1, sqrt(
+              power(sin(radians(lat - plat) / 2), 2) +
+              cos(radians(plat)) * cos(radians(lat)) *
+              power(sin(radians(lon - plon) / 2), 2)
+            )))
+          end as step_m
+        from ordered
+      ),
+      cumulative as (
+        select
+          tst, local_date, alt_s,
+          sum(step_m) over (partition by local_date order by tst) as cum_m
+        from steps
+      )
+      select
+        to_char(local_date, 'YYYY-MM-DD') as date,
+        floor(cum_m / ${ELEVATION_SAMPLE_M}::float8) as slice,
+        avg(alt_s)::float8 as alt
+      from cumulative
+      where alt_s is not null
+      group by local_date, slice
+      order by local_date, slice
+    `) as unknown as { date: string; slice: number; alt: number }[]
+
+    const altsByDay = new Map<string, number[]>()
+    for (const row of dayAltRows) {
+      const list = altsByDay.get(row.date)
+      if (list) list.push(row.alt)
+      else altsByDay.set(row.date, [row.alt])
+    }
+
+    const days: DaySummary[] = dayRows.map((d) => {
+      const alts = altsByDay.get(d.date) ?? []
+      return {
+        date: d.date,
+        distanceKm: d.distance_m / 1000,
+        elapsedSeconds: d.elapsed_s,
+        fixes: d.fixes,
+        start: [d.start_lon, d.start_lat],
+        end: [d.end_lon, d.end_lat],
+        gainM: hysteresisGain(alts, GAIN_THRESHOLD_M),
+        netM: alts.length >= 2 ? alts[alts.length - 1] - alts[0] : null,
+        highM: alts.length ? Math.max(...alts) : null,
+        lowM: alts.length ? Math.min(...alts) : null,
+      }
+    })
+
     const trail: [number, number][] = trailRows.map((r) => [r.lon, r.lat])
 
     // The newest fix can fall inside an already-represented slice, which would
@@ -454,6 +602,7 @@ export default async function handler(req: Request): Promise<Response> {
       elevationGainM,
       netTodayM,
       profileToday: profileRows,
+      days,
       trailPoints: trail.length,
       mode,
       ...(isOwner ? { devices: await knownDevices(sql) } : {}),

@@ -52,6 +52,7 @@ interface Feed {
   elevationGainM: number
   netTodayM: number | null
   profileToday: { m: number; alt: number }[]
+  days: DaySummary[]
   trailPoints: number
   mode: Mode
   devices?: string[]
@@ -60,7 +61,41 @@ interface Feed {
 type Status = 'loading' | 'ok' | 'denied' | 'error'
 
 /** Panels swap rather than stack; add a name here to nest another screen. */
-type PanelView = 'main' | 'elevation'
+type PanelView = 'main' | 'elevation' | 'day'
+
+interface DaySummary {
+  date: string
+  distanceKm: number
+  elapsedSeconds: number
+  fixes: number
+  start: [number, number]
+  end: [number, number]
+  gainM: number
+  netM: number | null
+  highM: number | null
+  lowM: number | null
+}
+
+const EMPTY_POINTS: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] }
+
+/** "2026-08-10" rendered as "Mon 10 Aug", without shifting into another day. */
+function formatDay(date: string): string {
+  const d = new Date(`${date}T12:00:00Z`)
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  }).format(d)
+}
+
+function duration(seconds: number): string {
+  // Round to minutes first and then split, or 23h 59m 59s renders as "23h 60m".
+  const totalMinutes = Math.round(seconds / 60)
+  const h = Math.floor(totalMinutes / 60)
+  const m = totalMinutes % 60
+  return h > 0 ? `${h}h ${m}m` : `${m}m`
+}
 
 const EMPTY_LINE: GeoJSON.Feature<GeoJSON.LineString> = {
   type: 'Feature',
@@ -118,6 +153,10 @@ export default function TrackMap({ role }: Props) {
   // The panel swaps between views instead of stacking sections, so it stays the
   // same height however much detail is nested inside it.
   const [view, setView] = useState<PanelView>('main')
+  const [selectedDay, setSelectedDay] = useState<string | null>(null)
+  // Read inside a map click handler, which is registered once and would
+  // otherwise capture the first render's state forever.
+  const daysRef = useRef<DaySummary[]>([])
   const [mode, setMode] = useState<Mode>(() =>
     role === 'owner' && localStorage.getItem(MODE_KEY) === 'test' ? 'test' : 'production',
   )
@@ -254,6 +293,37 @@ export default function TrackMap({ role }: Props) {
         paint: { 'line-color': LIVE_BLUE, 'line-width': 5 },
       })
 
+      // Where each day ended. Added above the trail so they stay clickable.
+      map.addSource('days', { type: 'geojson', data: EMPTY_POINTS })
+      map.addLayer({
+        id: 'day-markers',
+        type: 'circle',
+        source: 'days',
+        paint: {
+          'circle-radius': 6,
+          'circle-color': '#ffffff',
+          'circle-stroke-width': 3,
+          'circle-stroke-color': LIVE_BLUE,
+        },
+      })
+
+      map.on('click', 'day-markers', (e) => {
+        const date = e.features?.[0]?.properties?.date
+        if (typeof date !== 'string') return
+        const day = daysRef.current.find((d) => d.date === date)
+        if (!day) return
+        setSelectedDay(date)
+        setView('day')
+        setExpanded(true)
+        map.flyTo({ center: day.end, zoom: 10, duration: 900 })
+      })
+      map.on('mouseenter', 'day-markers', () => {
+        map.getCanvas().style.cursor = 'pointer'
+      })
+      map.on('mouseleave', 'day-markers', () => {
+        map.getCanvas().style.cursor = ''
+      })
+
       setMapReady(true)
     })
 
@@ -274,6 +344,17 @@ export default function TrackMap({ role }: Props) {
     trail?.setData({
       ...EMPTY_LINE,
       geometry: { type: 'LineString', coordinates: feed.trail },
+    })
+
+    daysRef.current = feed.days
+    const daySource = map.getSource('days') as mapboxgl.GeoJSONSource | undefined
+    daySource?.setData({
+      type: 'FeatureCollection',
+      features: feed.days.map((d) => ({
+        type: 'Feature',
+        properties: { date: d.date },
+        geometry: { type: 'Point', coordinates: d.end },
+      })),
     })
 
     if (!feed.latest) return
@@ -433,6 +514,82 @@ export default function TrackMap({ role }: Props) {
             </button>
           </>
         )}
+
+        {expanded && view === 'day' && (() => {
+          const day = feed?.days.find((d) => d.date === selectedDay)
+          if (!day) {
+            return (
+              <>
+                <div className="track-subhead">
+                  <button
+                    type="button"
+                    className="track-back"
+                    onClick={() => setView('main')}
+                    aria-label="Back to stats"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M15 18l-6-6 6-6" />
+                    </svg>
+                  </button>
+                  <span className="track-subhead-title">Day</span>
+                </div>
+                <p className="track-panel-note">That day is no longer in the feed.</p>
+              </>
+            )
+          }
+          return (
+            <>
+              <div className="track-subhead">
+                <button
+                  type="button"
+                  className="track-back"
+                  onClick={() => setView('main')}
+                  aria-label="Back to stats"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M15 18l-6-6 6-6" />
+                  </svg>
+                </button>
+                <span className="track-subhead-title">{formatDay(day.date)}</span>
+              </div>
+
+              <dl className="track-stats">
+                <div>
+                  <dt>Distance</dt>
+                  <dd>{miles(day.distanceKm)} mi</dd>
+                </div>
+                <div title="First fix to last fix, including stops">
+                  <dt>Elapsed</dt>
+                  <dd>{duration(day.elapsedSeconds)}</dd>
+                </div>
+                <div>
+                  <dt>Elevation gain</dt>
+                  <dd>{feet(day.gainM)} ft</dd>
+                </div>
+                <div>
+                  <dt>Net</dt>
+                  <dd>
+                    {day.netM == null
+                      ? '—'
+                      : `${day.netM >= 0 ? '+' : '−'}${feet(Math.abs(day.netM))} ft`}
+                  </dd>
+                </div>
+                <div>
+                  <dt>High</dt>
+                  <dd>{day.highM == null ? '—' : `${feet(day.highM)} ft`}</dd>
+                </div>
+                <div>
+                  <dt>Low</dt>
+                  <dd>{day.lowM == null ? '—' : `${feet(day.lowM)} ft`}</dd>
+                </div>
+                <div>
+                  <dt>Fixes</dt>
+                  <dd>{day.fixes.toLocaleString()}</dd>
+                </div>
+              </dl>
+            </>
+          )
+        })()}
 
         {expanded && view === 'elevation' && (
           <>
