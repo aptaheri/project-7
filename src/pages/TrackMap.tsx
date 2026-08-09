@@ -53,6 +53,16 @@ interface Feed {
   netTodayM: number | null
   profileToday: { m: number; alt: number }[]
   days: DaySummary[]
+  leg: {
+    date: string
+    kind: 'ride' | 'rest'
+    from: string | null
+    to: string
+    plannedMiles: number | null
+    destination: [number, number]
+    distanceToDestinationKm: number
+    daysFromSchedule: number
+  } | null
   trailPoints: number
   mode: Mode
   devices?: string[]
@@ -457,6 +467,32 @@ export default function TrackMap({ role }: Props) {
         </button>
 
         {indicator.note && <p className="track-panel-note">{indicator.note}</p>}
+
+        {/* Only rendered when the matcher is confident. No leg means no honest
+            destination to name, and a gap beats a guess. */}
+        {expanded && view === 'main' && feed?.leg && (
+          <div className="track-leg">
+            <p className="track-leg-route">
+              {feed.leg.kind === 'rest'
+                ? `Rest day in ${feed.leg.to}`
+                : `${feed.leg.from ?? '?'} → ${feed.leg.to}`}
+            </p>
+            <p className="track-leg-meta">
+              {feed.leg.kind === 'ride' && feed.leg.plannedMiles !== null && (
+                <span>{feed.leg.plannedMiles} mi planned</span>
+              )}
+              {feed.leg.kind === 'ride' && (
+                <span>{miles(feed.leg.distanceToDestinationKm)} mi to go</span>
+              )}
+              {feed.leg.daysFromSchedule !== 0 && (
+                <span className="track-leg-drift">
+                  {Math.abs(feed.leg.daysFromSchedule)}d{' '}
+                  {feed.leg.daysFromSchedule < 0 ? 'behind' : 'ahead'}
+                </span>
+              )}
+            </p>
+          </div>
+        )}
 
         {expanded && view === 'main' && latest && (
           <>

@@ -444,3 +444,33 @@
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.55);
 }
+
+// ── Planned leg ───────────────────────────────────────────────────────────────
+
+.track-leg {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.track-leg-route {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.35;
+}
+
+.track-leg-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+// Drift from the plan is information, not an error — stated, not alarming.
+.track-leg-drift {
+  color: #f5a623;
+}

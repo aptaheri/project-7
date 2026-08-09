@@ -3,6 +3,8 @@ import { json } from '../lib/auth.mts'
 import { db, ensureSchema } from '../lib/db.mts'
 import { currentSession } from '../lib/session.mts'
 import { canViewTrack, normalizeEmail } from '../lib/users.mts'
+import { currentLeg } from '../lib/itinerary.mts'
+import type { CurrentLeg } from '../lib/itinerary.mts'
 import type { Role } from '../lib/session.mts'
 
 /**
@@ -167,6 +169,8 @@ interface Payload {
   profileToday: { m: number; alt: number }[]
   /** One entry per riding day, oldest first. */
   days: DaySummary[]
+  /** The planned leg he appears to be on, or null when nothing fits. */
+  leg: CurrentLeg | null
   trailPoints: number
   mode: 'production' | 'test'
   /** Owners only: every device seen, so a misconfigured test list is visible. */
@@ -245,6 +249,7 @@ export default async function handler(req: Request): Promise<Response> {
         netTodayM: null,
         profileToday: [],
         days: [],
+        leg: null,
         trailPoints: 0,
         mode,
         ...(isOwner ? { devices: await knownDevices(sql) } : {}),
@@ -603,6 +608,7 @@ export default async function handler(req: Request): Promise<Response> {
       netTodayM,
       profileToday: profileRows,
       days,
+      leg: currentLeg([latest.lon, latest.lat], today),
       trailPoints: trail.length,
       mode,
       ...(isOwner ? { devices: await knownDevices(sql) } : {}),
