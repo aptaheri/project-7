@@ -859,18 +859,6 @@ export default function TrackMap({ role }: Props) {
                         <dd>{mph(relative.kph)}</dd>
                       </div>
                     )}
-                    {w.windGustKph !== null && w.windGustKph > w.windKph + 1 && (
-                      <div>
-                        <dt>Gusting</dt>
-                        <dd>{mph(w.windGustKph)}</dd>
-                      </div>
-                    )}
-                    {w.humidity !== null && (
-                      <div>
-                        <dt>Humidity</dt>
-                        <dd>{Math.round(w.humidity)}%</dd>
-                      </div>
-                    )}
                     {w.rainChance !== null && (
                       <div title="Chance of precipitation today">
                         <dt>Rain chance</dt>
