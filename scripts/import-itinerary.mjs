@@ -36,9 +36,36 @@ const COUNTRIES = [
   'Burkina Faso', 'Ghana', 'Togo', 'Benin', 'Nigeria', 'Cameroon', 'Chad',
   'Central African Republic', 'DRC', 'Uganda', 'Kenya', 'Tanzania', 'Rwanda',
   'India', 'Nepal', 'China', 'Myanmar', 'Thailand', 'Laos', 'Vietnam',
-  'CA', 'AZ', 'NM', 'TX', 'OK', 'AR', 'TN', 'VA', 'MD', 'PA', 'NJ', 'NY',
+  'Sierra Leone', 'Guinea', 'Guinea-Bissau', 'Gambia', 'Ivory Coast', 'Bhutan',
+  'Sudan', 'Ethiopia', 'South Africa', 'Namibia', 'Botswana', 'Zambia',
+  // US and Australian states appear where a country otherwise would.
+  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL',
+  'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT',
+  'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI',
+  'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY', 'DC',
+  'QLD', 'NT', 'TAS', 'ACT',
   'Antarctica',
 ]
+
+/**
+ * Place names pdftotext splits mid-word, resolved against the source pages.
+ *
+ * Kept as an explicit table rather than a clever de-spacing rule: the same
+ * rule that joins "Ana s tácio" would also wreck genuine short names like
+ * "Bo, Sierra Leone" or "Chuxiong Yi", both of which are correct as parsed.
+ */
+const NAME_FIXES = new Map(Object.entries({
+  'Ana s tácio': 'Anastácio',
+  'B erma gui': 'Bermagui',
+  'B ermagui': 'Bermagui',
+  'Be edelup': 'Beedelup',
+  'Bh ulkot': 'Bhulkot',
+  'Fort - Shevchenko': 'Fort-Shevchenko',
+  'J inshi City': 'Jinshi City',
+  'Kara - Köl': 'Kara-Köl',
+  'Say - Otes': 'Say-Otes',
+  'Uch - Uchak': 'Uch-Uchak',
+}))
 
 const MONTHS = {
   Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
@@ -189,9 +216,9 @@ function parse(text) {
       needsReview: false,
     }
 
-    if (/rest day/i.test(withoutMiles)) {
+    if (/rest\s*day/i.test(withoutMiles)) {
       entry.kind = 'rest'
-      const where = withoutMiles.replace(/.*rest day (?:in|at)\s*/i, '')
+      const where = withoutMiles.replace(/.*rest\s*day\s+(?:i\s*n|a\s*t)\s*/i, '')
       const { place, note } = splitPlace(where)
       entry.to = place
       entry.note = note
@@ -213,8 +240,13 @@ function parse(text) {
     }
 
     for (const side of ['from', 'to']) {
-      const name = entry[side]
+      let name = entry[side]
       if (!name) continue
+      const fixed = NAME_FIXES.get(name)
+      if (fixed) {
+        name = fixed
+        entry[side] = fixed
+      }
       const hit = waypoints.get(normalise(name))
       if (hit) {
         // Prefer the waypoint's spelling: the PDF text has spaces inside words.

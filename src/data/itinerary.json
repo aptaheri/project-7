@@ -1440,7 +1440,7 @@
       "date": "2026-10-18",
       "stage": "1a",
       "kind": "ride",
-      "from": "Fort - Shevchenko",
+      "from": "Fort-Shevchenko",
       "to": "Aktau",
       "miles": 84,
       "note": "Akku Hotel Tire Dip",
@@ -1476,7 +1476,7 @@
       "stage": "1a",
       "kind": "ride",
       "from": "Shetpe",
-      "to": "Say - Otes",
+      "to": "Say-Otes",
       "miles": 80,
       "note": "Aisha Bibi Café Hotel",
       "fromCoords": [
@@ -1491,7 +1491,7 @@
       "date": "2026-10-21",
       "stage": "1a",
       "kind": "ride",
-      "from": "Say - Otes",
+      "from": "Say-Otes",
       "to": "Beyneu",
       "miles": 116,
       "note": "",
@@ -1589,7 +1589,7 @@
       "stage": "1a",
       "kind": "ride",
       "from": "Turtkul",
-      "to": "Uch - Uchak",
+      "to": "Uch-Uchak",
       "miles": 70,
       "note": "Kemping Sarimoy",
       "fromCoords": null,
@@ -1601,7 +1601,7 @@
       "date": "2026-10-29",
       "stage": "1a",
       "kind": "ride",
-      "from": "Uch - Uchak",
+      "from": "Uch-Uchak",
       "to": "Gazli",
       "miles": 100,
       "note": "",
@@ -1753,7 +1753,7 @@
       "stage": "1a",
       "kind": "ride",
       "from": "Namangan",
-      "to": "Kara - Köl",
+      "to": "Kara-Köl",
       "miles": 91,
       "note": "",
       "fromCoords": null,
@@ -1765,7 +1765,7 @@
       "date": "2026-11-09",
       "stage": "1a",
       "kind": "ride",
-      "from": "Kara - Köl",
+      "from": "Kara-Köl",
       "to": "Toluk",
       "miles": 103,
       "note": "",
@@ -1934,7 +1934,7 @@
       "stage": "2",
       "kind": "ride",
       "from": "Yallingup",
-      "to": "Be edelup",
+      "to": "Beedelup",
       "miles": 97,
       "note": "via Karridale",
       "fromCoords": null,
@@ -2517,7 +2517,7 @@
       "stage": "2",
       "kind": "ride",
       "from": "Cann River",
-      "to": "B ermagui",
+      "to": "Bermagui",
       "miles": 126,
       "note": "via Wapengo Blue Pool",
       "fromCoords": null,
@@ -2529,7 +2529,7 @@
       "date": "2026-12-29",
       "stage": "2",
       "kind": "ride",
-      "from": "B erma gui",
+      "from": "Bermagui",
       "to": "Ulladulla",
       "miles": 96,
       "note": "Tire Rotation",
@@ -3420,7 +3420,7 @@
       "stage": "3",
       "kind": "ride",
       "from": "Porto Carrero",
-      "to": "Ana s tácio",
+      "to": "Anastácio",
       "miles": 104,
       "note": "Tire Rotation",
       "fromCoords": null,
@@ -3737,7 +3737,7 @@
       "from": "Tambacounda",
       "to": "Koundara",
       "miles": 120,
-      "note": "Guinea",
+      "note": "",
       "fromCoords": [
         -13.6710059,
         13.7725888
@@ -3756,7 +3756,7 @@
       "from": "Koundara",
       "to": "Tiankoi",
       "miles": 61,
-      "note": "Guinea",
+      "note": "",
       "fromCoords": [
         -13.3067562,
         12.4894021
@@ -3775,7 +3775,7 @@
       "from": "Tiankoi",
       "to": "Labé",
       "miles": 96,
-      "note": "Guinea",
+      "note": "",
       "fromCoords": [
         -13.068045,
         11.801194
@@ -3794,7 +3794,7 @@
       "from": "Labé",
       "to": "Mamou",
       "miles": 92,
-      "note": "Guinea",
+      "note": "",
       "fromCoords": [
         -12.2891314,
         11.3232042
@@ -3813,7 +3813,7 @@
       "from": "Mamou",
       "to": "Kindia",
       "miles": 82,
-      "note": "Guinea",
+      "note": "",
       "fromCoords": [
         -12.0832543,
         10.3785237
@@ -3832,7 +3832,7 @@
       "from": "Kindia",
       "to": "Forécariah",
       "miles": 84,
-      "note": "Guinea",
+      "note": "",
       "fromCoords": [
         -12.8629885,
         10.0406725
@@ -3851,7 +3851,7 @@
       "from": "Forécariah",
       "to": "Port Loko",
       "miles": 60,
-      "note": "Sierra Leone",
+      "note": "",
       "fromCoords": [
         -13.0904353,
         9.4344715
@@ -3870,7 +3870,7 @@
       "from": "Port Loko",
       "to": "Freetown",
       "miles": 74,
-      "note": "Sierra Leone",
+      "note": "",
       "fromCoords": [
         -12.7854613,
         8.766514
@@ -3889,7 +3889,7 @@
       "from": null,
       "to": "Freetown",
       "miles": null,
-      "note": "Sierra Leone",
+      "note": "",
       "fromCoords": null,
       "toCoords": [
         -13.2354918,
@@ -3905,7 +3905,7 @@
       "from": null,
       "to": "Freetown",
       "miles": null,
-      "note": "Sierra Leone Easter",
+      "note": "Easter",
       "fromCoords": null,
       "toCoords": [
         -13.2354918,
@@ -3921,7 +3921,7 @@
       "from": "Freetown",
       "to": "Moyamba",
       "miles": 95,
-      "note": "Sierra Leone via south loop",
+      "note": "via south loop",
       "fromCoords": [
         -13.2354918,
         8.4870803
@@ -3940,7 +3940,7 @@
       "from": "Moyamba",
       "to": "Bo",
       "miles": 68,
-      "note": "Sierra Leone",
+      "note": "",
       "fromCoords": [
         -12.4333255,
         8.1600523
@@ -3959,7 +3959,7 @@
       "from": "Bo",
       "to": "Zimmi",
       "miles": 66,
-      "note": "Sierra Leone via Koribondo",
+      "note": "via Koribondo",
       "fromCoords": [
         -11.7409946,
         7.9551791
@@ -3978,7 +3978,7 @@
       "from": "Zimmi",
       "to": "Monrovia",
       "miles": 107,
-      "note": "Sierra Leone Liberia Tire Rotation",
+      "note": "Liberia Tire Rotation",
       "fromCoords": [
         -11.3062382,
         7.3139328
@@ -5740,7 +5740,7 @@
       "stage": "5",
       "kind": "ride",
       "from": "Kathmandu",
-      "to": "Bh ulkot",
+      "to": "Bhulkot",
       "miles": 58,
       "note": "",
       "fromCoords": [
@@ -5755,7 +5755,7 @@
       "date": "2027-07-10",
       "stage": "5",
       "kind": "ride",
-      "from": "Bh ulkot",
+      "from": "Bhulkot",
       "to": "Mahadevsthan",
       "miles": 79,
       "note": "",
@@ -5836,7 +5836,7 @@
       "from": "Jai gaon",
       "to": "Chhukha",
       "miles": 57,
-      "note": "Bhutan Tashi Yangchar Hotel",
+      "note": "Tashi Yangchar Hotel",
       "fromCoords": null,
       "toCoords": null,
       "needsReview": true
@@ -5849,7 +5849,7 @@
       "from": "Chhukha",
       "to": "Paro",
       "miles": 40,
-      "note": "Bhutan Golden Paddyfield",
+      "note": "Golden Paddyfield",
       "fromCoords": null,
       "toCoords": null,
       "needsReview": true
@@ -5862,7 +5862,7 @@
       "from": "Paro",
       "to": "Thimphu",
       "miles": 45,
-      "note": "Bhutan Hotel Gak yil Tiger’s Nest",
+      "note": "Hotel Gak yil Tiger’s Nest",
       "fromCoords": null,
       "toCoords": [
         89.4169523,
@@ -5878,7 +5878,7 @@
       "from": "Thimphu",
       "to": "Nubding",
       "miles": 77,
-      "note": "Bhutan Gangtey Monastery",
+      "note": "Gangtey Monastery",
       "fromCoords": [
         89.4169523,
         27.4283009
@@ -5894,7 +5894,7 @@
       "from": "Nubding",
       "to": "Chumey",
       "miles": 71,
-      "note": "Bhutan Chumey Nature Resort",
+      "note": "Chumey Nature Resort",
       "fromCoords": null,
       "toCoords": null,
       "needsReview": true
@@ -5907,7 +5907,7 @@
       "from": "Chumey",
       "to": "Sengor",
       "miles": 59,
-      "note": "Bhutan Tashi Gatshel Food and Lodge",
+      "note": "Tashi Gatshel Food and Lodge",
       "fromCoords": null,
       "toCoords": null,
       "needsReview": true
@@ -5920,7 +5920,7 @@
       "from": "Sengor",
       "to": "Mongar",
       "miles": 53,
-      "note": "Bhutan Wangchuk Hotel",
+      "note": "Wangchuk Hotel",
       "fromCoords": null,
       "toCoords": [
         91.0286955,
@@ -5936,7 +5936,7 @@
       "from": "Mongar",
       "to": "Trashigang",
       "miles": 52,
-      "note": "Bhutan Ling khar Lodge",
+      "note": "Ling khar Lodge",
       "fromCoords": [
         91.0286955,
         27.3622845
@@ -5955,7 +5955,7 @@
       "from": "Trashigang",
       "to": "Wamrong",
       "miles": 44,
-      "note": "Bhutan Deche n Wangdi Rest aur &Lodge",
+      "note": "Deche n Wangdi Rest aur &Lodge",
       "fromCoords": [
         91.4066356,
         27.2598452
@@ -5971,7 +5971,7 @@
       "from": "Wamrong",
       "to": "Udal guri",
       "miles": 108,
-      "note": "Bhutan via S iddhinathpur",
+      "note": "via S iddhinathpur",
       "fromCoords": null,
       "toCoords": null,
       "needsReview": true
@@ -6366,7 +6366,7 @@
       "date": "2027-08-20",
       "stage": "5",
       "kind": "ride",
-      "from": "J inshi City",
+      "from": "Jinshi City",
       "to": "Yueyang",
       "miles": 104,
       "note": "",
@@ -6531,7 +6531,7 @@
       "stage": "6",
       "kind": "rest",
       "from": null,
-      "to": "Rest Day i n Los Angeles",
+      "to": "Los Angeles",
       "miles": null,
       "note": "Tune Up 12 @ C Street Bikes",
       "fromCoords": null,
@@ -6829,7 +6829,7 @@
       "from": "Westwood",
       "to": "Reno",
       "miles": 109,
-      "note": "NV Tire Rotation",
+      "note": "Tire Rotation",
       "fromCoords": [
         -121.0057931,
         40.3059999
@@ -6848,7 +6848,7 @@
       "from": "Reno",
       "to": "Middlegate",
       "miles": 110,
-      "note": "NV NV",
+      "note": "",
       "fromCoords": [
         -119.8142691,
         39.529919
@@ -6867,7 +6867,7 @@
       "from": "Middlegate",
       "to": "Eureka",
       "miles": 133,
-      "note": "NV NV",
+      "note": "",
       "fromCoords": [
         -118.02556,
         39.28778
@@ -6886,7 +6886,7 @@
       "from": "Eureka",
       "to": "Ely",
       "miles": 79,
-      "note": "NV NV",
+      "note": "",
       "fromCoords": [
         -115.9607803,
         39.5124858
@@ -6905,7 +6905,7 @@
       "from": null,
       "to": "Ely",
       "miles": null,
-      "note": "NV",
+      "note": "",
       "fromCoords": null,
       "toCoords": [
         -114.874248,
@@ -6921,7 +6921,7 @@
       "from": "Ely",
       "to": "Delta",
       "miles": 151,
-      "note": "NV UT",
+      "note": "",
       "fromCoords": [
         -114.874248,
         39.2533328
@@ -6940,7 +6940,7 @@
       "from": "Delta",
       "to": "Salina",
       "miles": 70,
-      "note": "UT UT",
+      "note": "",
       "fromCoords": [
         -112.57717,
         39.3521777
@@ -6959,7 +6959,7 @@
       "from": "Salina",
       "to": "Green River",
       "miles": 107,
-      "note": "UT UT",
+      "note": "",
       "fromCoords": [
         -111.859925,
         38.9577407
@@ -6978,7 +6978,7 @@
       "from": "Green River",
       "to": "Grand Junction",
       "miles": 102,
-      "note": "UT CO",
+      "note": "",
       "fromCoords": [
         -110.1596352,
         38.9955607
@@ -6997,7 +6997,7 @@
       "from": "Grand Junction",
       "to": "Crested Butte",
       "miles": 115,
-      "note": "CO CO Rockies",
+      "note": "Rockies",
       "fromCoords": [
         -108.5642809,
         39.0689478
@@ -7016,7 +7016,7 @@
       "from": null,
       "to": "Crested Butte",
       "miles": null,
-      "note": "CO Tune Up 13 @ Big Al’s Bicycle Heaven",
+      "note": "Tune Up 13 @ Big Al’s Bicycle Heaven",
       "fromCoords": null,
       "toCoords": [
         -106.9878231,
@@ -7032,7 +7032,7 @@
       "from": "Crested Butte",
       "to": "Cotopaxi",
       "miles": 116,
-      "note": "CO CO Rockies",
+      "note": "Rockies",
       "fromCoords": [
         -106.9878231,
         38.8697146
@@ -7051,7 +7051,7 @@
       "from": "Cotopaxi",
       "to": "Rocky Ford",
       "miles": 123,
-      "note": "CO CO Rockies",
+      "note": "Rockies",
       "fromCoords": [
         -105.6867122,
         38.3731692
@@ -7070,7 +7070,7 @@
       "from": "Rocky Ford",
       "to": "Holly",
       "miles": 94,
-      "note": "CO CO",
+      "note": "",
       "fromCoords": [
         -103.7202274,
         38.052508
@@ -7089,7 +7089,7 @@
       "from": "Holly",
       "to": "Dodge City",
       "miles": 125,
-      "note": "CO KS",
+      "note": "",
       "fromCoords": [
         -102.122685,
         38.0522337
@@ -7108,7 +7108,7 @@
       "from": "Dodge City",
       "to": "Medicine Lodge",
       "miles": 106,
-      "note": "KS KS",
+      "note": "",
       "fromCoords": [
         -100.018797,
         37.7560487
@@ -7127,7 +7127,7 @@
       "from": "Medicine Lodge",
       "to": "Winfield",
       "miles": 93,
-      "note": "KS KS",
+      "note": "",
       "fromCoords": [
         -98.580361,
         37.2811339
@@ -7146,7 +7146,7 @@
       "from": "Winfield",
       "to": "Independence",
       "miles": 87,
-      "note": "KS KS",
+      "note": "",
       "fromCoords": [
         -96.9955918,
         37.2397486
@@ -7165,7 +7165,7 @@
       "from": "Independence",
       "to": "Pittsburg",
       "miles": 68,
-      "note": "KS KS",
+      "note": "",
       "fromCoords": [
         -95.7083131,
         37.2242358
@@ -7184,7 +7184,7 @@
       "from": null,
       "to": "Pittsburg",
       "miles": null,
-      "note": "KS",
+      "note": "",
       "fromCoords": null,
       "toCoords": [
         -94.70496,
@@ -7200,7 +7200,7 @@
       "from": "Pittsburg",
       "to": "Marshfield",
       "miles": 107,
-      "note": "KS MO via Fair Grove",
+      "note": "via Fair Grove",
       "fromCoords": [
         -94.70496,
         37.410884
@@ -7219,7 +7219,7 @@
       "from": "Marshfield",
       "to": "Eminence",
       "miles": 106,
-      "note": "MO MO",
+      "note": "",
       "fromCoords": [
         -92.9024067,
         37.3372552
@@ -7238,7 +7238,7 @@
       "from": "Eminence",
       "to": "Sikeston",
       "miles": 121,
-      "note": "MO MO Tire Rotation",
+      "note": "Tire Rotation",
       "fromCoords": [
         -91.357635,
         37.1506044
@@ -7257,7 +7257,7 @@
       "from": "Sikeston",
       "to": "Dawson Springs",
       "miles": 125,
-      "note": "MO KY",
+      "note": "",
       "fromCoords": [
         -89.5878579,
         36.876719
@@ -7276,7 +7276,7 @@
       "from": "Dawson Springs",
       "to": "Elizabethtown",
       "miles": 125,
-      "note": "KY KY via 62",
+      "note": "via 62",
       "fromCoords": [
         -87.6925074,
         37.1672684
@@ -7295,7 +7295,7 @@
       "from": "Elizabethtown",
       "to": "Lexington",
       "miles": 85,
-      "note": "KY KY",
+      "note": "",
       "fromCoords": [
         -85.8712385,
         37.7043065
@@ -7314,7 +7314,7 @@
       "from": null,
       "to": "Lexington",
       "miles": null,
-      "note": "KY",
+      "note": "",
       "fromCoords": null,
       "toCoords": [
         -84.5152662,
@@ -7330,7 +7330,7 @@
       "from": "Lexington",
       "to": "Huntington",
       "miles": 132,
-      "note": "KY WV via 60",
+      "note": "via 60",
       "fromCoords": [
         -84.5152662,
         38.0389091
@@ -7349,7 +7349,7 @@
       "from": "Huntington",
       "to": "Ivydale",
       "miles": 104,
-      "note": "WV WV via 60, 119, 4",
+      "note": "via 60, 119, 4",
       "fromCoords": [
         -82.4451746,
         38.4191481
@@ -7368,7 +7368,7 @@
       "from": "Ivydale",
       "to": "Grafton",
       "miles": 122,
-      "note": "WV WV via 4, 19, 50",
+      "note": "via 4, 19, 50",
       "fromCoords": [
         -81.0348297,
         38.5356548
@@ -7387,7 +7387,7 @@
       "from": "Grafton",
       "to": "Cumberland",
       "miles": 93,
-      "note": "WV via 50, 219, 135, 220",
+      "note": "via 50, 219, 135, 220",
       "fromCoords": [
         -80.0189659,
         39.3409249
