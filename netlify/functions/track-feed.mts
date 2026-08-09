@@ -171,6 +171,9 @@ interface Payload {
   days: DaySummary[]
   /** The planned leg he appears to be on, or null when nothing fits. */
   leg: CurrentLeg | null
+  /** Reconstructed riding from before the tracker existed. Drawn dashed. */
+  backfillTrail: [number, number][]
+  backfillKm: number
   trailPoints: number
   mode: 'production' | 'test'
   /** Owners only: every device seen, so a misconfigured test list is visible. */
@@ -232,6 +235,7 @@ export default async function handler(req: Request): Promise<Response> {
       select tst, lat, lon, acc, alt, vel, batt, bs, conn, tid
       from locations
       where (device = any(${devices}::text[])) = ${isTest}::boolean
+        and source = 'device'
       order by tst desc
       limit 1
     `) as unknown as LatestRow[]
@@ -250,6 +254,8 @@ export default async function handler(req: Request): Promise<Response> {
         profileToday: [],
         days: [],
         leg: null,
+        backfillTrail: [],
+        backfillKm: 0,
         trailPoints: 0,
         mode,
         ...(isOwner ? { devices: await knownDevices(sql) } : {}),
@@ -270,6 +276,8 @@ export default async function handler(req: Request): Promise<Response> {
           lag(lon) over (order by tst) as plon
         from locations
         where (device = any(${devices}::text[])) = ${isTest}::boolean
+          and source = 'device'
+        and source = 'device'
       ),
       steps as (
         select
@@ -317,6 +325,8 @@ export default async function handler(req: Request): Promise<Response> {
           lag(lon) over (order by tst) as plon
         from locations
         where (device = any(${devices}::text[])) = ${isTest}::boolean
+          and source = 'device'
+        and source = 'device'
       ),
       steps as (
         select
@@ -363,6 +373,8 @@ export default async function handler(req: Request): Promise<Response> {
           lag(lon) over (order by tst) as plon
         from locations
         where (device = any(${devices}::text[])) = ${isTest}::boolean
+          and source = 'device'
+        and source = 'device'
       ),
       steps as (
         select
@@ -402,6 +414,8 @@ export default async function handler(req: Request): Promise<Response> {
         select tst, alt
         from locations
         where (device = any(${devices}::text[])) = ${isTest}::boolean
+          and source = 'device'
+        and source = 'device'
           and (tst at time zone ${zone}::text)::date = ${today}::date
           and alt is not null
       )
@@ -429,6 +443,8 @@ export default async function handler(req: Request): Promise<Response> {
           lag(lon) over (order by tst) as plon
         from locations
         where (device = any(${devices}::text[])) = ${isTest}::boolean
+          and source = 'device'
+        and source = 'device'
           and (tst at time zone ${zone}::text)::date = ${today}::date
       ),
       steps as (
@@ -471,6 +487,8 @@ export default async function handler(req: Request): Promise<Response> {
           lag(lon) over (order by tst) as plon
         from locations
         where (device = any(${devices}::text[])) = ${isTest}::boolean
+          and source = 'device'
+        and source = 'device'
       ),
       steps as (
         select
@@ -536,6 +554,8 @@ export default async function handler(req: Request): Promise<Response> {
           lag(lon) over (order by tst) as plon
         from locations
         where (device = any(${devices}::text[])) = ${isTest}::boolean
+          and source = 'device'
+        and source = 'device'
       ),
       steps as (
         select
@@ -588,6 +608,35 @@ export default async function handler(req: Request): Promise<Response> {
       }
     })
 
+    // Reconstructed riding, kept in its own line so it can be drawn dashed and
+    // never mistaken for a measured track.
+    const backfillRows = (await sql`
+      with ordered as (
+        select
+          tst, lat, lon,
+          lag(lat) over (order by tst) as plat,
+          lag(lon) over (order by tst) as plon
+        from locations
+        where source = 'backfill'
+      ),
+      steps as (
+        select
+          tst, lat, lon,
+          case when plat is null then 0 else
+            2 * 6371000 * asin(least(1, sqrt(
+              power(sin(radians(lat - plat) / 2), 2) +
+              cos(radians(plat)) * cos(radians(lat)) *
+              power(sin(radians(lon - plon) / 2), 2)
+            )))
+          end as step_m
+        from ordered
+      )
+      select lon, lat, sum(step_m) over () as total_m from steps order by tst
+    `) as unknown as { lon: number; lat: number; total_m: number }[]
+
+    const backfillTrail: [number, number][] = backfillRows.map((r) => [r.lon, r.lat])
+    const backfillKm = (backfillRows[0]?.total_m ?? 0) / 1000
+
     const trail: [number, number][] = trailRows.map((r) => [r.lon, r.lat])
 
     // The newest fix can fall inside an already-represented slice, which would
@@ -609,6 +658,8 @@ export default async function handler(req: Request): Promise<Response> {
       profileToday: profileRows,
       days,
       leg: currentLeg([latest.lon, latest.lat], today),
+      backfillTrail,
+      backfillKm,
       trailPoints: trail.length,
       mode,
       ...(isOwner ? { devices: await knownDevices(sql) } : {}),

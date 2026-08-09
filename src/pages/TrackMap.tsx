@@ -63,6 +63,8 @@ interface Feed {
     distanceToDestinationKm: number
     daysFromSchedule: number
   } | null
+  backfillTrail: [number, number][]
+  backfillKm: number
   trailPoints: number
   mode: Mode
   devices?: string[]
@@ -278,6 +280,22 @@ export default function TrackMap({ role }: Props) {
         paint: { 'line-color': ROUTE_RED, 'line-width': 2.5, 'line-opacity': 0.5 },
       })
 
+      // Reconstructed riding from before the tracker existed. Dashed and
+      // dimmer so it never reads as a measured track.
+      map.addSource('backfill', { type: 'geojson', data: EMPTY_LINE })
+      map.addLayer({
+        id: 'backfill-line',
+        type: 'line',
+        source: 'backfill',
+        layout: { 'line-cap': 'butt', 'line-join': 'round' },
+        paint: {
+          'line-color': LIVE_BLUE,
+          'line-width': 3,
+          'line-opacity': 0.55,
+          'line-dasharray': [2, 2],
+        },
+      })
+
       // Where he has actually been.
       map.addSource('trail', { type: 'geojson', data: EMPTY_LINE })
       map.addLayer({
@@ -354,6 +372,12 @@ export default function TrackMap({ role }: Props) {
     trail?.setData({
       ...EMPTY_LINE,
       geometry: { type: 'LineString', coordinates: feed.trail },
+    })
+
+    const backfill = map.getSource('backfill') as mapboxgl.GeoJSONSource | undefined
+    backfill?.setData({
+      ...EMPTY_LINE,
+      geometry: { type: 'LineString', coordinates: feed.backfillTrail },
     })
 
     daysRef.current = feed.days
@@ -527,6 +551,12 @@ export default function TrackMap({ role }: Props) {
                 <dt>Total</dt>
                 <dd>{miles(feed?.distanceKm ?? 0)} mi</dd>
               </div>
+              {(feed?.backfillKm ?? 0) > 0 && (
+                <div title="Reconstructed from the planned route and his own account — not measured">
+                  <dt>Reconstructed</dt>
+                  <dd>{miles(feed?.backfillKm ?? 0)} mi</dd>
+                </div>
+              )}
             </dl>
 
             {/* Opens a replacement view rather than growing the panel, which on

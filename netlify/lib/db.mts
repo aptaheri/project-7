@@ -53,6 +53,7 @@ export function ensureSchema(): Promise<void> {
           bs          smallint,
           conn        text,
           tid         text,
+          source      text not null default 'device',
           raw         jsonb not null,
           received_at timestamptz not null default now(),
           constraint locations_device_tst_key unique (device, tst)

@@ -16,6 +16,7 @@ create table if not exists locations (
   bs          smallint,                   -- battery status (0 unknown, 1 unplugged, 2 charging, 3 full)
   conn        text,                       -- w=wifi, m=mobile, o=offline
   tid         text,                       -- two-character tracker id
+  source      text not null default 'device', -- 'device' measured, 'backfill' reconstructed
   raw         jsonb not null,             -- full payload, so nothing is lost
   received_at timestamptz not null default now(),
 
