@@ -66,7 +66,7 @@ export default function ElevationChart({ points }: Props) {
       </svg>
 
       <div className="elevation-axis">
-        <span>{feet(minY)}–{feet(maxY)} ft</span>
+        <span>0 mi</span>
         <span>{miles(maxX)} mi</span>
       </div>
     </div>

@@ -58,6 +58,9 @@ interface Feed {
 
 type Status = 'loading' | 'ok' | 'denied' | 'error'
 
+/** Panels swap rather than stack; add a name here to nest another screen. */
+type PanelView = 'main' | 'elevation'
+
 const EMPTY_LINE: GeoJSON.Feature<GeoJSON.LineString> = {
   type: 'Feature',
   properties: {},
@@ -112,9 +115,9 @@ export default function TrackMap({ email, role }: Props) {
   // Owners can look at their own test phone instead of the live rider. The
   // choice survives reloads so a debugging session is not lost on refresh, and
   // production is always the default for everyone else.
-  // The profile is opt-in: it is the tallest thing in the panel and most
-  // viewers only want to know where he is.
-  const [showProfile, setShowProfile] = useState(false)
+  // The panel swaps between views instead of stacking sections, so it stays the
+  // same height however much detail is nested inside it.
+  const [view, setView] = useState<PanelView>('main')
   const [mode, setMode] = useState<Mode>(() =>
     role === 'owner' && localStorage.getItem(MODE_KEY) === 'test' ? 'test' : 'production',
   )
@@ -298,6 +301,9 @@ export default function TrackMap({ email, role }: Props) {
   }
 
   const latest = feed?.latest ?? null
+  const profileAlts = feed?.profileToday.map((p) => p.alt) ?? []
+  const profileHigh = profileAlts.length ? Math.max(...profileAlts) : null
+  const profileLow = profileAlts.length ? Math.min(...profileAlts) : null
 
   // Every condition resolves to one status line, so the panel keeps its shape
   // and "something is off" always reads the same way. The distinction that
@@ -362,7 +368,7 @@ export default function TrackMap({ email, role }: Props) {
 
         {indicator.note && <p className="track-panel-note">{indicator.note}</p>}
 
-        {expanded && latest && (
+        {expanded && view === 'main' && latest && (
           <>
             <dl className="track-stats">
               <div>
@@ -373,12 +379,6 @@ export default function TrackMap({ email, role }: Props) {
                 <div>
                   <dt>Speed</dt>
                   <dd>{Math.round(latest.vel * MILES_PER_KM)} mph</dd>
-                </div>
-              )}
-              {latest.alt !== null && (
-                <div>
-                  <dt>Elevation</dt>
-                  <dd>{feet(latest.alt)} ft</dd>
                 </div>
               )}
               {latest.batt !== null && (
@@ -401,8 +401,63 @@ export default function TrackMap({ email, role }: Props) {
                 <dt>Total</dt>
                 <dd>{miles(feed?.distanceKm ?? 0)} mi</dd>
               </div>
+            </dl>
+
+            {/* Opens a replacement view rather than growing the panel, which on
+                a phone would push it past the height of the screen. */}
+            <button
+              type="button"
+              className="track-nav-row"
+              onClick={() => setView('elevation')}
+            >
+              <span className="track-nav-label">Elevation</span>
+              <span className="track-nav-value">
+                {latest.alt === null ? '—' : `${feet(latest.alt)} ft`}
+              </span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
+
+            <button className="track-recenter" onClick={recenter}>
+              Recenter
+            </button>
+          </>
+        )}
+
+        {expanded && view === 'elevation' && (
+          <>
+            <div className="track-subhead">
+              <button
+                type="button"
+                className="track-back"
+                onClick={() => setView('main')}
+                aria-label="Back to stats"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+              </button>
+              <span className="track-subhead-title">Elevation</span>
+            </div>
+
+            <ElevationChart points={feed?.profileToday ?? []} />
+
+            <dl className="track-stats">
               <div>
-                <dt>Elevation gain</dt>
+                <dt>Current</dt>
+                <dd>{latest?.alt == null ? '—' : `${feet(latest.alt)} ft`}</dd>
+              </div>
+              <div title="Highest point of today's ride">
+                <dt>High today</dt>
+                <dd>{profileHigh === null ? '—' : `${feet(profileHigh)} ft`}</dd>
+              </div>
+              <div title="Lowest point of today's ride">
+                <dt>Low today</dt>
+                <dd>{profileLow === null ? '—' : `${feet(profileLow)} ft`}</dd>
+              </div>
+              <div title="Total climbing today, ignoring GPS wobble">
+                <dt>Gain today</dt>
                 <dd>{feet(feed?.elevationGainM ?? 0)} ft</dd>
               </div>
               <div title="Height now versus the start of his local day">
@@ -414,34 +469,10 @@ export default function TrackMap({ email, role }: Props) {
                 </dd>
               </div>
             </dl>
-
-            <button
-              type="button"
-              className="track-profile-toggle"
-              onClick={() => setShowProfile((v) => !v)}
-              aria-expanded={showProfile}
-            >
-              <span>Elevation profile</span>
-              <svg
-                className={`track-chevron${showProfile ? ' open' : ''}`}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-            </button>
-
-            {showProfile && <ElevationChart points={feed?.profileToday ?? []} />}
-
-            <button className="track-recenter" onClick={recenter}>
-              Recenter
-            </button>
           </>
         )}
 
-        {expanded && role === 'owner' && (
+        {expanded && view === 'main' && role === 'owner' && (
           <div className="track-modes">
             <button
               type="button"
@@ -460,12 +491,12 @@ export default function TrackMap({ email, role }: Props) {
           </div>
         )}
 
-        {expanded && role === 'owner' && feed?.devices && feed.devices.length > 0 && (
+        {expanded && view === 'main' && role === 'owner' && feed?.devices && feed.devices.length > 0 && (
           <p className="track-devices">Devices seen: {feed.devices.join(', ')}</p>
         )}
 
         {/* Signing out lives in the navbar; this just says who you are. */}
-        {expanded && (
+        {expanded && view === 'main' && (
           <div className="track-account">
             <span className="track-account-email">{email}</span>
             {role === 'owner' && <span className="track-account-role">Owner</span>}
