@@ -37,7 +37,7 @@ function mapItems(me: Me | null): MapItem[] {
       : undefined
 
   return [
-    { label: 'Route map', to: '/map', enabled: true },
+    { label: 'Route', to: '/map', enabled: true },
     {
       label: 'Live',
       to: '/track',
