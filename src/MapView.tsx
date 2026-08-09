@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
+import { ROUTE_RED } from './lib/mapColors'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import './MapView.scss'
 
@@ -133,7 +134,7 @@ export default function MapView() {
       map.addLayer({
         id: 'route-glow', type: 'line', source: 'route',
         filter: ['==', '$type', 'LineString'],
-        paint: { 'line-color': '#4285f4', 'line-width': 14, 'line-opacity': 0.15, 'line-blur': 4 },
+        paint: { 'line-color': ROUTE_RED, 'line-width': 14, 'line-opacity': 0.15, 'line-blur': 4 },
       })
       // Dark shadow so the route is visible on white surfaces (Antarctica snow)
       map.addLayer({
@@ -152,7 +153,7 @@ export default function MapView() {
         id: 'route-line', type: 'line', source: 'route',
         filter: ['==', '$type', 'LineString'],
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#4285f4', 'line-width': 4, 'line-opacity': 1 },
+        paint: { 'line-color': ROUTE_RED, 'line-width': 4, 'line-opacity': 1 },
       })
       map.addLayer({
         id: 'waypoints-border', type: 'circle', source: 'route',
@@ -162,7 +163,7 @@ export default function MapView() {
       map.addLayer({
         id: 'waypoints', type: 'circle', source: 'route',
         filter: ['==', '$type', 'Point'],
-        paint: { 'circle-radius': 4, 'circle-color': '#4285f4', 'circle-opacity': 1 },
+        paint: { 'circle-radius': 4, 'circle-color': ROUTE_RED, 'circle-opacity': 1 },
       })
 
       // Fit camera — exclude stage7 (Antarctica, lat ~-83) which breaks fitBounds on globe

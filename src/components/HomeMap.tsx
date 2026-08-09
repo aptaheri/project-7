@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
+import { ROUTE_RED } from '../lib/mapColors'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
@@ -105,14 +106,14 @@ export default function HomeMap() {
       map.addLayer({
         id: 'done-line', type: 'line', source: 'route-done',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#4285f4', 'line-width': 3, 'line-opacity': 1 },
+        paint: { 'line-color': ROUTE_RED, 'line-width': 3, 'line-opacity': 1 },
       })
 
       map.addSource('route-anim', { type: 'geojson', data: emptyLine })
       map.addLayer({
         id: 'anim-glow', type: 'line', source: 'route-anim',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#4285f4', 'line-width': 12, 'line-opacity': 0.2, 'line-blur': 4 },
+        paint: { 'line-color': ROUTE_RED, 'line-width': 12, 'line-opacity': 0.2, 'line-blur': 4 },
       })
       map.addLayer({
         id: 'anim-casing', type: 'line', source: 'route-anim',
@@ -122,7 +123,7 @@ export default function HomeMap() {
       map.addLayer({
         id: 'anim-line', type: 'line', source: 'route-anim',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#4285f4', 'line-width': 3, 'line-opacity': 1 },
+        paint: { 'line-color': ROUTE_RED, 'line-width': 3, 'line-opacity': 1 },
       })
 
       const completedFeatures: GeoJSON.Feature[] = []

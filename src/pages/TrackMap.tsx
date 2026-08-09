@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import ElevationChart from '../components/ElevationChart'
+import { LIVE_BLUE, ROUTE_RED } from '../lib/mapColors'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
@@ -225,7 +226,7 @@ export default function TrackMap({ role }: Props) {
         source: 'route',
         filter: ['==', '$type', 'LineString'],
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#4285f4', 'line-width': 2.5, 'line-opacity': 0.45 },
+        paint: { 'line-color': ROUTE_RED, 'line-width': 2.5, 'line-opacity': 0.5 },
       })
 
       // Where he has actually been.
@@ -234,14 +235,23 @@ export default function TrackMap({ role }: Props) {
         id: 'trail-glow',
         type: 'line',
         source: 'trail',
-        paint: { 'line-color': '#22d3a6', 'line-width': 12, 'line-opacity': 0.18, 'line-blur': 4 },
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': LIVE_BLUE, 'line-width': 18, 'line-opacity': 0.18, 'line-blur': 5 },
+      })
+      // A casing keeps the blue legible over dark forest and pale rock alike.
+      map.addLayer({
+        id: 'trail-casing',
+        type: 'line',
+        source: 'trail',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': '#ffffff', 'line-width': 8.5, 'line-opacity': 0.85 },
       })
       map.addLayer({
         id: 'trail-line',
         type: 'line',
         source: 'trail',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#22d3a6', 'line-width': 3.5 },
+        paint: { 'line-color': LIVE_BLUE, 'line-width': 5 },
       })
 
       setMapReady(true)

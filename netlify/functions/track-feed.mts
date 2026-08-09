@@ -20,6 +20,14 @@ const TARGET_TRAIL_POINTS = 2000
 const MIN_SPACING_M = 25
 
 /**
+ * Fixes averaged either side when drawing the trail.
+ *
+ * Only the drawn line is smoothed. Distance is measured from the raw fixes, so
+ * rounding off GPS wobble cannot change the reported mileage.
+ */
+const TRAIL_SMOOTHING = 2
+
+/**
  * A climb is banked only once the rise exceeds this above a running reference,
  * which the descent then follows back down.
  *
@@ -274,6 +282,14 @@ export default async function handler(req: Request): Promise<Response> {
       with ordered as (
         select
           tst, lat, lon,
+          avg(lat) over (
+            order by tst
+            rows between ${TRAIL_SMOOTHING} preceding and ${TRAIL_SMOOTHING} following
+          ) as lat_s,
+          avg(lon) over (
+            order by tst
+            rows between ${TRAIL_SMOOTHING} preceding and ${TRAIL_SMOOTHING} following
+          ) as lon_s,
           lag(lat) over (order by tst) as plat,
           lag(lon) over (order by tst) as plon
         from locations
@@ -281,7 +297,7 @@ export default async function handler(req: Request): Promise<Response> {
       ),
       steps as (
         select
-          tst, lat, lon,
+          tst, lat_s, lon_s,
           case when plat is null then 0 else
             2 * 6371000 * asin(least(1, sqrt(
               power(sin(radians(lat - plat) / 2), 2) +
@@ -297,16 +313,16 @@ export default async function handler(req: Request): Promise<Response> {
         -- rejects a DISTINCT ON whose expression does not textually match the
         -- leading ORDER BY.
         select
-          tst, lat, lon,
+          tst, lat_s, lon_s,
           floor(sum(step_m) over (order by tst) / ${spacing}::float8) as slice
         from steps
       ),
       thinned as (
-        select distinct on (slice) tst, lat, lon
+        select distinct on (slice) tst, lat_s, lon_s
         from bucketed
         order by slice, tst
       )
-      select lon, lat from thinned order by tst
+      select lon_s as lon, lat_s as lat from thinned order by tst
     `) as unknown as TrailRow[]
 
     // Altitude sampled by distance travelled rather than per fix, so the series

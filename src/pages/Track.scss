@@ -230,24 +230,24 @@
 
 .track-marker {
   position: relative;
-  width: 18px;
-  height: 18px;
+  width: 26px;
+  height: 26px;
 }
 
 .track-marker-dot {
   position: absolute;
-  inset: 4px;
+  inset: 6px;
   border-radius: 50%;
-  background: #22d3a6;
-  border: 2px solid #fff;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
+  background: #4285f4;
+  border: 2.5px solid #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.65);
 }
 
 .track-marker-pulse {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: rgba(34, 211, 166, 0.45);
+  background: rgba(66, 133, 244, 0.45);
   animation: track-pulse 2s ease-out infinite;
 }
 
@@ -351,12 +351,12 @@
 }
 
 .elevation-area {
-  fill: rgba(34, 211, 166, 0.18);
+  fill: rgba(66, 133, 244, 0.18);
 }
 
 .elevation-line {
   fill: none;
-  stroke: #22d3a6;
+  stroke: #4285f4;
   stroke-width: 1.5;
   // preserveAspectRatio="none" stretches the stroke; this keeps it even.
   vector-effect: non-scaling-stroke;
