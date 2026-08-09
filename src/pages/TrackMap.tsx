@@ -3,8 +3,7 @@ import mapboxgl from 'mapbox-gl'
 import ElevationChart from '../components/ElevationChart'
 import { BACKFILL_BLUE, LIVE_BLUE, ROUTE_RED } from '../lib/mapColors'
 import {
-  bearing, compass, dateIn, daylight, fahrenheit, mph, timeIn,
-  weatherDescription, windRelativeToHeading,
+  compass, dateIn, daylight, fahrenheit, mph, timeIn, weatherDescription,
 } from '../lib/conditions'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
@@ -814,19 +813,6 @@ export default function TrackMap({ role }: Props) {
             {feed?.local?.weather ? (
               (() => {
                 const w = feed.local.weather
-                // His direction of travel turns wind direction into the thing a
-                // cyclist actually cares about. Two trail points give the
-                // bearing; a stationary rider has no meaningful heading.
-                const trail = feed.trail
-                const heading =
-                  trail.length >= 2
-                    ? bearing(trail[trail.length - 2], trail[trail.length - 1])
-                    : null
-                const relative =
-                  heading !== null && w.windKph > 1
-                    ? windRelativeToHeading(w.windDirection, w.windKph, heading)
-                    : null
-
                 return (
                   <dl className="track-stats">
                     <div>
@@ -853,12 +839,6 @@ export default function TrackMap({ role }: Props) {
                       <dt>Wind</dt>
                       <dd>{mph(w.windKph)} from {compass(w.windDirection)}</dd>
                     </div>
-                    {relative && (
-                      <div title="The wind along his direction of travel">
-                        <dt>{relative.label}</dt>
-                        <dd>{mph(relative.kph)}</dd>
-                      </div>
-                    )}
                     {w.rainChance !== null && (
                       <div title="Chance of precipitation today">
                         <dt>Rain chance</dt>
