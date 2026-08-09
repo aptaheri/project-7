@@ -45,6 +45,8 @@ interface Feed {
   /** Every stored fix, not the thinned trail. */
   count: number
   distanceKm: number
+  distanceTodayKm: number
+  timezone: string | null
   elevationGainM: number
   trailPoints: number
   mode: Mode
@@ -385,8 +387,12 @@ export default function TrackMap({ email, role }: Props) {
                   <dd>±{feet(latest.acc)} ft</dd>
                 </div>
               )}
+              <div title={feed?.timezone ? `Day boundary: ${feed.timezone}` : undefined}>
+                <dt>Today</dt>
+                <dd>{miles(feed?.distanceTodayKm ?? 0)} mi</dd>
+              </div>
               <div>
-                <dt>Distance</dt>
+                <dt>Total</dt>
                 <dd>{miles(feed?.distanceKm ?? 0)} mi</dd>
               </div>
               <div>

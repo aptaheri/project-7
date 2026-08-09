@@ -1,3 +1,4 @@
+import tzLookup from 'tz-lookup'
 import { json } from '../lib/auth.mts'
 import { db, ensureSchema } from '../lib/db.mts'
 import { currentSession } from '../lib/session.mts'
@@ -55,7 +56,25 @@ interface LatestRow {
 interface StatsRow {
   distance_m: number
   gain_m: number
+  today_m: number
   points: number
+}
+
+/**
+ * The rider's own local day, derived from where he is rather than from the
+ * server or the viewer. Riding east across a border can shift the day boundary
+ * by an hour, and "today" has to mean what it means to him.
+ */
+function localDay(lat: number, lon: number): { zone: string; date: string } {
+  let zone: string
+  try {
+    zone = tzLookup(lat, lon)
+  } catch {
+    zone = 'UTC'
+  }
+  // en-CA formats as YYYY-MM-DD, which Postgres casts to date directly.
+  const date = new Intl.DateTimeFormat('en-CA', { timeZone: zone }).format(new Date())
+  return { zone, date }
 }
 
 interface TrailRow {
@@ -68,6 +87,9 @@ interface Payload {
   trail: [number, number][]
   count: number
   distanceKm: number
+  distanceTodayKm: number
+  /** IANA zone the day boundary was taken from, for labelling. */
+  timezone: string | null
   elevationGainM: number
   trailPoints: number
   mode: 'production' | 'test'
@@ -141,6 +163,8 @@ export default async function handler(req: Request): Promise<Response> {
         trail: [],
         count: 0,
         distanceKm: 0,
+        distanceTodayKm: 0,
+        timezone: null,
         elevationGainM: 0,
         trailPoints: 0,
         mode,
@@ -150,12 +174,14 @@ export default async function handler(req: Request): Promise<Response> {
       return json(payload)
     }
 
+    const { zone, date: today } = localDay(latest.lat, latest.lon)
+
     // Distance and climb are measured over every stored fix, not the thinned
     // trail, so thinning changes what is drawn but never what is reported.
     const statsRows = (await sql`
       with ordered as (
         select
-          lat, lon, alt,
+          tst, lat, lon, alt,
           lag(lat) over (order by tst) as plat,
           lag(lon) over (order by tst) as plon,
           lag(alt) over (order by tst) as palt
@@ -164,6 +190,9 @@ export default async function handler(req: Request): Promise<Response> {
       ),
       steps as (
         select
+          -- The day is bucketed in the rider's own timezone, so "today" means
+          -- his day rather than the server's or the viewer's.
+          (tst at time zone ${zone}::text)::date as local_date,
           case when plat is null then 0 else
             2 * 6371000 * asin(least(1, sqrt(
               power(sin(radians(lat - plat) / 2), 2) +
@@ -181,11 +210,12 @@ export default async function handler(req: Request): Promise<Response> {
       select
         coalesce(sum(step_m), 0)::float8 as distance_m,
         coalesce(sum(gain_m), 0)::float8 as gain_m,
+        coalesce(sum(step_m) filter (where local_date = ${today}::date), 0)::float8 as today_m,
         count(*)::int as points
       from steps
     `) as unknown as StatsRow[]
 
-    const stats = statsRows[0] ?? { distance_m: 0, gain_m: 0, points: 0 }
+    const stats = statsRows[0] ?? { distance_m: 0, gain_m: 0, today_m: 0, points: 0 }
 
     // Spacing scales with the route so the payload stays flat whether he has
     // ridden 10 km or 50,000.
@@ -247,6 +277,8 @@ export default async function handler(req: Request): Promise<Response> {
       trail,
       count: stats.points,
       distanceKm: stats.distance_m / 1000,
+      distanceTodayKm: stats.today_m / 1000,
+      timezone: zone,
       elevationGainM: stats.gain_m,
       trailPoints: trail.length,
       mode,
