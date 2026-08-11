@@ -10,6 +10,15 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
 
 const POLL_MS = 30_000
+
+/**
+ * Polling interval once the last fix has gone stale.
+ *
+ * A tab left open overnight was calling the feed every 30 seconds to be told
+ * nothing had changed — 2,880 invocations a day per tab, all of them billed.
+ */
+const IDLE_POLL_MS = 5 * 60_000
+
 const CLOCK_MS = 15_000
 
 // A fix older than this means the phone has been out of coverage or asleep.
@@ -181,6 +190,9 @@ export default function TrackMap({ role }: Props) {
   const [feed, setFeed] = useState<Feed | null>(null)
   const [status, setStatus] = useState<Status>('loading')
   const failuresRef = useRef(0)
+  // Read by the scheduler, which is set up once and must not close over stale
+  // render state.
+  const lastFixRef = useRef<number | null>(null)
   // On a phone the panel covers a third of the map, so it starts collapsed
   // there and open on the roomier desktop layout.
   const [expanded, setExpanded] = useState(() => window.innerWidth > 600)
@@ -208,6 +220,7 @@ export default function TrackMap({ role }: Props) {
   // --- Poll the feed ---
   useEffect(() => {
     let cancelled = false
+    let timer: number | undefined
     // A different rider is somewhere else entirely, so let the map fly there.
     hasCenteredRef.current = false
 
@@ -223,6 +236,7 @@ export default function TrackMap({ role }: Props) {
         const data = (await res.json()) as Feed
         if (cancelled) return
         failuresRef.current = 0
+        lastFixRef.current = data.latest ? new Date(data.latest.tst).getTime() : null
         setFeed(data)
         setStatus('ok')
       } catch (error) {
@@ -235,15 +249,40 @@ export default function TrackMap({ role }: Props) {
       }
     }
 
-    load()
-    const id = setInterval(load, POLL_MS)
-    const onFocus = () => load()
-    window.addEventListener('focus', onFocus)
+    /**
+     * Reschedules after each response rather than on a fixed interval, so the
+     * gap can reflect what is actually happening: nothing at all while the tab
+     * is hidden, and a slow trickle once he has stopped riding.
+     */
+    function schedule() {
+      window.clearTimeout(timer)
+      if (document.hidden) return
+
+      const last = lastFixRef.current
+      const stale = last !== null && Date.now() - last > STALE_MS
+      timer = window.setTimeout(run, stale ? IDLE_POLL_MS : POLL_MS)
+    }
+
+    async function run() {
+      await load()
+      if (!cancelled) schedule()
+    }
+
+    function onVisibility() {
+      // Coming back to a hidden tab should show current data immediately.
+      if (document.hidden) window.clearTimeout(timer)
+      else void run()
+    }
+
+    void run()
+    window.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('focus', onVisibility)
 
     return () => {
       cancelled = true
-      clearInterval(id)
-      window.removeEventListener('focus', onFocus)
+      window.clearTimeout(timer)
+      window.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('focus', onVisibility)
     }
   }, [mode])
 
