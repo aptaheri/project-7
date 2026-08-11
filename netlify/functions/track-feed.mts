@@ -89,6 +89,19 @@ function hysteresisGain(altitudes: number[], threshold: number): number {
 const CACHE_MS = 20_000
 
 /**
+ * How long a cached payload stays valid when no new fix has arrived.
+ *
+ * Compute is billed by GB-hour and covers the database as well as the
+ * functions, so a poll that wakes Postgres to re-derive an unchanged answer is
+ * the expensive part — not the request itself, which costs almost nothing. When
+ * nobody is riding, a poll should cost one indexed lookup and nothing more.
+ */
+const IDLE_CACHE_MS = 5 * 60_000
+
+/** Day summaries and the like change only as days complete, not per fix. */
+const COLD_CACHE_MS = 5 * 60_000
+
+/**
  * Devices whose fixes are test data. Production is defined as everything NOT
  * listed here, so a new rider's phone counts as real from its first fix — no
  * configuration needed on his side and no way for day one to land in test.
@@ -189,13 +202,165 @@ interface Payload {
 }
 
 // Keyed by mode so the two views cannot serve each other's cached payload.
-const cache = new Map<string, { at: number; payload: Payload }>()
+const cache = new Map<string, { at: number; watermark: string | null; payload: Payload }>()
+
+/** Reconstructed riding is fixed history; it never needs recomputing. */
+let backfillCache: { trail: [number, number][]; km: number } | null = null
+
+/** Per-day summaries, which only shift when a day gains or completes. */
+const dayCache = new Map<string, { at: number; days: DaySummary[] }>()
 
 async function knownDevices(sql: ReturnType<typeof db>): Promise<string[]> {
   const rows = (await sql`
     select distinct device from locations order by device
   `) as unknown as { device: string }[]
   return rows.map((r) => r.device)
+}
+
+/**
+ * Per-day summaries across both measured and reconstructed riding.
+ *
+ * Two full-history window queries, so the caller runs this on a slower clock
+ * than the live position — days only shift as one gains fixes or completes.
+ */
+async function computeDays(
+  sql: ReturnType<typeof db>,
+  zone: string,
+  devices: string[],
+  isTest: boolean,
+): Promise<DaySummary[]> {
+  const dayRows = (await sql`
+      with ordered as (
+        select
+          tst, lat, lon, source,
+          (tst at time zone ${zone}::text)::date as local_date,
+          lag(lat) over (order by tst) as plat,
+          lag(lon) over (order by tst) as plon
+        from locations
+        where ((device = any(${devices}::text[])) = ${isTest}::boolean and source = 'device')
+           or source = 'backfill'
+      ),
+      steps as (
+        select
+          tst, lat, lon, local_date, source,
+          case when plat is null then 0 else
+            2 * 6371000 * asin(least(1, sqrt(
+              power(sin(radians(lat - plat) / 2), 2) +
+              cos(radians(plat)) * cos(radians(lat)) *
+              power(sin(radians(lon - plon) / 2), 2)
+            )))
+          end as step_m
+        from ordered
+      ),
+      totals as (
+        select
+          local_date,
+          coalesce(sum(step_m), 0)::float8 as distance_m,
+          extract(epoch from (max(tst) - min(tst)))::float8 as elapsed_s,
+          count(*)::int as fixes,
+          bool_or(source = 'backfill') as reconstructed
+        from steps
+        group by local_date
+      ),
+      first_fix as (
+        select distinct on (local_date) local_date, lat, lon
+        from steps order by local_date, tst asc
+      ),
+      last_fix as (
+        select distinct on (local_date) local_date, lat, lon
+        from steps order by local_date, tst desc
+      )
+      select
+        to_char(t.local_date, 'YYYY-MM-DD') as date,
+        t.distance_m, t.elapsed_s, t.fixes, t.reconstructed,
+        f.lat as start_lat, f.lon as start_lon,
+        l.lat as end_lat, l.lon as end_lon
+      from totals t
+      join first_fix f on f.local_date = t.local_date
+      join last_fix l on l.local_date = t.local_date
+      order by t.local_date
+    `) as unknown as {
+      date: string
+      distance_m: number
+      elapsed_s: number
+      fixes: number
+      reconstructed: boolean
+      start_lat: number
+      start_lon: number
+      end_lat: number
+      end_lon: number
+    }[]
+
+    // Altitude sampled per day, so each day's climb is measured the same way as
+    // the running total rather than by a cruder shortcut.
+    const dayAltRows = (await sql`
+      with ordered as (
+        select
+          tst, lat, lon,
+          (tst at time zone ${zone}::text)::date as local_date,
+          avg(alt) over (
+            order by tst
+            rows between ${ALTITUDE_SMOOTHING} preceding and ${ALTITUDE_SMOOTHING} following
+          ) as alt_s,
+          lag(lat) over (order by tst) as plat,
+          lag(lon) over (order by tst) as plon
+        from locations
+        where (device = any(${devices}::text[])) = ${isTest}::boolean
+          and source = 'device'
+      ),
+      steps as (
+        select
+          tst, local_date, alt_s,
+          case when plat is null then 0 else
+            2 * 6371000 * asin(least(1, sqrt(
+              power(sin(radians(lat - plat) / 2), 2) +
+              cos(radians(plat)) * cos(radians(lat)) *
+              power(sin(radians(lon - plon) / 2), 2)
+            )))
+          end as step_m
+        from ordered
+      ),
+      cumulative as (
+        select
+          tst, local_date, alt_s,
+          sum(step_m) over (partition by local_date order by tst) as cum_m
+        from steps
+      )
+      select
+        to_char(local_date, 'YYYY-MM-DD') as date,
+        floor(cum_m / ${ELEVATION_SAMPLE_M}::float8) as slice,
+        avg(alt_s)::float8 as alt
+      from cumulative
+      where alt_s is not null
+      group by local_date, slice
+      order by local_date, slice
+    `) as unknown as { date: string; slice: number; alt: number }[]
+
+    const altsByDay = new Map<string, number[]>()
+    for (const row of dayAltRows) {
+      const list = altsByDay.get(row.date)
+      if (list) list.push(row.alt)
+      else altsByDay.set(row.date, [row.alt])
+    }
+
+  const days: DaySummary[] = dayRows.map((d) => {
+      const alts = altsByDay.get(d.date) ?? []
+      return {
+        date: d.date,
+        reconstructed: d.reconstructed,
+        distanceKm: d.distance_m / 1000,
+        elapsedSeconds: d.elapsed_s,
+        fixes: d.fixes,
+        start: [d.start_lon, d.start_lat],
+        end: [d.end_lon, d.end_lat],
+        gainM: hysteresisGain(alts, GAIN_THRESHOLD_M),
+        netM: alts.length >= 2 ? alts[alts.length - 1] - alts[0] : null,
+        highM: alts.length ? Math.max(...alts) : null,
+        lowM: alts.length ? Math.min(...alts) : null,
+      }
+    })
+
+  return days
 }
 
 export default async function handler(req: Request): Promise<Response> {
@@ -230,7 +395,29 @@ export default async function handler(req: Request): Promise<Response> {
   const isTest = mode === 'test'
 
   const cached = cache.get(mode)
-  if (cached && Date.now() - cached.at < CACHE_MS) {
+
+  // The newest fix time is an index-only lookup. If it has not moved, nothing
+  // downstream can have changed, so the whole payload is reused without running
+  // the window-function queries that make up the real cost.
+  let watermark: string | null = null
+  try {
+    const rows = (await db()`
+      select max(tst)::text as max_tst
+      from locations
+      where (device = any(${devices}::text[])) = ${isTest}::boolean
+        and source = 'device'
+    `) as unknown as { max_tst: string | null }[]
+    watermark = rows[0]?.max_tst ?? null
+  } catch (error) {
+    console.error('watermark lookup failed', error)
+    // A cached answer beats an error if we have one.
+    if (cached) return json(cached.payload)
+    return json({ error: 'query failed' }, 500)
+  }
+
+  const age = cached ? Date.now() - cached.at : Infinity
+  if (cached && age < CACHE_MS) return json(cached.payload)
+  if (cached && cached.watermark === watermark && age < IDLE_CACHE_MS) {
     return json(cached.payload)
   }
 
@@ -270,7 +457,7 @@ export default async function handler(req: Request): Promise<Response> {
         mode,
         ...(isOwner ? { devices: await knownDevices(sql) } : {}),
       }
-      cache.set(mode, { at: Date.now(), payload })
+      cache.set(mode, { at: Date.now(), watermark, payload })
       return json(payload)
     }
 
@@ -481,168 +668,48 @@ export default async function handler(req: Request): Promise<Response> {
     `) as unknown as { m: number; alt: number }[]
 
     // --- Per-day summaries -------------------------------------------------
-    // Days are bucketed in the rider's current local zone. He does not ride
-    // through local midnight, so a zone change mid-trip shifts at most the
-    // boundary of the day he crossed on.
-    const dayRows = (await sql`
-      with ordered as (
-        select
-          tst, lat, lon, source,
-          (tst at time zone ${zone}::text)::date as local_date,
-          lag(lat) over (order by tst) as plat,
-          lag(lon) over (order by tst) as plon
-        from locations
-        where ((device = any(${devices}::text[])) = ${isTest}::boolean and source = 'device')
-           or source = 'backfill'
-      ),
-      steps as (
-        select
-          tst, lat, lon, local_date, source,
-          case when plat is null then 0 else
-            2 * 6371000 * asin(least(1, sqrt(
-              power(sin(radians(lat - plat) / 2), 2) +
-              cos(radians(plat)) * cos(radians(lat)) *
-              power(sin(radians(lon - plon) / 2), 2)
-            )))
-          end as step_m
-        from ordered
-      ),
-      totals as (
-        select
-          local_date,
-          coalesce(sum(step_m), 0)::float8 as distance_m,
-          extract(epoch from (max(tst) - min(tst)))::float8 as elapsed_s,
-          count(*)::int as fixes,
-          bool_or(source = 'backfill') as reconstructed
-        from steps
-        group by local_date
-      ),
-      first_fix as (
-        select distinct on (local_date) local_date, lat, lon
-        from steps order by local_date, tst asc
-      ),
-      last_fix as (
-        select distinct on (local_date) local_date, lat, lon
-        from steps order by local_date, tst desc
-      )
-      select
-        to_char(t.local_date, 'YYYY-MM-DD') as date,
-        t.distance_m, t.elapsed_s, t.fixes, t.reconstructed,
-        f.lat as start_lat, f.lon as start_lon,
-        l.lat as end_lat, l.lon as end_lon
-      from totals t
-      join first_fix f on f.local_date = t.local_date
-      join last_fix l on l.local_date = t.local_date
-      order by t.local_date
-    `) as unknown as {
-      date: string
-      distance_m: number
-      elapsed_s: number
-      fixes: number
-      reconstructed: boolean
-      start_lat: number
-      start_lon: number
-      end_lat: number
-      end_lon: number
-    }[]
+    const dayKey = `${mode}:${zone}`
+    const cachedDays = dayCache.get(dayKey)
+    const days =
+      cachedDays && Date.now() - cachedDays.at < COLD_CACHE_MS
+        ? cachedDays.days
+        : await computeDays(sql, zone, devices, isTest)
+    if (days !== cachedDays?.days) dayCache.set(dayKey, { at: Date.now(), days })
 
-    // Altitude sampled per day, so each day's climb is measured the same way as
-    // the running total rather than by a cruder shortcut.
-    const dayAltRows = (await sql`
-      with ordered as (
-        select
-          tst, lat, lon,
-          (tst at time zone ${zone}::text)::date as local_date,
-          avg(alt) over (
-            order by tst
-            rows between ${ALTITUDE_SMOOTHING} preceding and ${ALTITUDE_SMOOTHING} following
-          ) as alt_s,
-          lag(lat) over (order by tst) as plat,
-          lag(lon) over (order by tst) as plon
-        from locations
-        where (device = any(${devices}::text[])) = ${isTest}::boolean
-          and source = 'device'
-      ),
-      steps as (
-        select
-          tst, local_date, alt_s,
-          case when plat is null then 0 else
-            2 * 6371000 * asin(least(1, sqrt(
-              power(sin(radians(lat - plat) / 2), 2) +
-              cos(radians(plat)) * cos(radians(lat)) *
-              power(sin(radians(lon - plon) / 2), 2)
-            )))
-          end as step_m
-        from ordered
-      ),
-      cumulative as (
-        select
-          tst, local_date, alt_s,
-          sum(step_m) over (partition by local_date order by tst) as cum_m
-        from steps
-      )
-      select
-        to_char(local_date, 'YYYY-MM-DD') as date,
-        floor(cum_m / ${ELEVATION_SAMPLE_M}::float8) as slice,
-        avg(alt_s)::float8 as alt
-      from cumulative
-      where alt_s is not null
-      group by local_date, slice
-      order by local_date, slice
-    `) as unknown as { date: string; slice: number; alt: number }[]
+    // Reconstructed riding never changes, so it is derived once per instance
+    // rather than re-queried behind every poll.
+    if (!backfillCache) {
+      const backfillRows = (await sql`
+        with ordered as (
+          select
+            tst, lat, lon,
+            lag(lat) over (order by tst) as plat,
+            lag(lon) over (order by tst) as plon
+          from locations
+          where source = 'backfill'
+        ),
+        steps as (
+          select
+            tst, lat, lon,
+            case when plat is null then 0 else
+              2 * 6371000 * asin(least(1, sqrt(
+                power(sin(radians(lat - plat) / 2), 2) +
+                cos(radians(plat)) * cos(radians(lat)) *
+                power(sin(radians(lon - plon) / 2), 2)
+              )))
+            end as step_m
+          from ordered
+        )
+        select lon, lat, sum(step_m) over () as total_m from steps order by tst
+      `) as unknown as { lon: number; lat: number; total_m: number }[]
 
-    const altsByDay = new Map<string, number[]>()
-    for (const row of dayAltRows) {
-      const list = altsByDay.get(row.date)
-      if (list) list.push(row.alt)
-      else altsByDay.set(row.date, [row.alt])
-    }
-
-    const days: DaySummary[] = dayRows.map((d) => {
-      const alts = altsByDay.get(d.date) ?? []
-      return {
-        date: d.date,
-        reconstructed: d.reconstructed,
-        distanceKm: d.distance_m / 1000,
-        elapsedSeconds: d.elapsed_s,
-        fixes: d.fixes,
-        start: [d.start_lon, d.start_lat],
-        end: [d.end_lon, d.end_lat],
-        gainM: hysteresisGain(alts, GAIN_THRESHOLD_M),
-        netM: alts.length >= 2 ? alts[alts.length - 1] - alts[0] : null,
-        highM: alts.length ? Math.max(...alts) : null,
-        lowM: alts.length ? Math.min(...alts) : null,
+      backfillCache = {
+        trail: backfillRows.map((r) => [r.lon, r.lat]),
+        km: (backfillRows[0]?.total_m ?? 0) / 1000,
       }
-    })
-
-    // Reconstructed riding, kept in its own line so it can be drawn dashed and
-    // never mistaken for a measured track.
-    const backfillRows = (await sql`
-      with ordered as (
-        select
-          tst, lat, lon,
-          lag(lat) over (order by tst) as plat,
-          lag(lon) over (order by tst) as plon
-        from locations
-        where source = 'backfill'
-      ),
-      steps as (
-        select
-          tst, lat, lon,
-          case when plat is null then 0 else
-            2 * 6371000 * asin(least(1, sqrt(
-              power(sin(radians(lat - plat) / 2), 2) +
-              cos(radians(plat)) * cos(radians(lat)) *
-              power(sin(radians(lon - plon) / 2), 2)
-            )))
-          end as step_m
-        from ordered
-      )
-      select lon, lat, sum(step_m) over () as total_m from steps order by tst
-    `) as unknown as { lon: number; lat: number; total_m: number }[]
-
-    const backfillTrail: [number, number][] = backfillRows.map((r) => [r.lon, r.lat])
-    const backfillKm = (backfillRows[0]?.total_m ?? 0) / 1000
+    }
+    const backfillTrail = backfillCache.trail
+    const backfillKm = backfillCache.km
 
     const trail: [number, number][] = trailRows.map((r) => [r.lon, r.lat])
 
@@ -674,7 +741,7 @@ export default async function handler(req: Request): Promise<Response> {
       ...(isOwner ? { devices: await knownDevices(sql) } : {}),
     }
 
-    cache.set(mode, { at: Date.now(), payload })
+    cache.set(mode, { at: Date.now(), watermark, payload })
     return json(payload)
   } catch (error) {
     console.error('track feed failed', error)
