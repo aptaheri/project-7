@@ -307,10 +307,18 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
 
   const result = await sendBatch(messages)
 
+  // Resend's rejection text is the whole diagnosis — an unverified domain and a
+  // malformed address fail identically otherwise — so it goes in the reason
+  // rather than only in a field the admin panel does not show.
+  const reason =
+    result.failed.length > 0
+      ? `sent to ${result.sent} of ${recipients.length}; first failure: ${result.failed[0].error}`
+      : `sent to ${result.sent} of ${recipients.length}`
+
   return {
     ...base,
     sent: result.sent > 0,
-    reason: `sent to ${result.sent} of ${recipients.length}`,
+    reason,
     subject: sample.subject,
     recipients,
     failed: result.failed,
