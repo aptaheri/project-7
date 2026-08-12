@@ -43,6 +43,25 @@ const MIN_CORRIDOR_KM = 20
 /** Roads are not straight; allow this share of the leg's length as slack. */
 const CORRIDOR_FRACTION = 0.18
 
+/**
+ * Cost per day between the leg's date and today.
+ *
+ * Falling behind is routine — an injury already cost him days — so a past leg
+ * is only mildly discouraged. Running ahead of the plan essentially does not
+ * happen, and the geometry cannot tell "arriving at today's destination" from
+ * "setting off on tomorrow's": both put him beside the same town. Left even,
+ * the tie broke toward tomorrow's leg, because tolerance scales with leg length
+ * and the next leg is usually longer. This makes a future leg win only when no
+ * current or earlier leg fits at all, since any leg that fits scores under 1.
+ */
+const DAY_PENALTY_BEHIND = 0.12
+const DAY_PENALTY_AHEAD = 1.2
+
+/** Days between the leg's date and today, as a score penalty. */
+function datePenalty(offset: number): number {
+  return offset >= 0 ? offset * DAY_PENALTY_AHEAD : -offset * DAY_PENALTY_BEHIND
+}
+
 const EARTH_RADIUS_KM = 6371
 
 function haversineKm(a: [number, number], b: [number, number]): number {
@@ -90,8 +109,7 @@ export function currentLeg(
       // A rest day matches only by being at the place.
       if (toDestination > REST_RADIUS_KM) continue
       // Consecutive rest days sit in the same town, so the date breaks the tie.
-      const score =
-        toDestination / REST_RADIUS_KM + Math.abs(offset) / (WINDOW_DAYS * 100)
+      const score = toDestination / REST_RADIUS_KM + datePenalty(offset)
       if (score < bestScore) {
         bestScore = score
         best = {
@@ -117,8 +135,8 @@ export function currentLeg(
     const corridor = Math.max(MIN_CORRIDOR_KM, legKm * CORRIDOR_FRACTION)
     if (detour > corridor) continue
 
-    // Prefer the tightest fit, and break ties towards the scheduled date.
-    const score = detour / corridor + Math.abs(offset) / (WINDOW_DAYS * 100)
+    // Prefer the tightest fit, then the leg whose date is closest to today.
+    const score = detour / corridor + datePenalty(offset)
     if (score < bestScore) {
       bestScore = score
       best = {
