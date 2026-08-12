@@ -68,6 +68,8 @@ export interface DailyOutcome {
   subject?: string
   recipients?: string[]
   failed?: { to: string; error: string }[]
+  /** Resend ids, so a send can be looked up on their Emails page. */
+  messageIds?: string[]
   /** Set on a dry run so the message can be looked at without sending it. */
   preview?: { subject: string; html: string; text: string }
 }
@@ -325,10 +327,14 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
   // Resend's rejection text is the whole diagnosis — an unverified domain and a
   // malformed address fail identically otherwise — so it goes in the reason
   // rather than only in a field the admin panel does not show.
+  // "Accepted" rather than "delivered", because that is all Resend can promise
+  // at this point, and the difference is exactly what a silently quarantined
+  // message looks like from here.
   const reason =
     result.failed.length > 0
-      ? `sent to ${result.sent} of ${recipients.length}; first failure: ${result.failed[0].error}`
-      : `sent to ${result.sent} of ${recipients.length}`
+      ? `accepted for ${result.sent} of ${recipients.length}; first failure: ${result.failed[0].error}`
+      : `accepted by Resend for ${result.sent} of ${recipients.length}` +
+        (result.ids.length > 0 ? ` — id ${result.ids[0]}` : '')
 
   return {
     ...base,
@@ -337,5 +343,6 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
     subject: sample.subject,
     recipients,
     failed: result.failed,
+    messageIds: result.ids,
   }
 }

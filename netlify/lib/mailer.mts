@@ -77,6 +77,14 @@ function fromAddress(): string {
 export interface SendResult {
   sent: number
   failed: { to: string; error: string }[]
+  /**
+   * Resend's own message ids, in the order sent.
+   *
+   * Accepting a message is not delivering it: a corporate or university mail
+   * server can take it and then quarantine it silently. The id is what turns
+   * "we sent it" into something answerable on Resend's Emails page.
+   */
+  ids: string[]
 }
 
 /**
@@ -90,7 +98,7 @@ export async function sendBatch(emails: OutgoingEmail[]): Promise<SendResult> {
   const key = process.env.RESEND_API_KEY
   if (!key) throw new Error('RESEND_API_KEY is not set')
 
-  const result: SendResult = { sent: 0, failed: [] }
+  const result: SendResult = { sent: 0, failed: [], ids: [] }
 
   for (let i = 0; i < emails.length; i += BATCH_LIMIT) {
     const chunk = emails.slice(i, i + BATCH_LIMIT)
@@ -123,6 +131,15 @@ export async function sendBatch(emails: OutgoingEmail[]): Promise<SendResult> {
         result.failed.push({ to: email.to, error: `${response.status} ${detail}` })
       }
       continue
+    }
+
+    try {
+      const body = (await response.json()) as { data?: { id?: string }[] }
+      for (const entry of body.data ?? []) {
+        if (entry.id) result.ids.push(entry.id)
+      }
+    } catch {
+      // A malformed success body is not worth failing a send that succeeded.
     }
 
     result.sent += chunk.length
