@@ -2,10 +2,14 @@ import { useEffect, useReducer } from 'react'
 
 export type Role = 'owner' | 'viewer' | 'pending'
 
+export type EmailPref = 'daily' | 'none'
+
 export interface Me {
   authenticated: boolean
   email?: string
   role?: Role
+  /** Whether they get the daily email. Absent until they have signed in. */
+  emailPref?: EmailPref
   canView?: boolean
   clientId: string | null
 }

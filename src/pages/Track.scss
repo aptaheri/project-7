@@ -299,6 +299,35 @@
 
 // ── Owner-only production / test switch ───────────────────────────────────────
 
+// An offer rather than a control: it only exists for people who have opted
+// out, and vanishes once taken, so it never sits in the panel as clutter for
+// the people already getting the email.
+.track-subscribe {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 9px 12px;
+  border: 1px solid rgba(66, 133, 244, 0.35);
+  border-radius: 8px;
+  background: rgba(66, 133, 244, 0.1);
+  color: #8ab4f8;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: rgba(66, 133, 244, 0.18);
+    border-color: rgba(66, 133, 244, 0.55);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
 .track-modes {
   display: flex;
   gap: 4px;

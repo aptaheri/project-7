@@ -11,5 +11,6 @@
 /api/viewers       /.netlify/functions/viewers                200!
 /api/unsubscribe   /.netlify/functions/unsubscribe            200!
 /api/email-admin   /.netlify/functions/email-admin            200!
+/api/email-pref    /.netlify/functions/email-pref             200!
 
 /* /index.html 200

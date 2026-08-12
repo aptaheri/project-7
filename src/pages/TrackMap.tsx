@@ -177,9 +177,10 @@ function freshness(iso: string): 'live' | 'stale' | 'offline' {
 
 interface Props {
   role: string
+  emailPref: 'daily' | 'none'
 }
 
-export default function TrackMap({ role }: Props) {
+export default function TrackMap({ role, emailPref }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const markerRef = useRef<mapboxgl.Marker | null>(null)
@@ -202,6 +203,10 @@ export default function TrackMap({ role }: Props) {
   // The panel swaps between views instead of stacking sections, so it stays the
   // same height however much detail is nested inside it.
   const [view, setView] = useState<PanelView>('main')
+  // Mirrored in state rather than read from the prop, so the row disappears the
+  // moment it is clicked instead of waiting for the next sign-in.
+  const [subscribed, setSubscribed] = useState(emailPref === 'daily')
+  const [subscribing, setSubscribing] = useState(false)
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   // Read inside a map click handler, which is registered once and would
   // otherwise capture the first render's state forever.
@@ -993,6 +998,33 @@ export default function TrackMap({ role }: Props) {
               </div>
             </dl>
           </>
+        )}
+
+        {/* Only shown to people who have opted out. Most of them are viewers
+            who never see the sharing page, so without this the unsubscribe
+            page's promise that they can turn the emails back on is false. */}
+        {expanded && view === 'main' && !subscribed && (
+          <button
+            type="button"
+            className="track-subscribe"
+            disabled={subscribing}
+            onClick={() => {
+              setSubscribing(true)
+              fetch('/api/email-pref', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ pref: 'daily' }),
+              })
+                .then((res) => {
+                  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+                  setSubscribed(true)
+                })
+                .catch(() => undefined)
+                .finally(() => setSubscribing(false))
+            }}
+          >
+            {subscribing ? 'Turning on…' : 'Email me when John sets off'}
+          </button>
         )}
 
         {expanded && view === 'main' && role === 'owner' && (

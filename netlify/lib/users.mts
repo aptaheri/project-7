@@ -53,13 +53,19 @@ function bootstrapOwners(): string[] {
 }
 
 /**
- * Records a Google sign-in and returns the caller's role.
+ * Records a Google sign-in and returns the caller's role and email preference.
  *
  * Unknown emails land as 'pending' so an owner can see who asked without
  * having to know the address in advance. Bootstrap owners are promoted on
  * every sign-in, so losing owner access cannot lock everyone out.
+ *
+ * The preference comes back with the role because the tracker needs it to
+ * decide whether to offer a resubscribe link, and one round trip is enough.
  */
-export async function recordSignIn(email: string): Promise<Role> {
+export async function recordSignIn(email: string): Promise<{
+  role: Role
+  emailPref: EmailPref
+}> {
   await ensureSchema()
   const sql = db()
   const address = normalizeEmail(email)
@@ -70,20 +76,22 @@ export async function recordSignIn(email: string): Promise<Role> {
       values (${address}, 'owner', 'bootstrap')
       on conflict (email) do update set role = 'owner', updated_at = now()
     `
-    return 'owner'
+  } else {
+    await sql`
+      insert into viewers (email, role)
+      values (${address}, 'pending')
+      on conflict (email) do nothing
+    `
   }
 
-  await sql`
-    insert into viewers (email, role)
-    values (${address}, 'pending')
-    on conflict (email) do nothing
-  `
   const rows = (await sql`
-    select role from viewers where email = ${address}
-  `) as unknown as { role: string }[]
+    select role, email_pref from viewers where email = ${address}
+  `) as unknown as { role: string; email_pref: string }[]
 
-  const role = rows[0]?.role
-  return isRole(role) ? role : 'pending'
+  return {
+    role: isRole(rows[0]?.role) ? rows[0].role : 'pending',
+    emailPref: isEmailPref(rows[0]?.email_pref) ? rows[0].email_pref : 'daily',
+  }
 }
 
 export async function listViewers(): Promise<Viewer[]> {

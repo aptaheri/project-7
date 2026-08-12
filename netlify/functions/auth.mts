@@ -42,11 +42,12 @@ export default async function handler(req: Request): Promise<Response> {
       // recordSignIn rather than a plain lookup, so adding someone to
       // TRACK_OWNER_EMAILS promotes them on their next poll instead of
       // requiring them to sign out and back in.
-      const role = await recordSignIn(session.email)
+      const { role, emailPref } = await recordSignIn(session.email)
       return json({
         authenticated: true,
         email: session.email,
         role,
+        emailPref,
         canView: canViewTrack(role),
         clientId,
       })
@@ -100,10 +101,10 @@ export default async function handler(req: Request): Promise<Response> {
     }
 
     try {
-      const role = await recordSignIn(email)
+      const { role, emailPref } = await recordSignIn(email)
       const { value } = createSession(email)
       return new Response(
-        JSON.stringify({ authenticated: true, email, role, canView: canViewTrack(role) }),
+        JSON.stringify({ authenticated: true, email, role, emailPref, canView: canViewTrack(role) }),
         {
           status: 200,
           headers: {
