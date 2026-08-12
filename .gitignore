@@ -26,3 +26,6 @@ dist-ssr
 
 # Netlify CLI
 .netlify
+
+# Local email render, not part of the site
+email-preview.html
