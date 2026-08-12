@@ -61,9 +61,20 @@ export function ensureSchema(): Promise<void> {
       `
       await sql`create index if not exists locations_tst_idx on locations (tst desc)`
       await sql`
+        create table if not exists sent_emails (
+          local_date  date not null,
+          kind        text not null default 'daily',
+          sent_at     timestamptz not null default now(),
+          recipients  int not null default 0,
+          subject     text,
+          primary key (local_date, kind)
+        )
+      `
+      await sql`
         create table if not exists viewers (
           email      text primary key,
           role       text not null default 'pending',
+          email_pref text not null default 'daily',
           created_at timestamptz not null default now(),
           updated_at timestamptz not null default now(),
           granted_by text
