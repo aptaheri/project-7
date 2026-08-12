@@ -4,9 +4,12 @@ import { useAuth } from '../lib/auth'
 import type { Role } from '../lib/auth'
 import './Admin.scss'
 
+type EmailPref = 'daily' | 'none'
+
 interface Viewer {
   email: string
   role: Role
+  email_pref: EmailPref
   created_at: string
   updated_at: string
   granted_by: string | null
@@ -25,6 +28,7 @@ export default function Admin() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [invite, setInvite] = useState('')
+  const [preview, setPreview] = useState<string | null>(null)
 
   const isOwner = me?.role === 'owner'
 
@@ -88,6 +92,49 @@ export default function Admin() {
           to let them see the live map. Changes take effect on their next poll.
         </p>
 
+        <div className="admin-email-check">
+          <button
+            type="button"
+            onClick={() => {
+              setPreview('Checking…')
+              fetch('/api/email-admin')
+                .then((res) => res.json())
+                .then((body: { reason?: string; subject?: string; recipients?: string[] }) =>
+                  setPreview(
+                    [
+                      body.reason,
+                      body.subject,
+                      body.recipients ? `${body.recipients.length} subscribed` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · '),
+                  ),
+                )
+                .catch((err: Error) => setPreview(err.message))
+            }}
+          >
+            Check today's email
+          </button>
+          <a href="/api/email-admin?format=html&force=1" target="_blank" rel="noreferrer">
+            See what it looks like
+          </a>
+          <button
+            type="button"
+            onClick={() => {
+              setPreview('Sending…')
+              // force, because a test send is wanted now rather than only on a
+              // morning he happens to be riding.
+              fetch('/api/email-admin?send=me&force=1')
+                .then((res) => res.json())
+                .then((body: { reason?: string }) => setPreview(body.reason ?? 'Done'))
+                .catch((err: Error) => setPreview(err.message))
+            }}
+          >
+            Send one to me
+          </button>
+          {preview && <p className="admin-note">{preview}</p>}
+        </div>
+
         <form
           className="admin-invite"
           onSubmit={(e) => {
@@ -121,6 +168,9 @@ export default function Admin() {
               <div className="admin-row-main">
                 <span className="admin-email">{v.email}</span>
                 <span className={`admin-role admin-role-${v.role}`}>{ROLE_LABELS[v.role]}</span>
+                {v.role !== 'pending' && v.email_pref === 'none' && (
+                  <span className="admin-pref">No emails</span>
+                )}
               </div>
               <div className="admin-row-actions">
                 {v.role !== 'viewer' && (
@@ -137,6 +187,19 @@ export default function Admin() {
                     onClick={() => mutate({ email: v.email, role: 'owner' }, v.email)}
                   >
                     Make owner
+                  </button>
+                )}
+                {v.role !== 'pending' && (
+                  <button
+                    disabled={busy === v.email}
+                    onClick={() =>
+                      mutate(
+                        { email: v.email, emailPref: v.email_pref === 'daily' ? 'none' : 'daily' },
+                        v.email,
+                      )
+                    }
+                  >
+                    {v.email_pref === 'daily' ? 'Stop emails' : 'Send emails'}
                   </button>
                 )}
                 {v.email !== me.email && (

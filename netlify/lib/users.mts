@@ -1,9 +1,12 @@
 import { db, ensureSchema } from './db.mts'
 import type { Role } from './session.mts'
 
+export type EmailPref = 'daily' | 'none'
+
 export interface Viewer {
   email: string
   role: Role
+  email_pref: EmailPref
   created_at: string
   updated_at: string
   granted_by: string | null
@@ -99,7 +102,7 @@ export async function listViewers(): Promise<Viewer[]> {
   }
 
   return (await sql`
-    select email, role, created_at, updated_at, granted_by
+    select email, role, email_pref, created_at, updated_at, granted_by
     from viewers
     order by
       case role when 'pending' then 0 when 'owner' then 1 else 2 end,
@@ -115,6 +118,26 @@ export async function setRole(email: string, role: Role, grantedBy: string): Pro
     values (${normalizeEmail(email)}, ${role}, ${grantedBy})
     on conflict (email) do update
       set role = ${role}, granted_by = ${grantedBy}, updated_at = now()
+  `
+}
+
+export function isEmailPref(value: unknown): value is EmailPref {
+  return value === 'daily' || value === 'none'
+}
+
+/**
+ * Turns the daily email on or off for one address.
+ *
+ * Separate from setRole because the two are genuinely different decisions:
+ * whether someone may see the map is the owners' call, whether they want mail
+ * about it is theirs. Unsubscribing never costs anyone their access.
+ */
+export async function setEmailPref(email: string, pref: EmailPref): Promise<void> {
+  await ensureSchema()
+  const sql = db()
+  await sql`
+    update viewers set email_pref = ${pref}, updated_at = now()
+    where email = ${normalizeEmail(email)}
   `
 }
 

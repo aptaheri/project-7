@@ -57,6 +57,45 @@
   margin: 0 0 16px;
 }
 
+// ── Daily email ───────────────────────────────────────────────────────────────
+
+.admin-email-check {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 0 0 28px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+
+  button {
+    padding: 7px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+
+    &:hover { border-color: rgba(255, 255, 255, 0.3); color: #fff; }
+  }
+
+  a {
+    font-size: 13px;
+    color: #7aa9f7;
+    text-decoration: none;
+
+    &:hover { text-decoration: underline; }
+  }
+
+  .admin-note {
+    flex-basis: 100%;
+    margin: 0;
+  }
+}
+
 // ── Invite ────────────────────────────────────────────────────────────────────
 
 .admin-invite {
@@ -143,6 +182,17 @@
 .admin-role-owner   { background: rgba(66, 133, 244, 0.18); color: #7aa9f7; }
 .admin-role-viewer  { background: rgba(34, 211, 166, 0.15); color: #22d3a6; }
 .admin-role-pending { background: rgba(245, 166, 35, 0.15); color: #f5a623; }
+
+// Only shown when someone has opted out, so the list reads as "everyone gets
+// the email" by default and the exceptions are what stand out.
+.admin-pref {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+  flex-shrink: 0;
+}
 
 .admin-row-actions {
   display: flex;

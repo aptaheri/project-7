@@ -9,5 +9,7 @@
 /api/auth/google   /.netlify/functions/auth?action=google      200!
 /api/auth/logout   /.netlify/functions/auth?action=logout      200!
 /api/viewers       /.netlify/functions/viewers                200!
+/api/unsubscribe   /.netlify/functions/unsubscribe            200!
+/api/email-admin   /.netlify/functions/email-admin            200!
 
 /* /index.html 200
