@@ -79,5 +79,5 @@ export default function Track() {
     )
   }
 
-  return <TrackMap role={me.role ?? 'viewer'} emailPref={me.emailPref ?? 'daily'} />
+  return <TrackMap emailPref={me.emailPref ?? 'daily'} />
 }

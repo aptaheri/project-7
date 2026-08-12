@@ -49,10 +49,6 @@ interface LatestFix {
   tid: string | null
 }
 
-type Mode = 'production' | 'test'
-
-const MODE_KEY = 'p7.trackMode'
-
 interface Feed {
   latest: LatestFix | null
   trail: [number, number][]
@@ -99,11 +95,12 @@ interface Feed {
     } | null
   } | null
   trailPoints: number
-  mode: Mode
-  devices?: string[]
 }
 
 type Status = 'loading' | 'ok' | 'denied' | 'error'
+
+/** How long a confirmation stays on screen. */
+const TOAST_MS = 4000
 
 /** Panels swap rather than stack; add a name here to nest another screen. */
 type PanelView = 'main' | 'elevation' | 'time' | 'weather' | 'device' | 'day'
@@ -176,11 +173,10 @@ function freshness(iso: string): 'live' | 'stale' | 'offline' {
 }
 
 interface Props {
-  role: string
   emailPref: 'daily' | 'none'
 }
 
-export default function TrackMap({ role, emailPref }: Props) {
+export default function TrackMap({ emailPref }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const markerRef = useRef<mapboxgl.Marker | null>(null)
@@ -207,13 +203,16 @@ export default function TrackMap({ role, emailPref }: Props) {
   // moment it is clicked instead of waiting for the next sign-in.
   const [subscribed, setSubscribed] = useState(emailPref === 'daily')
   const [subscribing, setSubscribing] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   // Read inside a map click handler, which is registered once and would
   // otherwise capture the first render's state forever.
   const daysRef = useRef<DaySummary[]>([])
-  const [mode, setMode] = useState<Mode>(() =>
-    role === 'owner' && localStorage.getItem(MODE_KEY) === 'test' ? 'test' : 'production',
-  )
+  useEffect(() => {
+    if (!toast) return
+    const id = setTimeout(() => setToast(null), TOAST_MS)
+    return () => clearTimeout(id)
+  }, [toast])
 
   // Re-renders the "x minutes ago" label without refetching.
   const [, setTick] = useState(0)
@@ -226,12 +225,10 @@ export default function TrackMap({ role, emailPref }: Props) {
   useEffect(() => {
     let cancelled = false
     let timer: number | undefined
-    // A different rider is somewhere else entirely, so let the map fly there.
-    hasCenteredRef.current = false
 
     async function load() {
       try {
-        const res = await fetch(`/api/track?mode=${mode}`)
+        const res = await fetch('/api/track')
         if (cancelled) return
         if (res.status === 401 || res.status === 403) {
           setStatus('denied')
@@ -289,7 +286,7 @@ export default function TrackMap({ role, emailPref }: Props) {
       window.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('focus', onVisibility)
     }
-  }, [mode])
+  }, [])
 
   // --- Map setup (once) ---
   useEffect(() => {
@@ -483,14 +480,6 @@ export default function TrackMap({ role, emailPref }: Props) {
     }
   }, [feed, mapReady])
 
-  function switchMode(next: Mode) {
-    if (next === mode) return
-    localStorage.setItem(MODE_KEY, next)
-    setFeed(null)
-    setStatus('loading')
-    setMode(next)
-  }
-
   function recenter() {
     const map = mapRef.current
     if (!map || !feed?.latest) return
@@ -536,6 +525,12 @@ export default function TrackMap({ role, emailPref }: Props) {
     <div className="track">
       <div ref={containerRef} className="track-map" />
 
+      {toast && (
+        <div className="track-toast" role="status">
+          {toast}
+        </div>
+      )}
+
       <div className="track-panel">
         {mapError && <p className="track-panel-detail">Map unavailable — {mapError}</p>}
 
@@ -548,8 +543,6 @@ export default function TrackMap({ role, emailPref }: Props) {
         >
           <span className={`track-dot track-dot-${indicator.tone}`} />
           <span className="track-status-label">{indicator.label}</span>
-          {/* Collapsed, this badge is the only clue the map is not the rider. */}
-          {mode === 'test' && <span className="track-test-badge">Test</span>}
           {/* Always rendered so the chevron stays pinned right either way. */}
           <span className="track-status-age">{latest ? timeAgo(latest.tst) : ''}</span>
           <svg
@@ -1018,38 +1011,14 @@ export default function TrackMap({ role, emailPref }: Props) {
                 .then((res) => {
                   if (!res.ok) throw new Error(`HTTP ${res.status}`)
                   setSubscribed(true)
+                  setToast("You're subscribed to Project 7 emails")
                 })
-                .catch(() => undefined)
+                .catch(() => setToast('That did not save — try again in a moment'))
                 .finally(() => setSubscribing(false))
             }}
           >
             {subscribing ? 'Turning on…' : 'Email me when John sets off'}
           </button>
-        )}
-
-        {expanded && view === 'main' && role === 'owner' && (
-          <div className="track-modes">
-            <button
-              type="button"
-              className={`track-mode${mode === 'production' ? ' active' : ''}`}
-              onClick={() => switchMode('production')}
-            >
-              Production
-            </button>
-            <button
-              type="button"
-              className={`track-mode${mode === 'test' ? ' active' : ''}`}
-              onClick={() => switchMode('test')}
-            >
-              Test
-            </button>
-          </div>
-        )}
-
-        {expanded && view === 'main' && role === 'owner' && feed?.devices && feed.devices.length > 0 && (
-          <p className="track-devices">
-            Devices: {feed.devices.map((d) => d.replace(/^owntracks\//, '')).join(', ')}
-          </p>
         )}
 
       </div>

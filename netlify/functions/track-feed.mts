@@ -197,8 +197,6 @@ interface Payload {
   local: LocalConditions | null
   trailPoints: number
   mode: 'production' | 'test'
-  /** Owners only: every device seen, so a misconfigured test list is visible. */
-  devices?: string[]
 }
 
 // Keyed by mode so the two views cannot serve each other's cached payload.
@@ -209,13 +207,6 @@ let backfillCache: { trail: [number, number][]; km: number } | null = null
 
 /** Per-day summaries, which only shift when a day gains or completes. */
 const dayCache = new Map<string, { at: number; days: DaySummary[] }>()
-
-async function knownDevices(sql: ReturnType<typeof db>): Promise<string[]> {
-  const rows = (await sql`
-    select distinct device from locations order by device
-  `) as unknown as { device: string }[]
-  return rows.map((r) => r.device)
-}
 
 /**
  * Per-day summaries across both measured and reconstructed riding.
@@ -455,7 +446,6 @@ export default async function handler(req: Request): Promise<Response> {
         local: null,
         trailPoints: 0,
         mode,
-        ...(isOwner ? { devices: await knownDevices(sql) } : {}),
       }
       cache.set(mode, { at: Date.now(), watermark, payload })
       return json(payload)
@@ -738,7 +728,6 @@ export default async function handler(req: Request): Promise<Response> {
       local: await localConditions(latest.lat, latest.lon),
       trailPoints: trail.length,
       mode,
-      ...(isOwner ? { devices: await knownDevices(sql) } : {}),
     }
 
     cache.set(mode, { at: Date.now(), watermark, payload })
