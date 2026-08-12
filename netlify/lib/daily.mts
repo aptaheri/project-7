@@ -268,6 +268,21 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
     }
   }
 
+  // Verifying the domain and going live are separate decisions. Without this,
+  // the first real send happens the morning after a DNS record propagates,
+  // which is no way to find out that forty people just got mail. A test send to
+  // one owner is still allowed, because that is how the pause gets lifted with
+  // any confidence.
+  if (!onlyTo && process.env.EMAIL_PAUSED === '1') {
+    return {
+      ...base,
+      sent: false,
+      reason: 'EMAIL_PAUSED is set, so the broadcast is held; owner test sends still work',
+      subject: sample.subject,
+      recipients,
+    }
+  }
+
   if (!mailerConfigured()) {
     return {
       ...base,
