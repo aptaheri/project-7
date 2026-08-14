@@ -20,9 +20,13 @@ export default async function handler(): Promise<Response> {
   }
 }
 
-// Half-hourly: the function cannot know which half-hour he sets off in, and
-// "morning" moves as he crosses timezones. Typed loosely because the site does
-// not depend on @netlify/functions — Netlify reads this shape either way.
+// Hourly. Half-hourly bought nothing worth having: the email only promises that
+// he is on the road, and arriving up to an hour after he sets off still says
+// that truthfully. It still gets six attempts inside the send window, and it
+// halves the number of times anything runs at all.
+//
+// Typed loosely because the site does not depend on @netlify/functions —
+// Netlify reads this shape either way.
 export const config = {
-  schedule: '*/30 * * * *',
+  schedule: '0 * * * *',
 }

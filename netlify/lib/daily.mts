@@ -46,6 +46,15 @@ const MAX_FIX_AGE_MINUTES = 45
 
 const KM_PER_MILE = 1.609344
 
+/**
+ * Hours of slack either side of the window when guessing from the plan.
+ *
+ * The guess uses where the itinerary says he should be, which can be a few
+ * hundred kilometres from where he is. Timezones are wide, but the slack means
+ * being wrong about the zone still cannot skip a morning.
+ */
+const GUESS_SLACK_HOURS = 2
+
 interface DayRecord {
   day: number
   date: string
@@ -107,6 +116,38 @@ function localNow(lat: number, lon: number): { zone: string; date: string; hour:
   return { zone, date, hour }
 }
 
+/**
+ * The rider's local hour guessed from the plan, without touching the database.
+ *
+ * Nearly every run of this function happens while he is asleep or already off
+ * the bike, and the only thing it needs in order to stop is the time where he
+ * is — which needs his position, which used to mean a query. Waking a database
+ * that bills by the hour, every half hour, to learn that it is the middle of
+ * the night, was most of what this feature cost to run.
+ *
+ * The itinerary is compiled into the bundle, so it answers for free. Returns
+ * null when the plan says nothing about today, which falls through to the real
+ * check rather than guessing.
+ */
+function plannedLocalHour(): number | null {
+  const utcDate = new Date().toISOString().slice(0, 10)
+  const planned = dayRecords().find((d) => d.date === utcDate)
+  const coords = planned?.toCoords ?? planned?.fromCoords
+  if (!coords) return null
+
+  try {
+    return Number(
+      new Intl.DateTimeFormat('en-GB', {
+        timeZone: tzLookup(coords[1], coords[0]),
+        hour: '2-digit',
+        hour12: false,
+      }).format(new Date()),
+    )
+  } catch {
+    return null
+  }
+}
+
 function testDevices(): string[] {
   return (process.env.TRACK_TEST_DEVICES ?? '')
     .split(',')
@@ -116,6 +157,21 @@ function testDevices(): string[] {
 
 export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOutcome> {
   const { dryRun = false, force = false, onlyTo, origin = SITE } = options
+
+  const window = sendWindow()
+
+  // Gate 0: is it even plausibly morning where he is? Answered from the
+  // itinerary, so a run that stops here costs nothing at all — no connection,
+  // no query, no waking a database that charges for being awake.
+  if (!force) {
+    const guess = plannedLocalHour()
+    if (guess !== null && (guess < window.from - GUESS_SLACK_HOURS || guess > window.until + GUESS_SLACK_HOURS)) {
+      return {
+        sent: false,
+        reason: `roughly ${guess}:00 along today's planned route, far enough outside the window to skip without a lookup`,
+      }
+    }
+  }
 
   await ensureSchema()
   const sql = db()
@@ -137,9 +193,7 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
   const { zone, date: today, hour } = localNow(latest.lat, latest.lon)
   const base = { localDate: today, localHour: hour, timezone: zone }
 
-  // Gate 1: his morning. Cheapest check, and true for most of the day, so it
-  // goes first and keeps the other queries from running at all.
-  const window = sendWindow()
+  // Gate 1: his morning, now from his actual position rather than the plan.
   if (!force && (hour < window.from || hour > window.until)) {
     return {
       ...base,
