@@ -94,10 +94,22 @@ await pg.exec(`
   );
 `)
 
-// A ride along the real leg, laid down over the last half hour so the freshness
+// A ride along a real leg, laid down over the last half hour so the freshness
 // and movement gates see what they would see on a live morning.
+//
+// The leg is chosen as the riding day nearest today rather than the first one
+// in the file. The matcher only considers legs within ten days of the date it
+// is given, so a fixture pinned to the start of the trip quietly stops matching
+// as the trip goes on — which is exactly what happened here.
 const itinerary = JSON.parse(readFileSync('src/data/itinerary.json', 'utf8'))
-const leg = itinerary.days.find((d) => d.kind === 'ride' && d.fromCoords && d.toCoords)
+const todayIso = new Date().toISOString().slice(0, 10)
+const rideDays = itinerary.days.filter((d) => d.kind === 'ride' && d.fromCoords && d.toCoords)
+const leg = rideDays.reduce((best, d) =>
+  Math.abs(Date.parse(d.date) - Date.parse(todayIso)) <
+  Math.abs(Date.parse(best.date) - Date.parse(todayIso))
+    ? d
+    : best,
+)
 const [lon0, lat0] = leg.fromCoords
 const [lon1, lat1] = leg.toCoords
 

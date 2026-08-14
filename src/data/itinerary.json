@@ -1,4 +1,17 @@
 {
+  "_comment": [
+    "Generated from the itinerary PDF by scripts/import-itinerary.mjs, then",
+    "hand-edited where John has changed the route on the road.",
+    "",
+    "2026-08-14: John rerouted 15-17 August so he gets two rest days in Canfranc",
+    "instead of one. Burgos -> Soria -> Trasmoz -> Erla -> Canfranc (88/49/56/75)",
+    "became Burgos -> Logrono -> Sanguesa -> Canfranc (72/70/59), and 18 August",
+    "turned from a riding day into the first of the two rest days.",
+    "",
+    "Re-running the import script would silently undo edits like this one. The",
+    "stage totals below are the PDF's published figures and are deliberately left",
+    "alone, so they no longer reconcile against the sum of the days."
+  ],
   "year": 2026,
   "stages": [
     {
@@ -309,16 +322,16 @@
       "stage": "1",
       "kind": "ride",
       "from": "Burgos",
-      "to": "Soria",
-      "miles": 88,
+      "to": "Logroño",
+      "miles": 72,
       "note": "",
       "fromCoords": [
         -3.6893545,
         42.3504659
       ],
       "toCoords": [
-        -2.4790872,
-        41.766436
+        -2.447636,
+        42.46556
       ],
       "needsReview": false
     },
@@ -327,17 +340,17 @@
       "date": "2026-08-16",
       "stage": "1",
       "kind": "ride",
-      "from": "Soria",
-      "to": "Trasmoz",
-      "miles": 49,
+      "from": "Logroño",
+      "to": "Sangüesa",
+      "miles": 70,
       "note": "",
       "fromCoords": [
-        -2.4790872,
-        41.766436
+        -2.447636,
+        42.46556
       ],
       "toCoords": [
-        -1.7225575,
-        41.826404
+        -1.282742,
+        42.576313
       ],
       "needsReview": false
     },
@@ -346,17 +359,17 @@
       "date": "2026-08-17",
       "stage": "1",
       "kind": "ride",
-      "from": "Trasmoz",
-      "to": "Erla",
-      "miles": 56,
-      "note": "",
+      "from": "Sangüesa",
+      "to": "Canfranc",
+      "miles": 59,
+      "note": "Hotel Santa Cristina, Pyrenees",
       "fromCoords": [
-        -1.7225575,
-        41.826404
+        -1.282742,
+        42.576313
       ],
       "toCoords": [
-        -0.9492193,
-        42.1169172
+        -0.5254869,
+        42.71649
       ],
       "needsReview": false
     },
@@ -364,15 +377,12 @@
       "day": 18,
       "date": "2026-08-18",
       "stage": "1",
-      "kind": "ride",
-      "from": "Erla",
+      "kind": "rest",
+      "from": null,
       "to": "Canfranc",
-      "miles": 75,
-      "note": "Hotel Santa Cristina TR Pyr enees",
-      "fromCoords": [
-        -0.9492193,
-        42.1169172
-      ],
+      "miles": null,
+      "note": "Pyrenees",
+      "fromCoords": null,
       "toCoords": [
         -0.5254869,
         42.71649
