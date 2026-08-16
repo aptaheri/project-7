@@ -529,12 +529,10 @@ export default function TrackMap({ emailPref }: Props) {
               }
             : freshness(latest.tst) === 'live'
               ? { tone: 'live', label: 'Live', note: null }
-              : resting
-                ? {
-                    tone: 'stale',
-                    label: resting,
-                    note: feed?.timezone ? `${timeIn(feed.timezone)} where he is` : null,
-                  }
+              : // No note: the Time row already carries the local clock, and
+                // repeating it directly above is just the same fact twice.
+                resting
+                ? { tone: 'stale', label: resting, note: null }
                 : freshness(latest.tst) === 'stale'
                   ? { tone: 'stale', label: 'No recent fix', note: null }
                   : { tone: 'offline', label: 'Not sharing location', note: null }
