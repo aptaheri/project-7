@@ -70,6 +70,7 @@ interface Feed {
     plannedMiles: number | null
     destination: [number, number]
     distanceToDestinationKm: number
+    roadRemainingKm: number | null
     daysFromSchedule: number
   } | null
   backfillTrail: [number, number][]
@@ -588,7 +589,9 @@ export default function TrackMap({ emailPref }: Props) {
                 <span>{feed.leg.plannedMiles} mi planned</span>
               )}
               {feed.leg.kind === 'ride' && (
-                <span>{miles(feed.leg.distanceToDestinationKm)} mi to go</span>
+                <span>
+                  {miles(feed.leg.roadRemainingKm ?? feed.leg.distanceToDestinationKm)} mi to go
+                </span>
               )}
               {feed.leg.daysFromSchedule !== 0 && (
                 <span className="track-leg-drift">

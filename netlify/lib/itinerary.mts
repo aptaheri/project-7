@@ -26,7 +26,19 @@ export interface CurrentLeg {
   to: string
   plannedMiles: number | null
   destination: [number, number]
+  /** Straight line from him to the destination. */
   distanceToDestinationKm: number
+  /**
+   * Road distance still to ride, estimated.
+   *
+   * The straight line is not comparable to the planned mileage, which follows
+   * roads — for this stretch of Spain the road is a third longer than the crow
+   * flies, so showing the two side by side made a rider who had not left yet
+   * look twenty miles in. Scaling by that leg's own ratio puts both numbers in
+   * the same units. Null when there is no planned distance to take a ratio
+   * from, and never more than the leg itself.
+   */
+  roadRemainingKm: number | null
   /** Negative when he is behind the plan, positive when ahead. */
   daysFromSchedule: number
 }
@@ -70,6 +82,26 @@ const DAY_PENALTY_AHEAD = 1.2
 /** Days between the leg's date and today, as a score penalty. */
 function datePenalty(offset: number): number {
   return offset >= 0 ? offset * DAY_PENALTY_AHEAD : -offset * DAY_PENALTY_BEHIND
+}
+
+const KM_PER_MILE = 1.609344
+
+/**
+ * Road kilometres left, from the straight line and this leg's own windiness.
+ *
+ * Every road is longer than the line it follows, and by how much varies —
+ * a valley climb into the Pyrenees is half as long again, a plain barely
+ * differs. The leg's planned mileage against its straight length gives that
+ * factor for free, and it is a far better estimate than either number alone.
+ */
+function roadRemaining(
+  plannedMiles: number | null,
+  legStraightKm: number,
+  straightToGoKm: number,
+): number | null {
+  if (plannedMiles === null || legStraightKm <= 0) return null
+  const plannedKm = plannedMiles * KM_PER_MILE
+  return Math.min(plannedKm, straightToGoKm * (plannedKm / legStraightKm))
 }
 
 const EARTH_RADIUS_KM = 6371
@@ -135,6 +167,7 @@ function bestMatch(
           plannedMiles: null,
           destination,
           distanceToDestinationKm: toDestination,
+          roadRemainingKm: null,
           daysFromSchedule: offset,
         }
       }
@@ -162,6 +195,7 @@ function bestMatch(
         plannedMiles: leg.miles,
         destination,
         distanceToDestinationKm: toDestination,
+        roadRemainingKm: roadRemaining(leg.miles, legKm, toDestination),
         daysFromSchedule: offset,
       }
     }
