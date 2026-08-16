@@ -37,6 +37,16 @@ const WINDOW_DAYS = 10
 /** A rider is "at" a rest stop within this radius of it. */
 const REST_RADIUS_KM = 25
 
+/**
+ * Close enough to a past leg's destination to call that leg finished.
+ *
+ * Sleeping in the town he rode to yesterday is not the same as being a day
+ * behind, but geometrically the two are identical: he is standing on the finish
+ * line of one leg and the start line of the next. Without this, the morning
+ * after every ride reads as "1d behind" until he gets back on the bike.
+ */
+const ARRIVED_RADIUS_KM = 15
+
 /** Smallest allowance for wandering off the straight line between two towns. */
 const MIN_CORRIDOR_KM = 20
 
@@ -87,9 +97,11 @@ function dayDifference(legDate: string, today: string): number {
  * Null is a real answer, not a failure: on a day he has gone off-plan there is
  * no honest destination to show, and inventing one would be worse than a gap.
  */
-export function currentLeg(
+function bestMatch(
   position: [number, number],
   today: string,
+  /** Ignore legs he has already ridden to the end of. */
+  skipFinished: boolean,
 ): CurrentLeg | null {
   const legs = itinerary.days as Leg[]
 
@@ -104,6 +116,9 @@ export function currentLeg(
 
     const destination = leg.toCoords
     const toDestination = haversineKm(position, destination)
+
+    // A leg dated before today whose destination he is standing in is done.
+    if (skipFinished && offset < 0 && toDestination <= ARRIVED_RADIUS_KM) continue
 
     if (leg.kind === 'rest') {
       // A rest day matches only by being at the place.
@@ -150,6 +165,26 @@ export function currentLeg(
         daysFromSchedule: offset,
       }
     }
+  }
+
+  return best
+}
+
+export function currentLeg(
+  position: [number, number],
+  today: string,
+): CurrentLeg | null {
+  const best = bestMatch(position, today, false)
+
+  // If the winner is a leg he finished on an earlier day, he is not behind on
+  // it — he is standing at the end of it, most likely asleep, with the next one
+  // starting from the same spot. Ask again ignoring the legs already ridden,
+  // and take that answer when there is one. When there is not, keep the
+  // original: still being in yesterday's town having ridden nowhere since is
+  // exactly what falling behind looks like.
+  if (best && best.daysFromSchedule < 0 && best.distanceToDestinationKm <= ARRIVED_RADIUS_KM) {
+    const ahead = bestMatch(position, today, true)
+    if (ahead) return ahead
   }
 
   return best
