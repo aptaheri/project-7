@@ -8,6 +8,9 @@
     "became Burgos -> Logrono -> Sanguesa -> Canfranc (72/70/59), and 18 August",
     "turned from a riding day into the first of the two rest days.",
     "",
+    "2026-08-16: John recalculated Logrono -> Sanguesa at 80 miles, not the 70",
+    "he first texted. His number, not a route change.",
+    "",
     "Re-running the import script would silently undo edits like this one. The",
     "stage totals below are the PDF's published figures and are deliberately left",
     "alone, so they no longer reconcile against the sum of the days."
@@ -342,7 +345,7 @@
       "kind": "ride",
       "from": "Logroño",
       "to": "Sangüesa",
-      "miles": 70,
+      "miles": 80,
       "note": "",
       "fromCoords": [
         -2.447636,
