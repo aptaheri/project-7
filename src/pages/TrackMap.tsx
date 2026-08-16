@@ -3,7 +3,7 @@ import mapboxgl from 'mapbox-gl'
 import ElevationChart from '../components/ElevationChart'
 import { BACKFILL_BLUE, LIVE_BLUE, ROUTE_RED } from '../lib/mapColors'
 import {
-  compass, dateIn, daylight, fahrenheit, mph, timeIn, weatherDescription,
+  compass, dateIn, daylight, fahrenheit, mph, restingLabel, timeIn, weatherDescription,
 } from '../lib/conditions'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
@@ -494,6 +494,18 @@ export default function TrackMap({ emailPref }: Props) {
   // Every condition resolves to one status line, so the panel keeps its shape
   // and "something is off" always reads the same way. The distinction that
   // matters to a viewer is why there is no position, not which layer failed.
+  const resting =
+    latest && feed
+      ? restingLabel({
+          isLive: freshness(latest.tst) === 'live',
+          isDay: feed.local?.weather?.isDay,
+          sunriseUtc: feed.local?.sunriseUtc,
+          sunsetUtc: feed.local?.sunsetUtc,
+          distanceTodayKm: feed.distanceTodayKm ?? 0,
+          leg: feed.leg,
+        })
+      : null
+
   const indicator: { tone: 'live' | 'stale' | 'offline'; label: string; note: string | null } =
     status === 'denied'
       ? {
@@ -517,9 +529,15 @@ export default function TrackMap({ emailPref }: Props) {
               }
             : freshness(latest.tst) === 'live'
               ? { tone: 'live', label: 'Live', note: null }
-              : freshness(latest.tst) === 'stale'
-                ? { tone: 'stale', label: 'No recent fix', note: null }
-                : { tone: 'offline', label: 'Not sharing location', note: null }
+              : resting
+                ? {
+                    tone: 'stale',
+                    label: resting,
+                    note: feed?.timezone ? `${timeIn(feed.timezone)} where he is` : null,
+                  }
+                : freshness(latest.tst) === 'stale'
+                  ? { tone: 'stale', label: 'No recent fix', note: null }
+                  : { tone: 'offline', label: 'Not sharing location', note: null }
 
   return (
     <div className="track">

@@ -128,3 +128,59 @@ export function daylight(
   if (now < sunset) return { label: 'Daylight left', value: format(sunset.getTime() - now.getTime()) }
   return { label: 'Since sunset', value: format(now.getTime() - sunset.getTime()) }
 }
+
+export interface RestingInput {
+  /** True when fixes are still arriving; nothing to say if he is moving. */
+  isLive: boolean
+  /** Open-Meteo's reading for his location, when weather resolved. */
+  isDay: boolean | null | undefined
+  sunriseUtc: string | null | undefined
+  sunsetUtc: string | null | undefined
+  distanceTodayKm: number
+  leg: { kind: 'ride' | 'rest'; from: string | null; to: string } | null
+  now?: number
+}
+
+/**
+ * "Asleep in Logroño", when that is what the silence means.
+ *
+ * A gap in the fixes at two in the morning where he is says he is asleep, not
+ * that anything has broken. For anyone checking from a US timezone — where his
+ * night is their afternoon — it answers the question they actually have, which
+ * is why nothing is moving.
+ *
+ * Returns null whenever the silence is not obviously bedtime, so the panel
+ * falls back to describing the tracker rather than guessing at the rider.
+ */
+export function restingLabel(input: RestingInput): string | null {
+  if (input.isLive) return null
+
+  const night =
+    input.isDay === false
+      ? true
+      : input.isDay === true
+        ? false
+        : // No weather to ask, so fall back to the sun times we compute. Null
+          // means polar day or night, where this cannot be answered at all and
+          // is better left unsaid — Antarctica will hit exactly that.
+          input.sunriseUtc && input.sunsetUtc
+          ? (() => {
+              const now = input.now ?? Date.now()
+              return now < Date.parse(input.sunriseUtc!) || now > Date.parse(input.sunsetUtc!)
+            })()
+          : false
+
+  if (!night) return null
+
+  // Which town he is in: the one he is resting at, or — when he has not set off
+  // yet — the one today's leg starts from. Mid-route there is no town to name.
+  const notStarted = input.distanceTodayKm < 3
+  const town =
+    input.leg?.kind === 'rest'
+      ? input.leg.to
+      : notStarted
+        ? (input.leg?.from ?? null)
+        : null
+
+  return town ? `Asleep in ${town}` : 'Probably asleep'
+}
