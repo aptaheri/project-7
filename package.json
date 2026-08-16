@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "fetch-directions": "node scripts/fetch-directions.mjs",
     "check-sql": "node scripts/check-sql.mjs",
-    "preview-email": "node scripts/preview-email.mjs"
+    "preview-email": "node scripts/preview-email.mjs",
+    "check-feed": "node scripts/check-feed-sql.mjs",
+    "check": "npm run check-sql && npm run check-feed"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

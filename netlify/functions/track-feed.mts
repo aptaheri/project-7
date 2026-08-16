@@ -547,6 +547,10 @@ export default async function handler(req: Request): Promise<Response> {
     // Altitude sampled by distance travelled rather than per fix, so the series
     // stays proportional to route length instead of to how often the phone
     // reported, and hysteresis sees hills rather than jitter.
+    //
+    // Scoped to his local day, like every other figure in this section. Without
+    // the date filter this was every foot he had climbed since Lisbon, sitting
+    // under a label that said "today".
     const elevationRows = (await sql`
       with ordered as (
         select
@@ -560,6 +564,7 @@ export default async function handler(req: Request): Promise<Response> {
         from locations
         where (device = any(${devices}::text[])) = ${isTest}::boolean
           and source = 'device'
+          and (tst at time zone ${zone}::text)::date = ${today}::date
       ),
       steps as (
         select
