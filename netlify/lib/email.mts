@@ -39,23 +39,32 @@ const MUTED = '#8b8f9a'
 /**
  * A light second line, worked out from the day's distance.
  *
- * Deterministic and true — the comparison is arithmetic, not invention. The
- * point is to make a number mean something to people who do not ride.
+ * Every one of these is arithmetic rather than invention — the comparison is
+ * true or it does not go in. The point is to make a number mean something to
+ * people who do not ride, and there are three hundred more of these to come, so
+ * it rotates by day rather than repeating the same joke until it dies.
  */
-export function scaleLine(miles: number | null): string | null {
-  if (miles === null || miles < 20) return null
-  const marathons = miles / 26.2
+const SCALE_LINES: ((miles: number) => string)[] = [
+  (m) =>
+    `That's ${(m / 26.2).toFixed(1)} marathons back to back, except nobody hands you a medal at the end of each one.`,
+  (m) => `About ${Math.round((m * 1609.344) / 400)} laps of a running track. Try not to picture it.`,
+  (m) =>
+    `Roughly ${(m / 13.4).toFixed(1)} times the length of Manhattan, end to end, with luggage.`,
+  (m) =>
+    `The English Channel is 21 miles across at its narrowest. Today is ${(m / 21).toFixed(1)} of those, with hills.`,
+  (m) =>
+    `About ${Math.round(m)} minutes of this would be a car journey at motorway speed. It will take him rather longer.`,
+  (m) => `Walking it would take about ${Math.round(m / 3)} hours without stopping.`,
+  (m) => `${Math.round(m / 6.1)} laps of Central Park, more or less.`,
+  (m) =>
+    `A Tour de France stage averages around 100 miles. Today is ${(m / 100).toFixed(1)} of one — no team car, no soigneur.`,
+]
 
-  if (miles >= 120) {
-    return `That's ${marathons.toFixed(1)} marathons back to back, except nobody hands you a medal at the end of each one.`
-  }
-  if (miles >= 90) {
-    return `About ${marathons.toFixed(1)} marathons in a day, on a bike, carrying his own luggage.`
-  }
-  if (miles >= 60) {
-    return `Roughly ${marathons.toFixed(1)} marathons' worth of road, which he'll do again tomorrow.`
-  }
-  return `A short one by his standards — only about ${marathons.toFixed(1)} marathons.`
+export function scaleLine(miles: number | null, dayNumber: number): string | null {
+  if (miles === null || miles < 20) return null
+  // Keyed to the day so the preview and the sent email always agree, and so
+  // consecutive mornings never land on the same comparison.
+  return SCALE_LINES[dayNumber % SCALE_LINES.length](miles)
 }
 
 export function factFor(destination: string): string | null {
@@ -100,7 +109,7 @@ export function buildDailyEmail(input: DailyEmailInput): {
   text: string
 } {
   const fact = factFor(input.to)
-  const scale = scaleLine(input.plannedMiles)
+  const scale = scaleLine(input.plannedMiles, input.dayNumber)
   const planned = input.plannedMiles !== null ? `${input.plannedMiles} miles` : null
   const mapUrl = input.mapboxToken
     ? legMapUrl(input.fromCoords, input.toCoords, input.mapboxToken)
