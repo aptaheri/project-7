@@ -52,25 +52,35 @@ export default function CurrentCountry() {
 
   return (
     <Link to="/track" className="current-country" title="Live tracking">
-      <span className="current-country-label">Current location:</span>
-      <span className="current-country-value">
-        {where.country}
-        {/* The flag says "Spain" a second time to a screen reader, so it is
-            decoration here rather than content. */}
-        {where.flag && (
-          <span className="current-country-flag" aria-hidden="true">{where.flag}</span>
-        )}
-        <svg
-          className="current-country-chevron"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          aria-hidden="true"
-        >
-          <path d="M9 6l6 6-6 6" />
-        </svg>
+      {/* The text is one block and the chevron sits outside it, so when the pill
+          wraps on a narrow phone the chevron stays centred against the whole
+          height at the right edge instead of trailing the last line. */}
+      <span className="current-country-text">
+        <span className="current-country-label">Current location:</span>
+        <span className="current-country-value">
+          {where.country}
+          {/* The flag says "Spain" a second time to a screen reader, so it is
+              decoration here rather than content. */}
+          {where.flag && (
+            <span className="current-country-flag" aria-hidden="true">{where.flag}</span>
+          )}
+        </span>
       </span>
+      {/* Cropped to the stroke rather than the usual 0 0 24 24: at this size the
+          empty quarter either side of a chevron path shows up as the pill
+          looking wider-padded on the right than on the left. The stroke is
+          scaled to match — 1.55 units across this box draws the same 1.35px
+          hairline the navbar's caret gets from 2.5 across a full 24. */}
+      <svg
+        className="current-country-chevron"
+        viewBox="7.5 4.5 9 15"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.55"
+        aria-hidden="true"
+      >
+        <path d="M9 6l6 6-6 6" />
+      </svg>
       {/* A chevron is a hint to the eye and nothing at all to a screen reader,
           which would otherwise announce a link named after a country with no
           clue where it goes. */}

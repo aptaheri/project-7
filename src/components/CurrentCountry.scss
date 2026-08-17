@@ -9,12 +9,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  // The route reaches countries with names like Bosnia and Herzegovina, which
-  // on a narrow phone is wider than the screen. Wrapping keeps it centred and
-  // readable; nowrap would push it off the edge of a hero that clips its
-  // overflow, and nobody would see it until that leg of the trip.
-  flex-wrap: wrap;
-  gap: 4px 12px;
+  // The text block wraps; the pill itself does not, so the chevron can never
+  // drop onto a line of its own.
+  flex-wrap: nowrap;
+  gap: 10px;
+  // Sized to its content, then capped at the screen. Without an explicit width
+  // an absolutely positioned box at left: 50% may only use the half of the
+  // viewport that remains to its right, so the pill wrapped at any width narrow
+  // enough to matter — a 390px phone allowed it 195px for 221px of content, and
+  // "Current location:" and "Spain" ended up stacked for no visible reason.
+  width: max-content;
   max-width: calc(100vw - 32px);
   text-align: center;
   padding: 8px 16px;
@@ -51,8 +55,20 @@
   }
 }
 
+// Label and country, wrapping to a second line together when the pill runs out
+// of room — which on a 375px phone it does, and on the longer country names of
+// the route it does at any width.
+.current-country-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2px 8px;
+  min-width: 0;
+}
+
 .current-country-label {
-  // Must stay one line: the pill wraps between the label and the country, and
+  // Must stay one line: the wrap belongs between the label and the country, and
   // letting flexbox squeeze this instead breaks "Current location:" in half.
   white-space: nowrap;
   font-size: 11px;
@@ -80,14 +96,17 @@
 .current-country-flag {
   font-size: 16px;
   line-height: 1;
+  // Centring the box leaves the glyph itself sitting high, because a flag emoji
+  // is drawn in the upper part of its em square rather than filling it. One
+  // pixel down puts its middle on the middle of the country name.
+  transform: translateY(1px);
 }
 
 // The only sign that the pill goes anywhere, so it is drawn rather than typed:
 // the › glyph is a hairline in some fonts and absent in others.
 .current-country-chevron {
-  width: 13px;
+  width: 8px;
   height: 13px;
-  margin-left: 1px;
   flex-shrink: 0;
   color: rgba(255, 255, 255, 0.45);
   transition: color 0.2s, transform 0.2s;
