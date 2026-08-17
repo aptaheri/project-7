@@ -10,11 +10,11 @@
   align-items: center;
   justify-content: center;
   // The route reaches countries with names like Bosnia and Herzegovina, which
-  // on a narrow phone is wider than the screen. Wrapping to a second line keeps
-  // it centred and readable; nowrap would push it off the edge of a hero that
-  // clips its overflow, and nobody would see it until that leg of the trip.
+  // on a narrow phone is wider than the screen. Wrapping keeps it centred and
+  // readable; nowrap would push it off the edge of a hero that clips its
+  // overflow, and nobody would see it until that leg of the trip.
   flex-wrap: wrap;
-  gap: 4px 10px;
+  gap: 4px 12px;
   max-width: calc(100vw - 32px);
   text-align: center;
   padding: 8px 16px;
@@ -22,15 +22,21 @@
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(12, 12, 18, 0.5);
   backdrop-filter: blur(10px);
+  text-decoration: none;
+  transition: border-color 0.2s, background 0.2s;
 
   // It arrives a moment after the page, so it fades in rather than appearing
   // mid-read.
   animation: current-country-in 0.5s ease both;
 
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(12, 12, 18, 0.66);
+  }
+
   @media (max-width: 768px) {
     top: 76px;
     padding: 7px 14px;
-    gap: 8px;
   }
 }
 
@@ -46,6 +52,9 @@
 }
 
 .current-country-label {
+  // Must stay one line: the pill wraps between the label and the country, and
+  // letting flexbox squeeze this instead breaks "Current location:" in half.
+  white-space: nowrap;
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.12em;
@@ -71,4 +80,34 @@
 .current-country-flag {
   font-size: 16px;
   line-height: 1;
+}
+
+// The only sign that the pill goes anywhere, so it is drawn rather than typed:
+// the › glyph is a hairline in some fonts and absent in others.
+.current-country-chevron {
+  width: 13px;
+  height: 13px;
+  margin-left: 1px;
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.45);
+  transition: color 0.2s, transform 0.2s;
+
+  .current-country:hover & {
+    color: rgba(255, 255, 255, 0.9);
+    transform: translateX(2px);
+  }
+}
+
+// Where the link goes, for anyone who cannot see the chevron. Off-screen rather
+// than display:none, which would take it out of the accessibility tree too.
+.current-country-destination {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
