@@ -251,5 +251,22 @@ check(
   JSON.stringify(sentMail[0].headers ?? null),
 )
 
+// ── A bootstrap owner cannot be removed or demoted ──────────────────────────
+// The role is re-asserted on every page load and every sign-in, so a delete
+// that "works" comes straight back with the name blanked. The list says which
+// rows those are; refusing the change is the sharing page's job.
+check('a bootstrap owner is flagged in the list',
+  (await users.listViewers()).find((v) => v.email === 'boss@example.com')?.bootstrap === true)
+check('an ordinary row is not flagged',
+  (await users.listViewers()).find((v) => v.email === 'nameless@example.com')?.bootstrap === false)
+check('the env var is what decides', users.isBootstrapOwner('BOSS@example.com') === true)
+check('and it is not everyone', users.isBootstrapOwner('nameless@example.com') === false)
+
+// Proving the reason it must be refused: deleting one and listing again brings
+// it back, which is exactly the confusing behaviour being prevented.
+await users.removeViewer('boss@example.com')
+check('a bootstrap owner deleted at the database level reappears on the next list',
+  (await users.listViewers()).some((v) => v.email === 'boss@example.com'))
+
 console.log(failures === 0 ? '\nAll access checks passed.' : `\n${failures} check(s) failed.`)
 process.exit(failures === 0 ? 0 : 1)

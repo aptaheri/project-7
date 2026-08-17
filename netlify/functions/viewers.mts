@@ -2,6 +2,7 @@ import { json } from '../lib/auth.mts'
 import { currentSession } from '../lib/session.mts'
 import {
   cleanName,
+  isBootstrapOwner,
   isEmailPref,
   isRole,
   listViewers,
@@ -64,9 +65,19 @@ export default async function handler(req: Request): Promise<Response> {
       const email = typeof body.email === 'string' ? normalizeEmail(body.email) : ''
       if (!email.includes('@')) return json({ error: 'a valid email is required' }, 400)
 
+      // An address listed in TRACK_OWNER_EMAILS is re-seeded as an owner on
+       // every load of the sharing page and re-promoted on every sign-in, so
+      // removing or demoting it deletes a row that comes straight back — with
+      // the name blanked, which is how this was noticed. Saying so beats a
+      // button that appears to work.
+      const bootstrapRefusal =
+        'That address is an owner because it is listed in TRACK_OWNER_EMAILS. ' +
+        'Take it out of that setting in Netlify first, or the change will be undone on the next page load.'
+
       if (body.remove === true) {
         // Losing the last owner would leave nobody able to grant access.
         if (email === owner.email) return json({ error: 'you cannot remove yourself' }, 400)
+        if (isBootstrapOwner(email)) return json({ error: bootstrapRefusal }, 409)
         await removeViewer(email)
         return json({ ok: true })
       }
@@ -99,6 +110,9 @@ export default async function handler(req: Request): Promise<Response> {
       if (!isRole(body.role)) return json({ error: 'role must be owner, viewer or pending' }, 400)
       if (email === owner.email && body.role !== 'owner') {
         return json({ error: 'you cannot demote yourself' }, 400)
+      }
+      if (body.role !== 'owner' && isBootstrapOwner(email)) {
+        return json({ error: bootstrapRefusal }, 409)
       }
 
       await setRole(email, body.role, owner.email)

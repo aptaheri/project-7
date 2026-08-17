@@ -15,7 +15,20 @@ interface Viewer {
   created_at: string
   updated_at: string
   granted_by: string | null
+  /** Owner by way of TRACK_OWNER_EMAILS, so the role cannot be changed here. */
+  bootstrap: boolean
 }
+
+/**
+ * Why a bootstrap owner's role is fixed, shown on the disabled buttons.
+ *
+ * These addresses are re-seeded as owners whenever this page loads and
+ * re-promoted whenever they sign in — that is what stops everyone being locked
+ * out — so removing one succeeds against the database and is undone a moment
+ * later, taking any name that was typed with it.
+ */
+const BOOTSTRAP_REASON =
+  'Listed in TRACK_OWNER_EMAILS. Remove it from that setting in Netlify to change this.'
 
 /** The two name fields as they are being typed, keyed by email. */
 type NameDrafts = Record<string, { first: string; last: string }>
@@ -229,6 +242,11 @@ export default function Admin() {
                   )}
                 </div>
                 <span className={`admin-role admin-role-${v.role}`}>{ROLE_LABELS[v.role]}</span>
+                {v.bootstrap && (
+                  <span className="admin-pref" title={BOOTSTRAP_REASON}>
+                    Always owner
+                  </span>
+                )}
                 {v.role !== 'pending' && v.email_pref === 'none' && (
                   <span className="admin-pref">No emails</span>
                 )}
@@ -265,8 +283,9 @@ export default function Admin() {
               <div className="admin-row-actions">
                 {v.role !== 'viewer' && (
                   <button
-                    disabled={busy === v.email}
-                    onClick={() => mutate({ email: v.email, role: 'viewer' }, v.email)}
+                    disabled={busy === v.email || v.bootstrap}
+                    title={v.bootstrap ? BOOTSTRAP_REASON : undefined}
+                    onClick={() => void mutate({ email: v.email, role: 'viewer' }, v.email)}
                   >
                     Make viewer
                   </button>
@@ -274,7 +293,7 @@ export default function Admin() {
                 {v.role !== 'owner' && (
                   <button
                     disabled={busy === v.email}
-                    onClick={() => mutate({ email: v.email, role: 'owner' }, v.email)}
+                    onClick={() => void mutate({ email: v.email, role: 'owner' }, v.email)}
                   >
                     Make owner
                   </button>
@@ -295,8 +314,9 @@ export default function Admin() {
                 {v.email !== me.email && (
                   <button
                     className="admin-danger"
-                    disabled={busy === v.email}
-                    onClick={() => mutate({ email: v.email, remove: true }, v.email)}
+                    disabled={busy === v.email || v.bootstrap}
+                    title={v.bootstrap ? BOOTSTRAP_REASON : undefined}
+                    onClick={() => void mutate({ email: v.email, remove: true }, v.email)}
                   >
                     Remove
                   </button>

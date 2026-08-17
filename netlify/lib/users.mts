@@ -12,6 +12,11 @@ export interface Viewer {
   created_at: string
   updated_at: string
   granted_by: string | null
+  /**
+   * True when TRACK_OWNER_EMAILS is what makes this an owner, so the sharing
+   * page can say so instead of offering changes that will not stick.
+   */
+  bootstrap: boolean
 }
 
 /** What Google's ID token says about who signed in. */
@@ -77,6 +82,21 @@ function bootstrapOwners(): string[] {
     .split(',')
     .map((e) => normalizeEmail(e))
     .filter(Boolean)
+}
+
+/**
+ * Whether this address is an owner because of the environment rather than a
+ * decision anyone made in the app.
+ *
+ * Worth knowing before offering to change it: the seeding in listViewers and the
+ * promotion in recordSignIn both re-assert the role, so removing or demoting one
+ * of these addresses succeeds against the database and is undone on the next
+ * page load. That is the point of the bootstrap — it is why losing owner access
+ * cannot lock everybody out — but a button that appears to work and silently
+ * reverts is worse than one that says it cannot.
+ */
+export function isBootstrapOwner(email: string): boolean {
+  return bootstrapOwners().includes(normalizeEmail(email))
 }
 
 /**
@@ -202,13 +222,17 @@ export async function listViewers(): Promise<Viewer[]> {
     `
   }
 
-  return (await sql`
+  const rows = (await sql`
     select email, role, email_pref, first_name, last_name, created_at, updated_at, granted_by
     from viewers
     order by
       case role when 'pending' then 0 when 'owner' then 1 else 2 end,
       created_at desc
-  `) as unknown as Viewer[]
+  `) as unknown as Omit<Viewer, 'bootstrap'>[]
+
+  // Computed here rather than stored: the env var can change between deploys,
+  // and a column would go stale the moment it did.
+  return rows.map((row) => ({ ...row, bootstrap: isBootstrapOwner(row.email) }))
 }
 
 export async function setRole(email: string, role: Role, grantedBy: string): Promise<void> {
