@@ -1,0 +1,74 @@
+// Sits just under the fixed 64px navbar, centred over the hero map.
+.current-country {
+  position: absolute;
+  top: 88px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  // The route reaches countries with names like Bosnia and Herzegovina, which
+  // on a narrow phone is wider than the screen. Wrapping to a second line keeps
+  // it centred and readable; nowrap would push it off the edge of a hero that
+  // clips its overflow, and nobody would see it until that leg of the trip.
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  max-width: calc(100vw - 32px);
+  text-align: center;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(12, 12, 18, 0.5);
+  backdrop-filter: blur(10px);
+
+  // It arrives a moment after the page, so it fades in rather than appearing
+  // mid-read.
+  animation: current-country-in 0.5s ease both;
+
+  @media (max-width: 768px) {
+    top: 76px;
+    padding: 7px 14px;
+    gap: 8px;
+  }
+}
+
+@keyframes current-country-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -4px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.current-country-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.current-country-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #fff;
+
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
+}
+
+// Emoji ignore the surrounding font weight, so size is the only lever.
+.current-country-flag {
+  font-size: 16px;
+  line-height: 1;
+}

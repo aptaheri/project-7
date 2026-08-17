@@ -3,6 +3,8 @@
 # netlify.toml because _redirects is processed first.
 /api/owntracks     /.netlify/functions/owntracks              200!
 /api/track         /.netlify/functions/track-feed             200!
+# Public on purpose: country only, no coordinates. See where.mts.
+/api/where         /.netlify/functions/where                  200!
 # One rule per action: a :placeholder does not get substituted into the
 # destination's query string, so the function saw no action at all.
 /api/auth/me       /.netlify/functions/auth?action=me         200!

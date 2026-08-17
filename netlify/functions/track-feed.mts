@@ -4,6 +4,7 @@ import { db, ensureSchema } from '../lib/db.mts'
 import { currentSession } from '../lib/session.mts'
 import { canViewTrack, normalizeEmail } from '../lib/users.mts'
 import { currentLeg } from '../lib/itinerary.mts'
+import { testDevices } from '../lib/devices.mts'
 import { localConditions } from '../lib/local.mts'
 import type { LocalConditions } from '../lib/local.mts'
 import type { CurrentLeg } from '../lib/itinerary.mts'
@@ -100,18 +101,6 @@ const IDLE_CACHE_MS = 5 * 60_000
 
 /** Day summaries and the like change only as days complete, not per fix. */
 const COLD_CACHE_MS = 5 * 60_000
-
-/**
- * Devices whose fixes are test data. Production is defined as everything NOT
- * listed here, so a new rider's phone counts as real from its first fix — no
- * configuration needed on his side and no way for day one to land in test.
- */
-function testDevices(): string[] {
-  return (process.env.TRACK_TEST_DEVICES ?? '')
-    .split(',')
-    .map((d) => d.trim())
-    .filter(Boolean)
-}
 
 interface LatestRow {
   tst: string

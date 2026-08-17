@@ -12,7 +12,8 @@
     "check-sql": "node scripts/check-sql.mjs",
     "preview-email": "node scripts/preview-email.mjs",
     "check-feed": "node scripts/check-feed-sql.mjs",
-    "check": "npm run check-sql && npm run check-feed"
+    "check-where": "node scripts/check-where.mjs",
+    "check": "npm run check-sql && npm run check-feed && npm run check-where"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
