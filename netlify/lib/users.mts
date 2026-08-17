@@ -7,9 +7,36 @@ export interface Viewer {
   email: string
   role: Role
   email_pref: EmailPref
+  first_name: string | null
+  last_name: string | null
   created_at: string
   updated_at: string
   granted_by: string | null
+}
+
+/** What Google's ID token says about who signed in. */
+export interface Profile {
+  firstName: string | null
+  lastName: string | null
+}
+
+/** Long enough for any real name, short enough not to be a place to hide text. */
+const MAX_NAME = 80
+
+/** Trims, caps the length, and treats blank as absent. */
+export function cleanName(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim().slice(0, MAX_NAME)
+  return trimmed === '' ? null : trimmed
+}
+
+/** "Jane Smith", or null when neither name is known. */
+export function displayName(viewer: {
+  first_name: string | null
+  last_name: string | null
+}): string | null {
+  const full = [viewer.first_name, viewer.last_name].filter(Boolean).join(' ').trim()
+  return full === '' ? null : full
 }
 
 export const ROLES: Role[] = ['owner', 'viewer', 'pending']
@@ -61,26 +88,55 @@ function bootstrapOwners(): string[] {
  *
  * The preference comes back with the role because the tracker needs it to
  * decide whether to offer a resubscribe link, and one round trip is enough.
+ *
+ * `newRequest` says a pending row was created by this call rather than already
+ * existing — the one moment worth emailing the owners about. It is deliberately
+ * derived from the insert itself rather than from a prior lookup, so two
+ * simultaneous sign-ins cannot both decide they were first.
  */
-export async function recordSignIn(email: string): Promise<{
+export async function recordSignIn(
+  email: string,
+  profile: Profile = { firstName: null, lastName: null },
+): Promise<{
   role: Role
   emailPref: EmailPref
+  newRequest: boolean
 }> {
   await ensureSchema()
   const sql = db()
   const address = normalizeEmail(email)
+  const firstName = cleanName(profile.firstName)
+  const lastName = cleanName(profile.lastName)
+
+  let newRequest = false
 
   if (bootstrapOwners().includes(address)) {
     await sql`
-      insert into viewers (email, role, granted_by)
-      values (${address}, 'owner', 'bootstrap')
+      insert into viewers (email, role, granted_by, first_name, last_name)
+      values (${address}, 'owner', 'bootstrap', ${firstName}, ${lastName})
       on conflict (email) do update set role = 'owner', updated_at = now()
     `
   } else {
-    await sql`
-      insert into viewers (email, role)
-      values (${address}, 'pending')
+    const inserted = (await sql`
+      insert into viewers (email, role, first_name, last_name)
+      values (${address}, 'pending', ${firstName}, ${lastName})
       on conflict (email) do nothing
+      returning email
+    `) as unknown as { email: string }[]
+    newRequest = inserted.length > 0
+  }
+
+  // Fill in a name Google knows and we do not. Per column and only where it is
+  // blank, so an owner who corrects a name on the sharing page does not have it
+  // silently reverted the next time that person signs in. The where clause makes
+  // this a no-op on every sign-in after the first.
+  if (firstName || lastName) {
+    await sql`
+      update viewers
+         set first_name = case when coalesce(first_name, '') = '' then ${firstName} else first_name end,
+             last_name  = case when coalesce(last_name, '')  = '' then ${lastName}  else last_name  end
+       where email = ${address}
+         and (coalesce(first_name, '') = '' or coalesce(last_name, '') = '')
     `
   }
 
@@ -91,7 +147,44 @@ export async function recordSignIn(email: string): Promise<{
   return {
     role: isRole(rows[0]?.role) ? rows[0].role : 'pending',
     emailPref: isEmailPref(rows[0]?.email_pref) ? rows[0].email_pref : 'daily',
+    newRequest,
   }
+}
+
+/** Everyone who can grant access — the people to tell when somebody asks. */
+export async function ownerEmails(): Promise<string[]> {
+  await ensureSchema()
+  const rows = (await db()`
+    select email from viewers where role = 'owner' order by email
+  `) as unknown as { email: string }[]
+  return rows.map((r) => r.email)
+}
+
+/**
+ * Sets or clears the name on one address, as typed by an owner.
+ *
+ * Nulls are a legitimate value: clearing a name Google guessed badly should be
+ * possible, and leaves the row showing just the address as it did before.
+ */
+export async function setName(
+  email: string,
+  firstName: string | null,
+  lastName: string | null,
+): Promise<boolean> {
+  await ensureSchema()
+  const sql = db()
+  // An update rather than an upsert: naming somebody should not be a way to
+  // create them. Whether it matched is returned so a typo in an address is an
+  // error the owner sees, not a save that quietly went nowhere.
+  const rows = (await sql`
+    update viewers
+       set first_name = ${cleanName(firstName)},
+           last_name = ${cleanName(lastName)},
+           updated_at = now()
+     where email = ${normalizeEmail(email)}
+     returning email
+  `) as unknown as { email: string }[]
+  return rows.length > 0
 }
 
 export async function listViewers(): Promise<Viewer[]> {
@@ -110,7 +203,7 @@ export async function listViewers(): Promise<Viewer[]> {
   }
 
   return (await sql`
-    select email, role, email_pref, created_at, updated_at, granted_by
+    select email, role, email_pref, first_name, last_name, created_at, updated_at, granted_by
     from viewers
     order by
       case role when 'pending' then 0 when 'owner' then 1 else 2 end,

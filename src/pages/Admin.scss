@@ -161,12 +161,80 @@
   align-items: center;
   gap: 12px;
   min-width: 0;
+  // Takes the slack and gives it back: a long address ellipsizes rather than
+  // pushing the name fields and the buttons onto separate lines, which made
+  // one row in the list lay out unlike all the others.
+  flex: 1 1 260px;
 }
 
-.admin-email {
-  font-size: 14px;
+.admin-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.admin-name {
+  font-size: 15px;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Secondary once a name is known, and the only line when it is not.
+.admin-email {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.45);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ── Editing a name ────────────────────────────────────────────────────────────
+
+.admin-name-edit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  input {
+    // Wide enough for most names, and they shrink together on a narrow screen
+    // rather than one of them pushing the Save button off the row.
+    width: 108px;
+    min-width: 0;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: #fff;
+    font-size: 13px;
+    font-family: inherit;
+
+    &::placeholder { color: rgba(255, 255, 255, 0.28); }
+    &:focus {
+      outline: none;
+      border-color: rgba(66, 133, 244, 0.6);
+    }
+  }
+
+  button {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+    // Nothing typed yet, nothing to save.
+    &:disabled { opacity: 0.3; cursor: default; }
+  }
 }
 
 .admin-role {

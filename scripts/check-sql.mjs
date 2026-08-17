@@ -82,6 +82,7 @@ await pg.exec(`
   create table viewers (
     email text primary key, role text not null default 'pending',
     email_pref text not null default 'daily',
+    first_name text, last_name text,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     granted_by text

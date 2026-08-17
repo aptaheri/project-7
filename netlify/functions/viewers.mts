@@ -1,12 +1,14 @@
 import { json } from '../lib/auth.mts'
 import { currentSession } from '../lib/session.mts'
 import {
+  cleanName,
   isEmailPref,
   isRole,
   listViewers,
   normalizeEmail,
   removeViewer,
   setEmailPref,
+  setName,
   setRole,
 } from '../lib/users.mts'
 import { db, ensureSchema } from '../lib/db.mts'
@@ -17,7 +19,8 @@ import type { Role } from '../lib/session.mts'
  *
  *   GET  /api/viewers → list everyone who has signed in, with their role
  *   POST /api/viewers → { email, role } to grant, { email, emailPref } to change
- *                       who gets the daily mail, or { email, remove: true }
+ *                       who gets the daily mail, { email, firstName, lastName }
+ *                       to set a name, or { email, remove: true }
  */
 
 async function requireOwner(req: Request): Promise<{ email: string } | Response> {
@@ -44,7 +47,14 @@ export default async function handler(req: Request): Promise<Response> {
     }
 
     if (req.method === 'POST') {
-      let body: { email?: unknown; role?: unknown; remove?: unknown; emailPref?: unknown }
+      let body: {
+        email?: unknown
+        role?: unknown
+        remove?: unknown
+        emailPref?: unknown
+        firstName?: unknown
+        lastName?: unknown
+      }
       try {
         body = (await req.json()) as typeof body
       } catch {
@@ -58,6 +68,23 @@ export default async function handler(req: Request): Promise<Response> {
         // Losing the last owner would leave nobody able to grant access.
         if (email === owner.email) return json({ error: 'you cannot remove yourself' }, 400)
         await removeViewer(email)
+        return json({ ok: true })
+      }
+
+      // Names are edited on their own, not folded into the role change: an owner
+      // fixing a spelling should not be able to alter access by accident, and
+      // sending only the field that changed keeps the two audit trails apart.
+      if (body.firstName !== undefined || body.lastName !== undefined) {
+        if (
+          (body.firstName !== undefined && typeof body.firstName !== 'string') ||
+          (body.lastName !== undefined && typeof body.lastName !== 'string')
+        ) {
+          return json({ error: 'firstName and lastName must be text' }, 400)
+        }
+        // Any name is allowed on any row, including a pending one — knowing who
+        // is waiting is the point. An empty string clears the name.
+        const named = await setName(email, cleanName(body.firstName), cleanName(body.lastName))
+        if (!named) return json({ error: 'nobody on file with that address' }, 404)
         return json({ ok: true })
       }
 

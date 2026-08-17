@@ -17,8 +17,15 @@ export interface OutgoingEmail {
   subject: string
   html: string
   text: string
-  /** Put in List-Unsubscribe so mail clients can offer their own button. */
-  unsubscribeUrl: string
+  /**
+   * Put in List-Unsubscribe so mail clients can offer their own button.
+   *
+   * Omitted for mail that is not a subscription. An owner told that somebody has
+   * asked for access is being sent one notification about a thing they
+   * administer, and offering an unsubscribe button on it would quietly turn off
+   * their daily email instead — the one list that token controls.
+   */
+  unsubscribeUrl?: string
 }
 
 function secret(): string {
@@ -108,10 +115,14 @@ export async function sendBatch(emails: OutgoingEmail[]): Promise<SendResult> {
       subject: email.subject,
       html: email.html,
       text: email.text,
-      headers: {
-        'List-Unsubscribe': `<${email.unsubscribeUrl}>`,
-        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-      },
+      ...(email.unsubscribeUrl
+        ? {
+            headers: {
+              'List-Unsubscribe': `<${email.unsubscribeUrl}>`,
+              'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+            },
+          }
+        : {}),
     }))
 
     const response = await fetch(RESEND_BATCH_URL, {

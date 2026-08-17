@@ -75,11 +75,20 @@ export function ensureSchema(): Promise<void> {
           email      text primary key,
           role       text not null default 'pending',
           email_pref text not null default 'daily',
+          first_name text,
+          last_name  text,
           created_at timestamptz not null default now(),
           updated_at timestamptz not null default now(),
           granted_by text
         )
       `
+      // The table above already exists in production, where `create table if not
+      // exists` is a no-op and would leave the new columns missing. Adding them
+      // here rather than only in netlify/database/migrations means a deploy
+      // heals its own schema — nobody has to find the connection string and run
+      // a migration by hand before the code that needs the column ships.
+      await sql`alter table viewers add column if not exists first_name text`
+      await sql`alter table viewers add column if not exists last_name text`
     })()
     schemaReady.catch(() => {
       schemaReady = null

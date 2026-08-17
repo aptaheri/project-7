@@ -10,9 +10,30 @@ interface Viewer {
   email: string
   role: Role
   email_pref: EmailPref
+  first_name: string | null
+  last_name: string | null
   created_at: string
   updated_at: string
   granted_by: string | null
+}
+
+/** The two name fields as they are being typed, keyed by email. */
+type NameDrafts = Record<string, { first: string; last: string }>
+
+function draftFor(drafts: NameDrafts, viewer: Viewer): { first: string; last: string } {
+  return drafts[viewer.email] ?? {
+    first: viewer.first_name ?? '',
+    last: viewer.last_name ?? '',
+  }
+}
+
+/** Whether what is typed differs from what is stored, so Save can stay quiet. */
+function isDirty(drafts: NameDrafts, viewer: Viewer): boolean {
+  const draft = draftFor(drafts, viewer)
+  return (
+    draft.first.trim() !== (viewer.first_name ?? '') ||
+    draft.last.trim() !== (viewer.last_name ?? '')
+  )
 }
 
 const ROLE_LABELS: Record<Role, string> = {
@@ -29,6 +50,7 @@ export default function Admin() {
   const [busy, setBusy] = useState<string | null>(null)
   const [invite, setInvite] = useState('')
   const [preview, setPreview] = useState<string | null>(null)
+  const [drafts, setDrafts] = useState<NameDrafts>({})
 
   const isOwner = me?.role === 'owner'
 
@@ -48,7 +70,7 @@ export default function Admin() {
 
   useEffect(load, [load])
 
-  async function mutate(body: Record<string, unknown>, key: string) {
+  async function mutate(body: Record<string, unknown>, key: string): Promise<boolean> {
     setBusy(key)
     try {
       const res = await fetch('/api/viewers', {
@@ -59,11 +81,37 @@ export default function Admin() {
       const parsed = (await res.json()) as { error?: string }
       if (!res.ok) throw new Error(parsed.error ?? `HTTP ${res.status}`)
       load()
+      setError(null)
+      return true
     } catch (err) {
       setError((err as Error).message)
+      return false
     } finally {
       setBusy(null)
     }
+  }
+
+  function editName(viewer: Viewer, patch: Partial<{ first: string; last: string }>) {
+    setDrafts((current) => ({
+      ...current,
+      [viewer.email]: { ...draftFor(current, viewer), ...patch },
+    }))
+  }
+
+  async function saveName(viewer: Viewer) {
+    const draft = draftFor(drafts, viewer)
+    const ok = await mutate(
+      { email: viewer.email, firstName: draft.first.trim(), lastName: draft.last.trim() },
+      viewer.email,
+    )
+    // The draft is dropped only once it is stored, so a failed save leaves what
+    // was typed on screen to try again rather than throwing it away.
+    if (!ok) return
+    setDrafts((current) => {
+      const next = { ...current }
+      delete next[viewer.email]
+      return next
+    })
   }
 
   if (authLoading) {
@@ -141,7 +189,9 @@ export default function Admin() {
             e.preventDefault()
             const email = invite.trim()
             if (!email) return
-            mutate({ email, role: 'viewer' }, email).then(() => setInvite(''))
+            void mutate({ email, role: 'viewer' }, email).then((ok) => {
+              if (ok) setInvite('')
+            })
           }}
         >
           <input
@@ -166,12 +216,52 @@ export default function Admin() {
           {viewers.map((v) => (
             <div key={v.email} className="admin-row">
               <div className="admin-row-main">
-                <span className="admin-email">{v.email}</span>
+                <div className="admin-identity">
+                  {/* The name leads when there is one: an address is a poor way
+                      to recognise somebody, which is the whole reason names are
+                      collected. Without one the address takes the top line
+                      rather than leaving a blank where a name should be. */}
+                  <span className="admin-name">
+                    {[v.first_name, v.last_name].filter(Boolean).join(' ') || v.email}
+                  </span>
+                  {(v.first_name || v.last_name) && (
+                    <span className="admin-email">{v.email}</span>
+                  )}
+                </div>
                 <span className={`admin-role admin-role-${v.role}`}>{ROLE_LABELS[v.role]}</span>
                 {v.role !== 'pending' && v.email_pref === 'none' && (
                   <span className="admin-pref">No emails</span>
                 )}
               </div>
+
+              <form
+                className="admin-name-edit"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  void saveName(v)
+                }}
+              >
+                <input
+                  type="text"
+                  placeholder="First name"
+                  autoComplete="off"
+                  value={draftFor(drafts, v).first}
+                  onChange={(e) => editName(v, { first: e.target.value })}
+                />
+                <input
+                  type="text"
+                  placeholder="Last name"
+                  autoComplete="off"
+                  value={draftFor(drafts, v).last}
+                  onChange={(e) => editName(v, { last: e.target.value })}
+                />
+                {/* Enabled only when something has actually changed, so the row
+                    does not offer a save that would do nothing. */}
+                <button type="submit" disabled={busy === v.email || !isDirty(drafts, v)}>
+                  Save
+                </button>
+              </form>
+
               <div className="admin-row-actions">
                 {v.role !== 'viewer' && (
                   <button
