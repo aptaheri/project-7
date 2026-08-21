@@ -5,6 +5,16 @@ import { currentSession } from '../lib/session.mts'
 import { canViewTrack, normalizeEmail } from '../lib/users.mts'
 import { currentLeg } from '../lib/itinerary.mts'
 import { testDevices } from '../lib/devices.mts'
+import { localDayRange } from '../lib/day.mts'
+import {
+  ALTITUDE_SMOOTHING,
+  ELEVATION_SAMPLE_M,
+  GAIN_THRESHOLD_M,
+  TRAIL_SMOOTHING,
+  hysteresisGain,
+  loadRollups,
+} from '../lib/rollups.mts'
+import type { DaySummary } from '../lib/rollups.mts'
 import { localConditions } from '../lib/local.mts'
 import type { LocalConditions } from '../lib/local.mts'
 import type { CurrentLeg } from '../lib/itinerary.mts'
@@ -24,67 +34,11 @@ const TARGET_TRAIL_POINTS = 2000
 /** Never thin below this, so short rides keep their shape. */
 const MIN_SPACING_M = 25
 
-/**
- * Fixes averaged either side when drawing the trail.
- *
- * Only the drawn line is smoothed. Distance is measured from the raw fixes, so
- * rounding off GPS wobble cannot change the reported mileage.
- */
-const TRAIL_SMOOTHING = 2
-
-/**
- * A climb is banked only once the rise exceeds this above a running reference,
- * which the descent then follows back down.
- *
- * Discriminating by amplitude rather than by frequency is the whole point:
- * a moving average wide enough to erase GPS noise also erases rolling hills,
- * because it cannot tell 8 m of jitter from a 20 m hill. Measured against
- * synthetic rides, summing raw positive deltas reported 706 m of climb on flat
- * ground and 738 m on rolling terrain whose true gain was 300 m; this reports
- * 17 m and 253 m.
- */
-const GAIN_THRESHOLD_M = 5
-
-/** Altitude is averaged over this many fixes either side before differencing. */
-const ALTITUDE_SMOOTHING = 4
-
-/** Altitudes are sampled this far apart along the route, not per fix. */
-const ELEVATION_SAMPLE_M = 100
-
 /** Fixes averaged at each end of the day to take the net change off jitter. */
 const NET_ENDPOINT_FIXES = 5
 
 /** Points in the day's elevation profile. Enough to read, small enough to poll. */
 const PROFILE_POINTS = 120
-
-/**
- * Total ascent over a series of altitudes, ignoring wobble under the threshold.
- *
- * Run here rather than in SQL because the sequential form needs a recursive CTE
- * joining an unindexed CTE, which is quadratic and would not survive the row
- * counts this table will reach.
- */
-function hysteresisGain(altitudes: number[], threshold: number): number {
-  let reference: number | null = null
-  let gain = 0
-
-  for (const alt of altitudes) {
-    if (!Number.isFinite(alt)) continue
-    if (reference === null) {
-      reference = alt
-      continue
-    }
-    if (alt > reference + threshold) {
-      gain += alt - reference
-      reference = alt
-    } else if (alt < reference) {
-      // Follow the descent down so the next climb is measured from the valley.
-      reference = alt
-    }
-  }
-
-  return gain
-}
 
 /** Serving a slightly stale feed beats re-scanning the table for every viewer. */
 const CACHE_MS = 20_000
@@ -99,9 +53,6 @@ const CACHE_MS = 20_000
  */
 const IDLE_CACHE_MS = 5 * 60_000
 
-/** Day summaries and the like change only as days complete, not per fix. */
-const COLD_CACHE_MS = 5 * 60_000
-
 interface LatestRow {
   tst: string
   lat: number
@@ -113,13 +64,6 @@ interface LatestRow {
   bs: number | null
   conn: string | null
   tid: string | null
-}
-
-interface StatsRow {
-  distance_m: number
-  today_m: number
-  points: number
-  points_today: number
 }
 
 /**
@@ -142,23 +86,6 @@ function localDay(lat: number, lon: number): { zone: string; date: string } {
 interface TrailRow {
   lon: number
   lat: number
-}
-
-interface DaySummary {
-  /** Local calendar date, YYYY-MM-DD. */
-  date: string
-  /** True when the day is reconstructed rather than recorded. */
-  reconstructed: boolean
-  distanceKm: number
-  /** First fix to last fix. Includes stops, which is what was asked for. */
-  elapsedSeconds: number
-  fixes: number
-  start: [number, number]
-  end: [number, number]
-  gainM: number
-  netM: number | null
-  highM: number | null
-  lowM: number | null
 }
 
 interface Payload {
@@ -193,155 +120,6 @@ const cache = new Map<string, { at: number; watermark: string | null; payload: P
 
 /** Reconstructed riding is fixed history; it never needs recomputing. */
 let backfillCache: { trail: [number, number][]; km: number } | null = null
-
-/** Per-day summaries, which only shift when a day gains or completes. */
-const dayCache = new Map<string, { at: number; days: DaySummary[] }>()
-
-/**
- * Per-day summaries across both measured and reconstructed riding.
- *
- * Two full-history window queries, so the caller runs this on a slower clock
- * than the live position — days only shift as one gains fixes or completes.
- */
-async function computeDays(
-  sql: ReturnType<typeof db>,
-  zone: string,
-  devices: string[],
-  isTest: boolean,
-): Promise<DaySummary[]> {
-  const dayRows = (await sql`
-      with ordered as (
-        select
-          tst, lat, lon, source,
-          (tst at time zone ${zone}::text)::date as local_date,
-          lag(lat) over (order by tst) as plat,
-          lag(lon) over (order by tst) as plon
-        from locations
-        where ((device = any(${devices}::text[])) = ${isTest}::boolean and source = 'device')
-           or source = 'backfill'
-      ),
-      steps as (
-        select
-          tst, lat, lon, local_date, source,
-          case when plat is null then 0 else
-            2 * 6371000 * asin(least(1, sqrt(
-              power(sin(radians(lat - plat) / 2), 2) +
-              cos(radians(plat)) * cos(radians(lat)) *
-              power(sin(radians(lon - plon) / 2), 2)
-            )))
-          end as step_m
-        from ordered
-      ),
-      totals as (
-        select
-          local_date,
-          coalesce(sum(step_m), 0)::float8 as distance_m,
-          extract(epoch from (max(tst) - min(tst)))::float8 as elapsed_s,
-          count(*)::int as fixes,
-          bool_or(source = 'backfill') as reconstructed
-        from steps
-        group by local_date
-      ),
-      first_fix as (
-        select distinct on (local_date) local_date, lat, lon
-        from steps order by local_date, tst asc
-      ),
-      last_fix as (
-        select distinct on (local_date) local_date, lat, lon
-        from steps order by local_date, tst desc
-      )
-      select
-        to_char(t.local_date, 'YYYY-MM-DD') as date,
-        t.distance_m, t.elapsed_s, t.fixes, t.reconstructed,
-        f.lat as start_lat, f.lon as start_lon,
-        l.lat as end_lat, l.lon as end_lon
-      from totals t
-      join first_fix f on f.local_date = t.local_date
-      join last_fix l on l.local_date = t.local_date
-      order by t.local_date
-    `) as unknown as {
-      date: string
-      distance_m: number
-      elapsed_s: number
-      fixes: number
-      reconstructed: boolean
-      start_lat: number
-      start_lon: number
-      end_lat: number
-      end_lon: number
-    }[]
-
-    // Altitude sampled per day, so each day's climb is measured the same way as
-    // the running total rather than by a cruder shortcut.
-    const dayAltRows = (await sql`
-      with ordered as (
-        select
-          tst, lat, lon,
-          (tst at time zone ${zone}::text)::date as local_date,
-          avg(alt) over (
-            order by tst
-            rows between ${ALTITUDE_SMOOTHING} preceding and ${ALTITUDE_SMOOTHING} following
-          ) as alt_s,
-          lag(lat) over (order by tst) as plat,
-          lag(lon) over (order by tst) as plon
-        from locations
-        where (device = any(${devices}::text[])) = ${isTest}::boolean
-          and source = 'device'
-      ),
-      steps as (
-        select
-          tst, local_date, alt_s,
-          case when plat is null then 0 else
-            2 * 6371000 * asin(least(1, sqrt(
-              power(sin(radians(lat - plat) / 2), 2) +
-              cos(radians(plat)) * cos(radians(lat)) *
-              power(sin(radians(lon - plon) / 2), 2)
-            )))
-          end as step_m
-        from ordered
-      ),
-      cumulative as (
-        select
-          tst, local_date, alt_s,
-          sum(step_m) over (partition by local_date order by tst) as cum_m
-        from steps
-      )
-      select
-        to_char(local_date, 'YYYY-MM-DD') as date,
-        floor(cum_m / ${ELEVATION_SAMPLE_M}::float8) as slice,
-        avg(alt_s)::float8 as alt
-      from cumulative
-      where alt_s is not null
-      group by local_date, slice
-      order by local_date, slice
-    `) as unknown as { date: string; slice: number; alt: number }[]
-
-    const altsByDay = new Map<string, number[]>()
-    for (const row of dayAltRows) {
-      const list = altsByDay.get(row.date)
-      if (list) list.push(row.alt)
-      else altsByDay.set(row.date, [row.alt])
-    }
-
-  const days: DaySummary[] = dayRows.map((d) => {
-      const alts = altsByDay.get(d.date) ?? []
-      return {
-        date: d.date,
-        reconstructed: d.reconstructed,
-        distanceKm: d.distance_m / 1000,
-        elapsedSeconds: d.elapsed_s,
-        fixes: d.fixes,
-        start: [d.start_lon, d.start_lat],
-        end: [d.end_lon, d.end_lat],
-        gainM: hysteresisGain(alts, GAIN_THRESHOLD_M),
-        netM: alts.length >= 2 ? alts[alts.length - 1] - alts[0] : null,
-        highM: alts.length ? Math.max(...alts) : null,
-        lowM: alts.length ? Math.min(...alts) : null,
-      }
-    })
-
-  return days
-}
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method !== 'GET') {
@@ -441,24 +219,57 @@ export default async function handler(req: Request): Promise<Response> {
     }
 
     const { zone, date: today } = localDay(latest.lat, latest.lon)
+    // His day as a range of instants, which is the form an index can answer.
+    const { start: dayStart, end: dayEnd } = localDayRange(zone, today)
 
     // Distance is measured over every stored fix, not the thinned trail, so
     // thinning changes what is drawn but never what is reported.
+    // Everything before today, read back as numbers. This is the change that
+    // stops the feed getting more expensive every week: the fixes behind these
+    // totals are only read again when a day ends or fixes arrive late for one
+    // that already has.
+    const rollups = await loadRollups({
+      sql, zone, mode, devices, isTest, todayStart: dayStart, today,
+    })
+
+    // Today, and only today. Bounded by an instant range rather than by
+    // `(tst at time zone $zone)::date = $today`, which wraps the column in a
+    // function call and so cannot use the index on tst — that one detail meant
+    // every "today" query was reading the whole table and discarding the rest.
     const statsRows = (await sql`
-      with ordered as (
+      with window_rows as (
+        -- The last fix before midnight, borrowed so the first step of the day is
+        -- measured from where he actually stopped. Without it the distance from
+        -- his last fix last night to his first this morning would go uncounted,
+        -- and the trip total would quietly shrink by one step per day against
+        -- the figure that has been reported all along. One row, by index.
+        (
+          select tst, lat, lon from locations
+          where (device = any(${devices}::text[])) = ${isTest}::boolean
+            and source = 'device'
+            and tst < ${dayStart.toISOString()}::timestamptz
+          order by tst desc
+          limit 1
+        )
+        union all
+        (
+          select tst, lat, lon from locations
+          where (device = any(${devices}::text[])) = ${isTest}::boolean
+            and source = 'device'
+            and tst >= ${dayStart.toISOString()}::timestamptz
+            and tst < ${dayEnd.toISOString()}::timestamptz
+        )
+      ),
+      ordered as (
         select
           tst, lat, lon,
           lag(lat) over (order by tst) as plat,
           lag(lon) over (order by tst) as plon
-        from locations
-        where (device = any(${devices}::text[])) = ${isTest}::boolean
-          and source = 'device'
+        from window_rows
       ),
       steps as (
         select
-          -- The day is bucketed in the rider's own timezone, so "today" means
-          -- his day rather than the server's or the viewer's.
-          (tst at time zone ${zone}::text)::date as local_date,
+          tst, lat, lon,
           case when plat is null then 0 else
             2 * 6371000 * asin(least(1, sqrt(
               power(sin(radians(lat - plat) / 2), 2) +
@@ -467,24 +278,48 @@ export default async function handler(req: Request): Promise<Response> {
             )))
           end as step_m
         from ordered
+        where tst >= ${dayStart.toISOString()}::timestamptz
       )
+      -- Everything today's summary needs, from the one scan: how far, how many,
+      -- how long, and where he set off from.
       select
-        coalesce(sum(step_m), 0)::float8 as distance_m,
-        coalesce(sum(step_m) filter (where local_date = ${today}::date), 0)::float8 as today_m,
-        count(*)::int as points,
-        count(*) filter (where local_date = ${today}::date)::int as points_today
+        coalesce(sum(step_m), 0)::float8 as today_m,
+        count(*)::int as points_today,
+        coalesce(extract(epoch from (max(tst) - min(tst))), 0)::float8 as elapsed_s,
+        (array_agg(lat order by tst asc))[1]::float8 as start_lat,
+        (array_agg(lon order by tst asc))[1]::float8 as start_lon
       from steps
-    `) as unknown as StatsRow[]
+    `) as unknown as {
+      today_m: number
+      points_today: number
+      elapsed_s: number
+      start_lat: number | null
+      start_lon: number | null
+    }[]
 
-    const stats = statsRows[0] ?? { distance_m: 0, today_m: 0, points: 0, points_today: 0 }
+    const todayStats = statsRows[0] ?? {
+      today_m: 0,
+      points_today: 0,
+      elapsed_s: 0,
+      start_lat: null,
+      start_lon: null,
+    }
 
-    // Spacing scales with the route so the payload stays flat whether he has
-    // ridden 10 km or 50,000.
+    // The first fix of the day has no predecessor inside the day, so the step
+    // from where he stopped yesterday is not counted against today. That is the
+    // same arithmetic as before, where the window ran over everything and the
+    // day boundary fell between two rows.
+    const stats = {
+      distance_m: rollups.distanceM + todayStats.today_m,
+      today_m: todayStats.today_m,
+      points: rollups.fixes + todayStats.points_today,
+      points_today: todayStats.points_today,
+    }
+
+    // Today's line, at the same spacing the whole route is drawn at, so the
+    // join between the stored history and today is invisible.
     const spacing = Math.max(MIN_SPACING_M, stats.distance_m / TARGET_TRAIL_POINTS)
 
-    // Take the first fix in each fixed-length slice of the travelled path.
-    // Thinning by distance rather than by row count keeps the shape of the
-    // route intact and drops only the points where he was barely moving.
     const trailRows = (await sql`
       with ordered as (
         select
@@ -502,6 +337,8 @@ export default async function handler(req: Request): Promise<Response> {
         from locations
         where (device = any(${devices}::text[])) = ${isTest}::boolean
           and source = 'device'
+          and tst >= ${dayStart.toISOString()}::timestamptz
+          and tst < ${dayEnd.toISOString()}::timestamptz
       ),
       steps as (
         select
@@ -553,7 +390,8 @@ export default async function handler(req: Request): Promise<Response> {
         from locations
         where (device = any(${devices}::text[])) = ${isTest}::boolean
           and source = 'device'
-          and (tst at time zone ${zone}::text)::date = ${today}::date
+          and tst >= ${dayStart.toISOString()}::timestamptz
+          and tst < ${dayEnd.toISOString()}::timestamptz
       ),
       steps as (
         select
@@ -594,7 +432,8 @@ export default async function handler(req: Request): Promise<Response> {
         from locations
         where (device = any(${devices}::text[])) = ${isTest}::boolean
           and source = 'device'
-          and (tst at time zone ${zone}::text)::date = ${today}::date
+          and tst >= ${dayStart.toISOString()}::timestamptz
+          and tst < ${dayEnd.toISOString()}::timestamptz
           and alt is not null
       )
       select (
@@ -622,7 +461,8 @@ export default async function handler(req: Request): Promise<Response> {
         from locations
         where (device = any(${devices}::text[])) = ${isTest}::boolean
           and source = 'device'
-          and (tst at time zone ${zone}::text)::date = ${today}::date
+          and tst >= ${dayStart.toISOString()}::timestamptz
+          and tst < ${dayEnd.toISOString()}::timestamptz
       ),
       steps as (
         select
@@ -652,13 +492,28 @@ export default async function handler(req: Request): Promise<Response> {
     `) as unknown as { m: number; alt: number }[]
 
     // --- Per-day summaries -------------------------------------------------
-    const dayKey = `${mode}:${zone}`
-    const cachedDays = dayCache.get(dayKey)
-    const days =
-      cachedDays && Date.now() - cachedDays.at < COLD_CACHE_MS
-        ? cachedDays.days
-        : await computeDays(sql, zone, devices, isTest)
-    if (days !== cachedDays?.days) dayCache.set(dayKey, { at: Date.now(), days })
+    // Finished days come back as stored numbers; today is assembled from the
+    // figures already computed above, which cost one indexed range scan.
+    const todayAlts = elevationRows.map((r) => r.alt)
+    const todaySummary: DaySummary | null = todayStats.points_today
+      ? {
+          date: today,
+          reconstructed: false,
+          distanceKm: todayStats.today_m / 1000,
+          elapsedSeconds: todayStats.elapsed_s,
+          fixes: todayStats.points_today,
+          start:
+            todayStats.start_lon !== null && todayStats.start_lat !== null
+              ? [todayStats.start_lon, todayStats.start_lat]
+              : [latest.lon, latest.lat],
+          end: [latest.lon, latest.lat],
+          gainM: elevationGainM,
+          netM: netTodayM,
+          highM: todayAlts.length ? Math.max(...todayAlts) : null,
+          lowM: todayAlts.length ? Math.min(...todayAlts) : null,
+        }
+      : null
+    const days = todaySummary ? [...rollups.days, todaySummary] : rollups.days
 
     // Reconstructed riding never changes, so it is derived once per instance
     // rather than re-queried behind every poll.
@@ -695,7 +550,12 @@ export default async function handler(req: Request): Promise<Response> {
     const backfillTrail = backfillCache.trail
     const backfillKm = backfillCache.km
 
-    const trail: [number, number][] = trailRows.map((r) => [r.lon, r.lat])
+    // The stored line through last night, then today's. Concatenated here
+    // rather than in SQL so the history is never re-read to draw it.
+    const trail: [number, number][] = [
+      ...rollups.trail,
+      ...trailRows.map((r) => [r.lon, r.lat] as [number, number]),
+    ]
 
     // The newest fix can fall inside an already-represented slice, which would
     // leave the drawn line stopping short of the marker.

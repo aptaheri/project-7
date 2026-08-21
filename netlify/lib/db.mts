@@ -89,6 +89,53 @@ export function ensureSchema(): Promise<void> {
       // a migration by hand before the code that needs the column ships.
       await sql`alter table viewers add column if not exists first_name text`
       await sql`alter table viewers add column if not exists last_name text`
+
+      // Finished days, computed once and then read back rather than derived
+      // from the whole history on every poll. Keyed by mode so the owner's
+      // test view cannot contaminate the real numbers.
+      await sql`
+        create table if not exists day_rollups (
+          local_date    date not null,
+          mode          text not null,
+          zone          text not null,
+          distance_m    double precision not null,
+          elapsed_s     double precision not null,
+          fixes         int not null,
+          start_lon     double precision not null,
+          start_lat     double precision not null,
+          end_lon       double precision not null,
+          end_lat       double precision not null,
+          gain_m        double precision not null,
+          net_m         double precision,
+          high_m        double precision,
+          low_m         double precision,
+          reconstructed boolean not null default false,
+          computed_at   timestamptz not null default now(),
+          primary key (local_date, mode)
+        )
+      `
+      // The drawn line for every finished day, already thinned. One row per
+      // mode: reading 500 days of history should be one lookup, not a scan.
+      await sql`
+        create table if not exists trail_cache (
+          mode          text primary key,
+          through_date  date not null,
+          points        jsonb not null,
+          seen_received timestamptz not null,
+          computed_at   timestamptz not null default now()
+        )
+      `
+      // Serves both the newest-fix watermark and every "since this instant"
+      // range scan. The plain tst index cannot skip the other source.
+      await sql`
+        create index if not exists locations_source_tst_idx on locations (source, tst desc)
+      `
+      // Fixes for a past day can arrive late — OwnTracks replays what it queued
+      // during a gap in coverage. This is how a rollup finds out it is stale
+      // without re-reading the day it summarises.
+      await sql`
+        create index if not exists locations_received_at_idx on locations (received_at)
+      `
     })()
     schemaReady.catch(() => {
       schemaReady = null
