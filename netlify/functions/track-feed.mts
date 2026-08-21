@@ -1,8 +1,7 @@
 import tzLookup from 'tz-lookup'
 import { json } from '../lib/auth.mts'
-import { db, ensureSchema } from '../lib/db.mts'
-import { currentSession } from '../lib/session.mts'
-import { canViewTrack, normalizeEmail } from '../lib/users.mts'
+import { db } from '../lib/db.mts'
+import { requireTrackViewer } from '../lib/gate.mts'
 import { currentLeg } from '../lib/itinerary.mts'
 import { testDevices } from '../lib/devices.mts'
 import { localDayRange } from '../lib/day.mts'
@@ -12,13 +11,12 @@ import {
   GAIN_THRESHOLD_M,
   TRAIL_SMOOTHING,
   hysteresisGain,
-  loadRollups,
+  loadTotals,
 } from '../lib/rollups.mts'
 import type { DaySummary } from '../lib/rollups.mts'
 import { localConditions } from '../lib/local.mts'
 import type { LocalConditions } from '../lib/local.mts'
 import type { CurrentLeg } from '../lib/itinerary.mts'
-import type { Role } from '../lib/session.mts'
 
 /**
  * Read endpoint backing the /track page.
@@ -102,13 +100,27 @@ interface Payload {
   netTodayM: number | null
   /** Today's ride profile: metres travelled against smoothed altitude. */
   profileToday: { m: number; alt: number }[]
-  /** One entry per riding day, oldest first. */
-  days: DaySummary[]
+  /**
+   * Today's ride so far, as a day summary. Finished days live behind
+   * /api/track/history, which changes once a day rather than once a fix.
+   */
+  today: DaySummary | null
+  /** Changes only when the stored history does; the client refetches on it. */
+  historyVersion: string
+  /**
+   * Always empty. Kept for one release only.
+   *
+   * A viewer with the tracker already open goes on running the previous
+   * bundle until they reload, and that one reads these fields directly. Absent,
+   * it throws and they get an error page instead of a map; empty, it draws a
+   * little less than it should until the next reload. Delete these after a
+   * deploy or two — nothing this side reads them.
+   */
+  days: never[]
+  backfillTrail: never[]
+  backfillKm: number
   /** The planned leg he appears to be on, or null when nothing fits. */
   leg: CurrentLeg | null
-  /** Reconstructed riding from before the tracker existed. Drawn dashed. */
-  backfillTrail: [number, number][]
-  backfillKm: number
   /** Sun times and weather where he is. */
   local: LocalConditions | null
   trailPoints: number
@@ -118,35 +130,17 @@ interface Payload {
 // Keyed by mode so the two views cannot serve each other's cached payload.
 const cache = new Map<string, { at: number; watermark: string | null; payload: Payload }>()
 
-/** Reconstructed riding is fixed history; it never needs recomputing. */
-let backfillCache: { trail: [number, number][]; km: number } | null = null
-
 export default async function handler(req: Request): Promise<Response> {
   if (req.method !== 'GET') {
     return json({ error: 'method not allowed' }, 405)
   }
 
-  const session = currentSession(req)
-  if (!session) return json({ error: 'unauthorized' }, 401)
-
-  let role: Role = 'pending'
-  try {
-    await ensureSchema()
-    const roles = (await db()`
-      select role from viewers where email = ${normalizeEmail(session.email)}
-    `) as unknown as { role: Role }[]
-    role = roles[0]?.role ?? 'pending'
-    if (!canViewTrack(role)) {
-      return json({ error: 'forbidden' }, 403)
-    }
-  } catch (error) {
-    console.error('role check failed', error)
-    return json({ error: 'query failed' }, 500)
-  }
+  const gate = await requireTrackViewer(req)
+  if (gate instanceof Response) return gate
 
   // Test data is an owner-only view. Anyone else always gets production, no
   // matter what they put in the query string.
-  const isOwner = role === 'owner'
+  const isOwner = gate.role === 'owner'
   const wantsTest = new URL(req.url).searchParams.get('mode') === 'test'
   const mode: 'production' | 'test' = isOwner && wantsTest ? 'test' : 'production'
   const devices = testDevices()
@@ -206,10 +200,12 @@ export default async function handler(req: Request): Promise<Response> {
         elevationGainM: 0,
         netTodayM: null,
         profileToday: [],
+        today: null,
+        historyVersion: 'empty',
         days: [],
-        leg: null,
         backfillTrail: [],
         backfillKm: 0,
+        leg: null,
         local: null,
         trailPoints: 0,
         mode,
@@ -228,7 +224,7 @@ export default async function handler(req: Request): Promise<Response> {
     // stops the feed getting more expensive every week: the fixes behind these
     // totals are only read again when a day ends or fixes arrive late for one
     // that already has.
-    const rollups = await loadRollups({
+    const rollups = await loadTotals({
       sql, zone, mode, devices, isTest, todayStart: dayStart, today,
     })
 
@@ -513,49 +509,13 @@ export default async function handler(req: Request): Promise<Response> {
           lowM: todayAlts.length ? Math.min(...todayAlts) : null,
         }
       : null
-    const days = todaySummary ? [...rollups.days, todaySummary] : rollups.days
+    // Finished days and the line through them now come from /api/track/history,
+    // fetched once a session. Only today rides along with the live figures.
 
-    // Reconstructed riding never changes, so it is derived once per instance
-    // rather than re-queried behind every poll.
-    if (!backfillCache) {
-      const backfillRows = (await sql`
-        with ordered as (
-          select
-            tst, lat, lon,
-            lag(lat) over (order by tst) as plat,
-            lag(lon) over (order by tst) as plon
-          from locations
-          where source = 'backfill'
-        ),
-        steps as (
-          select
-            tst, lat, lon,
-            case when plat is null then 0 else
-              2 * 6371000 * asin(least(1, sqrt(
-                power(sin(radians(lat - plat) / 2), 2) +
-                cos(radians(plat)) * cos(radians(lat)) *
-                power(sin(radians(lon - plon) / 2), 2)
-              )))
-            end as step_m
-          from ordered
-        )
-        select lon, lat, sum(step_m) over () as total_m from steps order by tst
-      `) as unknown as { lon: number; lat: number; total_m: number }[]
-
-      backfillCache = {
-        trail: backfillRows.map((r) => [r.lon, r.lat]),
-        km: (backfillRows[0]?.total_m ?? 0) / 1000,
-      }
-    }
-    const backfillTrail = backfillCache.trail
-    const backfillKm = backfillCache.km
-
-    // The stored line through last night, then today's. Concatenated here
-    // rather than in SQL so the history is never re-read to draw it.
-    const trail: [number, number][] = [
-      ...rollups.trail,
-      ...trailRows.map((r) => [r.lon, r.lat] as [number, number]),
-    ]
+    // Today's line only. The client already holds the history and draws the two
+    // together, so the ~1 MB of route behind him is not re-sent every thirty
+    // seconds to move a marker a few hundred metres.
+    const trail: [number, number][] = trailRows.map((r) => [r.lon, r.lat])
 
     // The newest fix can fall inside an already-represented slice, which would
     // leave the drawn line stopping short of the marker.
@@ -575,10 +535,12 @@ export default async function handler(req: Request): Promise<Response> {
       elevationGainM,
       netTodayM,
       profileToday: profileRows,
-      days,
+      today: todaySummary,
+      historyVersion: rollups.version,
+      days: [],
+      backfillTrail: [],
+      backfillKm: 0,
       leg: currentLeg([latest.lon, latest.lat], today),
-      backfillTrail,
-      backfillKm,
       local: await localConditions(latest.lat, latest.lon),
       trailPoints: trail.length,
       mode,

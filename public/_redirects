@@ -2,6 +2,11 @@
 # before the SPA catch-all or it swallows them. These live here rather than in
 # netlify.toml because _redirects is processed first.
 /api/owntracks     /.netlify/functions/owntracks              200!
+# The settled half of the tracker: finished days and the route behind him.
+# Same sign-in wall, fetched once a session rather than once every 30 seconds.
+# Ahead of /api/track because the first match wins and the longer path is the
+# more specific one.
+/api/track/history /.netlify/functions/track-history          200!
 /api/track         /.netlify/functions/track-feed             200!
 # Public on purpose: country only, no coordinates. See where.mts.
 /api/where         /.netlify/functions/where                  200!

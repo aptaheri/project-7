@@ -76,6 +76,25 @@ const bundle = await esbuild.build({
 const outPath = join(dir, 'track-feed.mjs')
 writeFileSync(outPath, bundle.outputFiles[0].text)
 
+const historyBundle = await esbuild.build({
+  entryPoints: ['netlify/functions/track-history.mts'],
+  bundle: true,
+  format: 'esm',
+  platform: 'node',
+  write: false,
+  external: ['tz-lookup'],
+  plugins: [
+    {
+      name: 'swap-db',
+      setup(build) {
+        build.onResolve({ filter: /db\.mts$/ }, () => ({ path: shimPath }))
+      },
+    },
+  ],
+})
+const historyPath = join(dir, 'track-history.mjs')
+writeFileSync(historyPath, historyBundle.outputFiles[0].text)
+
 await pg.exec(`
   create table locations (
     id bigserial primary key,
@@ -189,7 +208,7 @@ const body = await res.json()
 
 check('every query in the request path ran', !body.error, body.error ?? 'no error')
 check('latest fix present', Boolean(body.latest))
-check('trail drawn', Array.isArray(body.trail) && body.trail.length > 0, `${body.trail?.length} points`)
+check('today is drawn', Array.isArray(body.trail) && body.trail.length > 0, `${body.trail?.length} points`)
 check('timezone resolved', Boolean(body.timezone), body.timezone)
 check('total distance covers both days', body.distanceKm > body.distanceTodayKm,
   `${body.distanceKm?.toFixed(1)} km total vs ${body.distanceTodayKm?.toFixed(1)} km today`)
@@ -201,7 +220,15 @@ check('gain today sees today\'s climb', body.elevationGainM > 150, `${Math.round
 check("gain today excludes yesterday's climbing", body.elevationGainM < 450,
   `${Math.round(body.elevationGainM)} m`)
 check('profile is today only', body.profileToday.length > 0, `${body.profileToday.length} samples`)
-check('per-day summaries built', body.days.length >= 1, `${body.days.length} days`)
+check('today comes back as a day summary', Boolean(body.today), body.today?.date)
+check('the live feed carries a history version', typeof body.historyVersion === 'string',
+  body.historyVersion)
+
+// The whole point of the split: the journey so far must not be in here. The
+// fields survive one release empty, so a viewer mid-session keeps a map rather
+// than getting an error page from the bundle they are still running.
+check('the live feed no longer carries finished days', body.days.length === 0)
+check('nor the route behind him', body.backfillTrail.length === 0)
 
 
 // ── The cost of a poll must not grow with the length of the trip ────────────
@@ -263,14 +290,35 @@ const stored = await pg.query('select * from day_rollups order by local_date')
 check('finished days are summarised in the database', stored.rows.length >= 1,
   `${stored.rows.length} day(s) stored`)
 check('today is not stored as finished',
-  !stored.rows.some((r) => r.local_date.toISOString().slice(0, 10) === afterFix.body.days.at(-1).date),
+  !stored.rows.some((r) => r.local_date.toISOString().slice(0, 10) === afterFix.body.today.date),
   stored.rows.map((r) => r.local_date.toISOString().slice(0, 10)).join(', '))
 
 // ── A fix that arrives late for a finished day is picked up ────────────────
 //
 // OwnTracks replays what it queued during a gap in coverage, so yesterday can
 // gain fixes today. A summary that never noticed would be wrong forever.
-const before = afterFix.body.days[0].distanceKm
+const historyOf = async (h) => {
+  const r = await h(
+    new Request('https://project7.bike/api/track/history', {
+      headers: { cookie: `p7_session=${encodeURIComponent(value)}` },
+    }),
+  )
+  return r.json()
+}
+
+const { default: historyHandler } = await import(pathToFileURL(historyPath).href)
+let freshHistory = 0
+const freshHistoryHandler = async () =>
+  (await import(`${pathToFileURL(historyPath).href}?i=${++freshHistory}`)).default
+
+const firstHistory = await historyOf(historyHandler)
+check('the history endpoint returns the finished days', firstHistory.days.length >= 1,
+  `${firstHistory.days.length} day(s)`)
+check('and the route behind him', firstHistory.trail.length > 0,
+  `${firstHistory.trail.length} points`)
+check('and its version matches the live feed', firstHistory.version === afterFix.body.historyVersion)
+
+const before = firstHistory.days[0].distanceKm
 await pg.query(
   `insert into locations (device, tst, lat, lon, alt, source, raw, received_at)
    values ('phone', now() - make_interval(mins => $1), $2, $3, 400, 'device', '{}'::jsonb, now())`,
@@ -279,8 +327,11 @@ await pg.query(
 const late = await poll(await freshHandler())
 check('a late fix for a finished day forces a rebuild', late.sql.filter(isRebuild).length === 1,
   `${late.sql.filter(isRebuild).length} rebuild(s)`)
-check('and the stored summary is corrected', late.body.days[0].distanceKm > before,
-  `${before.toFixed(1)} -> ${late.body.days[0].distanceKm.toFixed(1)} km`)
+const lateHistory = await historyOf(await freshHistoryHandler())
+check('and the stored summary is corrected', lateHistory.days[0].distanceKm > before,
+  `${before.toFixed(1)} -> ${lateHistory.days[0].distanceKm.toFixed(1)} km`)
+check('and the version changes so a client refetches',
+  lateHistory.version !== firstHistory.version)
 
 // ── The totals still agree with reading every fix the simple way ───────────
 const independent = await pg.query(`
@@ -341,6 +392,44 @@ const afterMove = await pg.query(`
 check('nothing is double counted across the boundary',
   Math.abs(moved.body.distanceKm - Number(afterMove.rows[0].km)) < 0.01,
   `feed ${moved.body.distanceKm.toFixed(1)} km vs ${Number(afterMove.rows[0].km).toFixed(1)} km`)
+
+
+// ── The stored line still follows the road ─────────────────────────────────
+//
+// Thinning by distance is what makes a route stop tracing the road it was
+// ridden on: it drops the apex of every switchback because it cannot tell a
+// corner from a straight. The simplification has to spend its points where the
+// road bends.
+const simplifyBundle = await esbuild.build({
+  entryPoints: ['netlify/lib/rollups.mts'],
+  bundle: true, format: 'esm', platform: 'node', write: false,
+  plugins: [{ name: 'swap-db', setup(b) { b.onResolve({ filter: /db\.mts$/ }, () => ({ path: shimPath })) } }],
+})
+writeFileSync(join(dir, 'rollups.mjs'), simplifyBundle.outputFiles[0].text)
+const { simplify } = await import(pathToFileURL(resolve(dir, 'rollups.mjs')).href)
+
+const DEG = 1 / 111320
+const road = []
+for (let d = 0; d < 40000; d += 150) road.push([0, d * DEG])
+for (let d = 0; d < 10000; d += 150) road.push([Math.sin(d / 300) * 120 * DEG, (40000 + d) * DEG])
+
+const kept = simplify(road, 12)
+const bends = kept.filter((p) => p[1] > 40000 * DEG).length
+const straight = kept.length - bends
+check('a straight run costs almost nothing', straight <= 4, `${straight} points for 40 km`)
+check('the switchbacks keep their shape', bends >= 20, `${bends} points for 10 km`)
+check('and the whole thing is a fraction of the fixes', kept.length < road.length / 4,
+  `${kept.length} of ${road.length}`)
+
+
+// ── What actually goes over the wire, every thirty seconds ─────────────────
+const livePayload = JSON.stringify(late.body)
+const historyPayload = JSON.stringify(lateHistory)
+const kb = (t) => (t.length / 1024).toFixed(1)
+console.log(`\n      live poll: ${kb(livePayload)} KB   history (once a session): ${kb(historyPayload)} KB`)
+check('the live poll carries no route history',
+  late.body.days.length === 0 && late.body.backfillTrail.length === 0 &&
+  livePayload.length < 20_000, `${kb(livePayload)} KB`)
 
 console.log(failures === 0 ? '\nAll feed SQL checks passed.' : `\n${failures} check(s) failed.`)
 process.exit(failures === 0 ? 0 : 1)

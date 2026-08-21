@@ -49,8 +49,25 @@ interface LatestFix {
   tid: string | null
 }
 
+/**
+ * The live half of the tracker: what has changed since the last poll.
+ *
+ * The journey so far — finished days, the route behind him, the reconstructed
+ * riding — is fetched separately and held in state, because it changes once a
+ * day rather than once every thirty seconds. Sending it with every poll meant
+ * re-transmitting the whole expedition to move a marker.
+ */
+interface History {
+  version: string
+  days: DaySummary[]
+  trail: [number, number][]
+  backfillTrail: [number, number][]
+  backfillKm: number
+}
+
 interface Feed {
   latest: LatestFix | null
+  /** Today's line only. Drawn joined onto the history. */
   trail: [number, number][]
   /** Every stored fix, not the thinned trail. */
   count: number
@@ -61,7 +78,10 @@ interface Feed {
   elevationGainM: number
   netTodayM: number | null
   profileToday: { m: number; alt: number }[]
-  days: DaySummary[]
+  /** Today's ride so far. Finished days come from the history. */
+  today: DaySummary | null
+  /** Refetch the history when this changes, and not otherwise. */
+  historyVersion: string
   leg: {
     date: string
     kind: 'ride' | 'rest'
@@ -73,8 +93,6 @@ interface Feed {
     roadRemainingKm: number | null
     daysFromSchedule: number
   } | null
-  backfillTrail: [number, number][]
-  backfillKm: number
   local: {
     sunriseUtc: string | null
     sunsetUtc: string | null
@@ -186,6 +204,11 @@ export default function TrackMap({ emailPref }: Props) {
   const [mapReady, setMapReady] = useState(false)
   const [mapError, setMapError] = useState<string | null>(null)
   const [feed, setFeed] = useState<Feed | null>(null)
+  // Held across polls and refetched only when the feed says it has changed.
+  const [history, setHistory] = useState<History | null>(null)
+  // The version already held, in a ref so the polling effect can read it
+  // without restarting itself every time the history changes.
+  const historyRef = useRef<string | null>(null)
   const [status, setStatus] = useState<Status>('loading')
   const failuresRef = useRef(0)
   // Read by the scheduler, which is set up once and must not close over stale
@@ -242,6 +265,17 @@ export default function TrackMap({ emailPref }: Props) {
         lastFixRef.current = data.latest ? new Date(data.latest.tst).getTime() : null
         setFeed(data)
         setStatus('ok')
+
+        // Once a session, and again the morning a day is added to it.
+        if (data.historyVersion !== 'empty' && data.historyVersion !== historyRef.current) {
+          const stamp = data.historyVersion
+          const res = await fetch('/api/track/history')
+          if (cancelled || !res.ok) return
+          const loaded = (await res.json()) as History
+          if (cancelled) return
+          historyRef.current = stamp
+          setHistory(loaded)
+        }
       } catch (error) {
         if (cancelled) return
         console.error('track feed request failed', error)
@@ -442,20 +476,26 @@ export default function TrackMap({ emailPref }: Props) {
     const trail = map.getSource('trail') as mapboxgl.GeoJSONSource | undefined
     trail?.setData({
       ...EMPTY_LINE,
-      geometry: { type: 'LineString', coordinates: feed.trail },
+      geometry: {
+        type: 'LineString',
+        // The journey so far and today, joined at the point he woke up at.
+        coordinates: [...(history?.trail ?? []), ...feed.trail],
+      },
     })
 
     const backfill = map.getSource('backfill') as mapboxgl.GeoJSONSource | undefined
     backfill?.setData({
       ...EMPTY_LINE,
-      geometry: { type: 'LineString', coordinates: feed.backfillTrail },
+      geometry: { type: 'LineString', coordinates: history?.backfillTrail ?? [] },
     })
 
-    daysRef.current = feed.days
+    // Finished days from the history, today from the live feed.
+    const days = [...(history?.days ?? []), ...(feed.today ? [feed.today] : [])]
+    daysRef.current = days
     const daySource = map.getSource('days') as mapboxgl.GeoJSONSource | undefined
     daySource?.setData({
       type: 'FeatureCollection',
-      features: feed.days.map((d) => ({
+      features: days.map((d) => ({
         type: 'Feature',
         properties: { date: d.date, reconstructed: d.reconstructed },
         geometry: { type: 'Point', coordinates: d.end },
@@ -479,7 +519,10 @@ export default function TrackMap({ emailPref }: Props) {
       hasCenteredRef.current = true
       map.flyTo({ center: position, zoom: 9, duration: 2000 })
     }
-  }, [feed, mapReady])
+    // history is a dependency as much as feed is: it arrives a moment after the
+    // first poll, and without it here the route behind him would stay invisible
+    // until the next one thirty seconds later.
+  }, [feed, history, mapReady])
 
   function recenter() {
     const map = mapRef.current
@@ -620,13 +663,13 @@ export default function TrackMap({ emailPref }: Props) {
                   together. The split stays in the tooltip rather than a row. */}
               <div
                 title={
-                  (feed?.backfillKm ?? 0) > 0
-                    ? `${miles(feed?.distanceKm ?? 0)} mi tracked, ${miles(feed?.backfillKm ?? 0)} mi reconstructed from before the tracker existed`
+                  (history?.backfillKm ?? 0) > 0
+                    ? `${miles(feed?.distanceKm ?? 0)} mi tracked, ${miles(history?.backfillKm ?? 0)} mi reconstructed from before the tracker existed`
                     : undefined
                 }
               >
                 <dt>Total</dt>
-                <dd>{miles((feed?.distanceKm ?? 0) + (feed?.backfillKm ?? 0))} mi</dd>
+                <dd>{miles((feed?.distanceKm ?? 0) + (history?.backfillKm ?? 0))} mi</dd>
               </div>
             </dl>
 
@@ -698,7 +741,9 @@ export default function TrackMap({ emailPref }: Props) {
         )}
 
         {expanded && view === 'day' && (() => {
-          const day = feed?.days.find((d) => d.date === selectedDay)
+          const day = [...(history?.days ?? []), ...(feed?.today ? [feed.today] : [])].find(
+            (d) => d.date === selectedDay,
+          )
           if (!day) {
             return (
               <>

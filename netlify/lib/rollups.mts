@@ -96,14 +96,27 @@ export interface RollupContext {
   today: string
 }
 
-export interface Rollups {
-  days: DaySummary[]
+/**
+ * What the live feed needs from the history: two numbers and a token.
+ *
+ * Deliberately not the line or the day list. Those are the large half, they
+ * change once a day, and re-sending them on every poll is what the split
+ * exists to stop.
+ */
+export interface RollupTotals {
   /** Metres ridden across every finished day, measured and reconstructed. */
   distanceM: number
   /** Fixes recorded across every finished day. */
   fixes: number
-  /** The drawn line through the end of the last finished day. */
+  /** Changes only when the stored history does, so a client can skip refetching. */
+  version: string
+}
+
+/** The large half, fetched once a session. */
+export interface RollupHistory {
+  days: DaySummary[]
   trail: [number, number][]
+  version: string
 }
 
 interface RollupRow {
@@ -373,15 +386,134 @@ async function rebuild(ctx: RollupContext): Promise<void> {
   await rebuildTrail(ctx)
 }
 
-/** Thinning target for the stored history line. Today's fixes are added live. */
-const HISTORY_TRAIL_POINTS = 1500
-const MIN_SPACING_M = 25
+/**
+ * Most points the stored history line may carry.
+ *
+ * Fetched once a session rather than on every poll, so it can afford detail
+ * that would be absurd to re-send every thirty seconds. Forty thousand points
+ * is roughly a megabyte of JSON — a couple of map tiles — for the whole
+ * expedition.
+ */
+const HISTORY_POINT_BUDGET = 40_000
 
 /**
- * The drawn line for everything before today, thinned once and stored.
+ * Rows the first pass may return, before the shape-aware pass runs.
  *
- * Thinning by distance rather than by row count keeps the shape of the route
- * intact and drops only the points where he was barely moving.
+ * Only a memory bound: a function reading half a million rows to draw a line is
+ * a different kind of problem from one sending them.
+ */
+const RAW_POINT_CEILING = 250_000
+
+/**
+ * How far the drawn line may stray from the recorded one, in metres.
+ *
+ * Not a spacing. Thinning by distance — one point every N metres — is what
+ * makes a route stop following roads: it drops the apex of every switchback and
+ * cuts every corner, because it has no idea which points carry the shape. This
+ * is the tolerance of a Douglas-Peucker simplification instead, which keeps a
+ * point precisely when leaving it out would move the line by more than this,
+ * so a straight run across the Nullarbor costs two points and a climb into the
+ * Pyrenees keeps every hairpin.
+ *
+ * 12 m is under a pixel until about zoom 14 — street level — so the line
+ * follows the road at any zoom anyone is likely to use.
+ */
+const HISTORY_TOLERANCE_M = 12
+
+/** Raised, if it must be, until the line fits the budget. */
+const TOLERANCE_GROWTH = 1.7
+
+const MIN_SPACING_M = 25
+
+const EARTH_RADIUS_M = 6_371_000
+
+/**
+ * Perpendicular distance from a point to the line through two others, in metres.
+ *
+ * Longitude is scaled by the cosine of the latitude so a degree east is worth
+ * what it is actually worth at that latitude — without it the simplification
+ * would be increasingly wrong the further from the equator he rides, and this
+ * route reaches both poles.
+ */
+function perpendicularM(
+  point: [number, number],
+  start: [number, number],
+  end: [number, number],
+): number {
+  const scale = Math.cos((point[1] * Math.PI) / 180)
+  const toM = (deg: number) => (deg * Math.PI * EARTH_RADIUS_M) / 180
+  const px = toM((point[0] - start[0]) * scale)
+  const py = toM(point[1] - start[1])
+  const ex = toM((end[0] - start[0]) * scale)
+  const ey = toM(end[1] - start[1])
+
+  const lengthSq = ex * ex + ey * ey
+  if (lengthSq === 0) return Math.hypot(px, py)
+
+  // Where the foot of the perpendicular falls along the segment, clamped to it.
+  const t = Math.max(0, Math.min(1, (px * ex + py * ey) / lengthSq))
+  return Math.hypot(px - t * ex, py - t * ey)
+}
+
+/**
+ * Douglas-Peucker, iteratively rather than recursively.
+ *
+ * The recursive form is the one everybody writes, and on a track of several
+ * hundred thousand fixes it recurses deep enough to blow the stack — of which
+ * the first sign would be the map going blank halfway through the trip.
+ */
+export function simplify(points: [number, number][], toleranceM: number): [number, number][] {
+  if (points.length < 3) return points.slice()
+
+  const keep = new Uint8Array(points.length)
+  keep[0] = 1
+  keep[points.length - 1] = 1
+
+  const stack: [number, number][] = [[0, points.length - 1]]
+  while (stack.length > 0) {
+    const [first, last] = stack.pop() as [number, number]
+    let worst = 0
+    let index = -1
+
+    for (let i = first + 1; i < last; i++) {
+      const distance = perpendicularM(points[i], points[first], points[last])
+      if (distance > worst) {
+        worst = distance
+        index = i
+      }
+    }
+
+    if (index !== -1 && worst > toleranceM) {
+      keep[index] = 1
+      stack.push([first, index], [index, last])
+    }
+  }
+
+  return points.filter((_, i) => keep[i] === 1)
+}
+
+/**
+ * Simplified as finely as the budget allows.
+ *
+ * Starts at the tolerance that looks right and loosens only if the result is
+ * too big to send, so the line is as faithful as it can be for its size rather
+ * than uniformly coarse for the whole trip.
+ */
+function simplifyToBudget(points: [number, number][], budget: number): {
+  points: [number, number][]
+  toleranceM: number
+} {
+  let toleranceM = HISTORY_TOLERANCE_M
+  let simplified = simplify(points, toleranceM)
+  while (simplified.length > budget && toleranceM < 5000) {
+    toleranceM *= TOLERANCE_GROWTH
+    simplified = simplify(points, toleranceM)
+  }
+  return { points: simplified, toleranceM }
+}
+
+/**
+ * The drawn line for everything before today, simplified once and stored.
  */
 async function rebuildTrail(ctx: RollupContext): Promise<void> {
   const { sql, mode, devices, isTest, todayStart, today } = ctx
@@ -392,7 +524,10 @@ async function rebuildTrail(ctx: RollupContext): Promise<void> {
     from day_rollups where mode = ${mode}
   `) as unknown as { distance_m: number }[]
 
-  const spacing = Math.max(MIN_SPACING_M, (totals[0]?.distance_m ?? 0) / HISTORY_TRAIL_POINTS)
+  // A first pass in SQL, only to bound how much comes back into memory. It is
+  // deliberately far finer than the line needs — the shape-aware pass below is
+  // what decides which points survive, and it can only keep what it is given.
+  const spacing = Math.max(MIN_SPACING_M, (totals[0]?.distance_m ?? 0) / RAW_POINT_CEILING)
 
   const rows = (await sql`
     with ordered as (
@@ -444,7 +579,13 @@ async function rebuildTrail(ctx: RollupContext): Promise<void> {
     where tst < ${before}::timestamptz
   `) as unknown as { seen: string }[]
 
-  const points = rows.map((r) => [r.lon, r.lat])
+  const { points, toleranceM } = simplifyToBudget(
+    rows.map((r) => [r.lon, r.lat] as [number, number]),
+    HISTORY_POINT_BUDGET,
+  )
+  console.log(
+    `history trail rebuilt: ${rows.length} fixes -> ${points.length} points at ${toleranceM.toFixed(0)}m`,
+  )
   // Yesterday, in his local reckoning: the last day the stored line covers.
   const throughDate = new Date(todayStart.getTime() - 1)
 
@@ -465,12 +606,46 @@ async function rebuildTrail(ctx: RollupContext): Promise<void> {
   `
 }
 
-/**
- * Every finished day, refreshing the stored summaries first if they have gone
- * stale. The refresh is the only thing here that reads the fixes themselves.
- */
-export async function loadRollups(ctx: RollupContext): Promise<Rollups> {
+/** Brings the stored summaries up to date if anything has changed. */
+async function refreshIfStale(ctx: RollupContext): Promise<void> {
   if (await needsRefresh(ctx)) await rebuild(ctx)
+}
+
+/**
+ * The totals behind the live feed: an aggregate over a table with one row per
+ * day, and the version token. Nothing here grows with how much he has ridden.
+ */
+export async function loadTotals(ctx: RollupContext): Promise<RollupTotals> {
+  await refreshIfStale(ctx)
+
+  const rows = (await ctx.sql`
+    select
+      coalesce(sum(distance_m), 0)::float8 as distance_m,
+      coalesce(sum(fixes), 0)::int as fixes
+    from day_rollups where mode = ${ctx.mode}
+  `) as unknown as { distance_m: number; fixes: number }[]
+
+  return {
+    distanceM: rows[0]?.distance_m ?? 0,
+    fixes: rows[0]?.fixes ?? 0,
+    version: await version(ctx),
+  }
+}
+
+/** The token the client compares against to decide whether to refetch. */
+async function version(ctx: RollupContext): Promise<string> {
+  const rows = (await ctx.sql`
+    select computed_at::text as computed_at from trail_cache where mode = ${ctx.mode}
+  `) as unknown as { computed_at: string }[]
+  return rows[0]?.computed_at ?? 'empty'
+}
+
+/**
+ * Every finished day and the line through them. The large half, fetched once a
+ * session and again only when the version changes — which is once a day.
+ */
+export async function loadHistory(ctx: RollupContext): Promise<RollupHistory> {
+  await refreshIfStale(ctx)
 
   const rows = (await ctx.sql`
     select
@@ -489,8 +664,7 @@ export async function loadRollups(ctx: RollupContext): Promise<Rollups> {
 
   return {
     days: rows.map(toSummary),
-    distanceM: rows.reduce((sum, r) => sum + r.distance_m, 0),
-    fixes: rows.reduce((sum, r) => sum + r.fixes, 0),
     trail: cached[0]?.points ?? [],
+    version: await version(ctx),
   }
 }
