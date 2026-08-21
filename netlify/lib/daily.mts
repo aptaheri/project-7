@@ -297,10 +297,9 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
     return { ...base, sent: false, reason: 'nobody is subscribed' }
   }
 
-  // Resolved once, before anyone's copy is rendered: it is the same sentence for
-  // every recipient, and it may cost a model call and a web search to obtain.
-  // Everything after the gates has already decided to send, so a slow or absent
-  // fact costs the email a line and never the send.
+  // A lookup, not a generation: writing one takes thirteen seconds and this
+  // function has thirty to send forty emails. fact-warm.mts writes them hours
+  // earlier; a destination it has not reached yet simply has no line.
   const fact = await factFor(leg.to)
 
   const render = (to: string) =>

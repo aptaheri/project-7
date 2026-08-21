@@ -55,7 +55,7 @@ const bundle = await esbuild.build({
 })
 const outPath = join(dir, 'fact.mjs')
 writeFileSync(outPath, bundle.outputFiles[0].text)
-const { factFor } = await import(pathToFileURL(resolve(outPath)).href)
+const { factFor, ensureFact } = await import(pathToFileURL(resolve(outPath)).href)
 
 // The Messages API, stubbed. `reply` decides what this turn returns.
 let calls = 0
@@ -68,9 +68,10 @@ globalThis.fetch = async (url) => {
     return new Response(JSON.stringify({ type: 'error', error: { type: 'api_error', message: 'boom' } }),
       { status: reply.status, headers: { 'content-type': 'application/json' } })
   }
+  const blocks = reply.blocks ?? [reply.text]
   return new Response(JSON.stringify({
     id: 'msg_test', type: 'message', role: 'assistant', model: 'claude-opus-5',
-    content: [{ type: 'text', text: reply.text }],
+    content: blocks.map((text) => ({ type: 'text', text })),
     stop_reason: reply.stop_reason ?? 'end_turn',
     stop_details: reply.stop_reason === 'refusal' ? { type: 'refusal', category: 'cyber' } : null,
     usage: { input_tokens: 10, output_tokens: 20 },
@@ -85,50 +86,78 @@ const check = (name, ok, detail) => {
 const stored = async (d) =>
   (await pg.query('select fact from destination_facts where destination = $1', [d])).rows[0]
 
+// ── The send path never generates ───────────────────────────────────────────
+// The email has thirty seconds to send forty messages and writing a line takes
+// thirteen to twenty-five of them. This is the assertion that keeps it out.
+calls = 0
+check('an unwarmed place is simply blank at send time', (await factFor('Nowhere Yet')) === null)
+check('and costs no model call', calls === 0, `${calls} call(s)`)
+
 // ── A hand-written fact is never overridden ─────────────────────────────────
 calls = 0
 const porto = await factFor('Porto')
 check('a hand-written fact is used as written', porto?.startsWith('T'), porto?.slice(0, 40) + '…')
 check('and costs no model call', calls === 0, `${calls} call(s)`)
+check('warming a hand-written place does nothing', (await ensureFact('Porto')) === 'curated')
 
-// ── An unknown place is generated once, then remembered ─────────────────────
+// ── Warming writes once, then remembers ─────────────────────────────────────
 calls = 0
-const first = await factFor('Solomiac')
-check('an unknown place gets a generated line', first === reply.text, first)
+check('an unknown place gets written', (await ensureFact('Solomiac')) === 'written')
 check('which is stored', (await stored('Solomiac'))?.fact === reply.text)
-const second = await factFor('Solomiac')
-check('a repeat visit reuses it', second === first)
-check('without asking the model again', calls === 1, `${calls} call(s)`)
+check('and is what the send reads', (await factFor('Solomiac')) === reply.text)
+check('warming again is a no-op', (await ensureFact('Solomiac')) === 'stored')
+check('so the model is asked exactly once', calls === 1, `${calls} call(s)`)
+
+// A run that has used its one write skips the rest for the next run.
+check('writing can be withheld', (await ensureFact('Held Back', false)) === 'skipped')
+check('and nothing is stored for it', (await stored('Held Back')) === undefined)
+
+// ── Only the last text block is the answer ──────────────────────────────────
+// With a search tool the model narrates before it searches. One real answer
+// began "I'll search for information about Rieupeyroux." — joining the blocks
+// would have emailed the narration.
+reply = { blocks: ['I\'ll search for information about this place.', 'The bastide was founded in 1332.'] }
+check('narration before the search is dropped', (await ensureFact('Narrated Place')) === 'written')
+check('and only the answer is kept', (await stored('Narrated Place'))?.fact === 'The bastide was founded in 1332.')
+
+// ── Citation whitespace is tidied ───────────────────────────────────────────
+// Answers come back spaced around inline citations: "around  849 metres , sits".
+reply = { text: 'Tence sits at  849 metres , on a plateau.' }
+await ensureFact('Spaced Place')
+check('citation spacing is cleaned up',
+  (await stored('Spaced Place'))?.fact === 'Tence sits at 849 metres, on a plateau.',
+  (await stored('Spaced Place'))?.fact)
 
 // ── NONE means no line, and is never stored ─────────────────────────────────
 reply = { text: 'NONE' }
-const nothing = await factFor('Tiny Hamlet')
-check('NONE becomes no fact at all', nothing === null, JSON.stringify(nothing))
-check('and is not stored as a sentence', (await stored('Tiny Hamlet')) === undefined)
+check('NONE is a decline, not a sentence', (await ensureFact('Tiny Hamlet')) === 'declined')
+check('and is not stored', (await stored('Tiny Hamlet')) === undefined)
+check('and the email opens without a line', (await factFor('Tiny Hamlet')) === null)
 
-// A refusal to answer inside a sentence counts too — the email must never
-// print the word NONE to forty people.
 reply = { text: 'NONE — I could not verify anything about this village.' }
-check('a wordy refusal is also no fact', (await factFor('Another Hamlet')) === null)
+check('a wordy refusal is also a decline', (await ensureFact('Another Hamlet')) === 'declined')
 
-// ── Every failure mode costs a line, not the email ──────────────────────────
+// ── Failing and declining are told apart ────────────────────────────────────
+// A decline is permanent and fine; a failure is worth retrying next run, and a
+// log that calls a timeout a decline hides an outage.
 reply = { text: 'x'.repeat(600) }
-check('an overlong answer is discarded', (await factFor('Rambling Place')) === null)
+check('an overlong answer is discarded', (await ensureFact('Rambling Place')) === 'declined')
 check('and not stored', (await stored('Rambling Place')) === undefined)
 
 reply = { text: 'irrelevant', stop_reason: 'refusal' }
-check('a model refusal is no fact', (await factFor('Refused Place')) === null)
+check('a model refusal is a decline', (await ensureFact('Refused Place')) === 'declined')
 
 reply = { status: 500 }
-check('an API error is no fact', (await factFor('Broken Place')) === null)
+check('an API error is a failure', (await ensureFact('Broken Place')) === 'failed')
 
 reply = { throw: true }
-check('a dropped connection is no fact', (await factFor('Offline Place')) === null)
+check('a dropped connection is a failure', (await ensureFact('Offline Place')) === 'failed')
 
 // ── No key configured ───────────────────────────────────────────────────────
 delete process.env.ANTHROPIC_API_KEY
 calls = 0
-check('with no key, no fact and no call', (await factFor('Keyless Place')) === null && calls === 0)
+check('with no key it fails without calling', (await ensureFact('Keyless Place')) === 'failed' && calls === 0)
+check('and the send still reads cleanly', (await factFor('Keyless Place')) === null)
 
 console.log(failures === 0 ? '\nAll fact checks passed.' : `\n${failures} check(s) failed.`)
 process.exit(failures === 0 ? 0 : 1)
