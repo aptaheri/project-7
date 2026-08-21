@@ -1,6 +1,7 @@
 import tzLookup from 'tz-lookup'
 import itinerary from '../../src/data/itinerary.json'
 import { db, ensureSchema } from './db.mts'
+import { factFor } from './fact.mts'
 import { buildDailyEmail } from './email.mts'
 import { currentLeg } from './itinerary.mts'
 import { mailerConfigured, sendBatch, unsubscribeUrl } from './mailer.mts'
@@ -296,6 +297,12 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
     return { ...base, sent: false, reason: 'nobody is subscribed' }
   }
 
+  // Resolved once, before anyone's copy is rendered: it is the same sentence for
+  // every recipient, and it may cost a model call and a web search to obtain.
+  // Everything after the gates has already decided to send, so a slow or absent
+  // fact costs the email a line and never the send.
+  const fact = await factFor(leg.to)
+
   const render = (to: string) =>
     buildDailyEmail({
       dayNumber: record.day,
@@ -306,6 +313,7 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
       fromCoords: record.fromCoords as [number, number],
       toCoords: leg.destination,
       milesSoFar: todayKm / KM_PER_MILE,
+      fact,
       liveUrl: `${origin}/track`,
       unsubscribeUrl: unsubscribeUrl(to, origin),
       mapboxToken: process.env.VITE_MAPBOX_TOKEN ?? process.env.MAPBOX_TOKEN ?? null,

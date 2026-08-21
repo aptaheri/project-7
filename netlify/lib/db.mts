@@ -90,6 +90,17 @@ export function ensureSchema(): Promise<void> {
       await sql`alter table viewers add column if not exists first_name text`
       await sql`alter table viewers add column if not exists last_name text`
 
+      // Generated destination lines, kept so the same place is never invented
+      // twice and so a sentence that turns out to be wrong can be found again.
+      await sql`
+        create table if not exists destination_facts (
+          destination text primary key,
+          fact        text not null,
+          model       text not null,
+          created_at  timestamptz not null default now()
+        )
+      `
+
       // Finished days, computed once and then read back rather than derived
       // from the whole history on every poll. Keyed by mode so the owner's
       // test view cannot contaminate the real numbers.

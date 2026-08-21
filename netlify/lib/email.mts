@@ -1,4 +1,3 @@
-import facts from '../../src/data/destination-facts.json'
 
 /**
  * The morning email: John has started riding, here is where he is going.
@@ -20,6 +19,13 @@ export interface DailyEmailInput {
   toCoords: [number, number]
   /** Distance covered before the email fires, in miles. */
   milesSoFar: number
+  /**
+   * The line about tonight's destination, or null for none.
+   *
+   * Passed in rather than looked up here: it may have to be written on the spot
+   * by a model with a web search, and this file's job is to render.
+   */
+  fact: string | null
   liveUrl: string
   unsubscribeUrl: string
   mapboxToken: string | null
@@ -67,11 +73,6 @@ export function scaleLine(miles: number | null, dayNumber: number): string | nul
   return SCALE_LINES[dayNumber % SCALE_LINES.length](miles)
 }
 
-export function factFor(destination: string): string | null {
-  const table = (facts as { facts: Record<string, string> }).facts
-  return table[destination] ?? null
-}
-
 /**
  * A satellite image of today's leg, start pin to finish pin.
  *
@@ -108,7 +109,7 @@ export function buildDailyEmail(input: DailyEmailInput): {
   html: string
   text: string
 } {
-  const fact = factFor(input.to)
+  const fact = input.fact
   const scale = scaleLine(input.plannedMiles, input.dayNumber)
   const planned = input.plannedMiles !== null ? `${input.plannedMiles} miles` : null
   const mapUrl = input.mapboxToken
