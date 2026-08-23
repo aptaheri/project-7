@@ -26,6 +26,12 @@ export interface DailyEmailInput {
    * by a model with a web search, and this file's job is to render.
    */
   fact: string | null
+  /**
+   * A sentence putting today's distance in terms of the destination, written
+   * with the fact. Null falls back to the arithmetic comparisons below, which
+   * are true by construction.
+   */
+  distanceLine: string | null
   liveUrl: string
   unsubscribeUrl: string
   mapboxToken: string | null
@@ -110,7 +116,9 @@ export function buildDailyEmail(input: DailyEmailInput): {
   text: string
 } {
   const fact = input.fact
-  const scale = scaleLine(input.plannedMiles, input.dayNumber)
+  // Written about this place if there is one, arithmetic about the number if
+  // not. The fallback is never wrong, which is why it stays.
+  const scale = input.distanceLine ?? scaleLine(input.plannedMiles, input.dayNumber)
   const planned = input.plannedMiles !== null ? `${input.plannedMiles} miles` : null
   const mapUrl = input.mapboxToken
     ? legMapUrl(input.fromCoords, input.toCoords, input.mapboxToken)
@@ -172,14 +180,17 @@ export function buildDailyEmail(input: DailyEmailInput): {
       </table>
     </td></tr>
 
-    ${fact ? `<tr><td style="padding:24px 28px 0;">
-      <div style="border-left:3px solid ${RED};padding:2px 0 2px 16px;">
-        <div style="font:600 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${MUTED};letter-spacing:.1em;text-transform:uppercase;">About ${escape(input.to)}</div>
-        <div style="font:400 16px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${TEXT};padding-top:9px;">${escape(fact)}</div>
-      </div>
+    ${fact ? `<tr><td style="padding:26px 20px 0;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:rgba(255,255,255,.045);border-radius:12px;">
+        <tr><td style="padding:20px 22px;border-left:4px solid ${RED};border-radius:12px 0 0 12px;">
+          <div style="font:700 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${RED};letter-spacing:.12em;text-transform:uppercase;">About ${escape(input.to)}</div>
+          <div style="font:400 17px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${TEXT};padding-top:11px;">${escape(fact)}</div>
+          ${scale ? `<div style="font:400 15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${MUTED};padding-top:12px;">${escape(scale)}</div>` : ''}
+        </td></tr>
+      </table>
     </td></tr>` : ''}
 
-    ${scale ? `<tr><td style="padding:18px 28px 0;">
+    ${!fact && scale ? `<tr><td style="padding:18px 28px 0;">
       <div style="font:400 15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${MUTED};font-style:italic;">${escape(scale)}</div>
     </td></tr>` : ''}
 

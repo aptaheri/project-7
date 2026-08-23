@@ -300,7 +300,7 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
   // A lookup, not a generation: writing one takes thirteen seconds and this
   // function has thirty to send forty emails. fact-warm.mts writes them hours
   // earlier; a destination it has not reached yet simply has no line.
-  const fact = await factFor(leg.to)
+  const { fact, distance } = await factFor(leg.to)
 
   const render = (to: string) =>
     buildDailyEmail({
@@ -313,6 +313,7 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
       toCoords: leg.destination,
       milesSoFar: todayKm / KM_PER_MILE,
       fact,
+      distanceLine: distance,
       liveUrl: `${origin}/track`,
       unsubscribeUrl: unsubscribeUrl(to, origin),
       mapboxToken: process.env.VITE_MAPBOX_TOKEN ?? process.env.MAPBOX_TOKEN ?? null,

@@ -68,15 +68,26 @@ they are the things a reasonable change would otherwise undo.
    times.
 
 5. **The daily email never writes a destination line.** Generating one takes
-   13–22 seconds because the model searches the web first, and the send has
+   15–25 seconds because the model searches the web first, and the send has
    about thirty to read the day's riding, render, and hand forty messages to
    Resend. `fact-warm.mts` writes them hours ahead; the send does a lookup.
+   That function makes **one model call per run**, success or failure — two
+   timeouts in a run would exceed the limit and lose the whole run — and
+   rotates its queue so a slow place cannot take every run's attempt.
 
 6. **Hand-written facts beat generated ones**, always
    (`src/data/destination-facts.json`). Correcting a bad generated line means
-   adding it there.
+   adding it there. A hand-written place still gets a *distance* sentence
+   written for it — that is the second half of what the warmer stores, and the
+   only way those mornings get one — but its fact is never regenerated.
 
-7. **Bootstrap owners cannot be removed from the sharing page.** Every address
+7. **`FORMAT_VERSION` in `lib/fact.mts` is what makes a change to the brief
+   take effect.** Rows below it are rewritten on the next warming run.
+   Without bumping it, a longer or differently-shaped line only ever appears
+   for places nobody has warmed yet, and two shapes of email go out depending
+   on when a place happened to come up.
+
+8. **Bootstrap owners cannot be removed from the sharing page.** Every address
    in `TRACK_OWNER_EMAILS` is re-seeded as an owner on each load and re-promoted
    on each sign-in, so a delete succeeds and is undone a moment later. The API
    refuses with a 409 that says so; the row is tagged "Always owner".
@@ -111,7 +122,7 @@ own schema before the code that needs a column can ship.
 | `VITE_MAPBOX_TOKEN` | Maps in the browser, static maps in email, reverse geocoding the country |
 | `DATABASE_URL` / `NETLIFY_DATABASE_URL` | Postgres. Injected at runtime; absent locally |
 | `GOOGLE_CLIENT_ID`, `SESSION_SECRET` | Sign-in and the session cookie |
-| `TRACK_OWNER_EMAILS` | Bootstrap owners — see rule 7 |
+| `TRACK_OWNER_EMAILS` | Bootstrap owners — see rule 8 |
 | `TRACK_TEST_DEVICES` | Devices whose fixes are test data; everything else is real |
 | `RESEND_API_KEY`, `EMAIL_FROM` | The daily email |
 | `EMAIL_PAUSED`, `EMAIL_SEND_FROM_HOUR`, `EMAIL_SEND_UNTIL_HOUR` | Hold or shift the send without a deploy |

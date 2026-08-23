@@ -100,6 +100,12 @@ export function ensureSchema(): Promise<void> {
           created_at  timestamptz not null default now()
         )
       `
+      // A sentence putting the day's distance in terms of the place, written
+      // alongside the fact. Older rows have none and fall back to arithmetic.
+      await sql`alter table destination_facts add column if not exists distance_line text`
+      // Which brief the row was written to, so a change of shape replaces the
+      // old lines instead of leaving two kinds of email going out.
+      await sql`alter table destination_facts add column if not exists format_version int not null default 1`
 
       // Finished days, computed once and then read back rather than derived
       // from the whole history on every poll. Keyed by mode so the owner's

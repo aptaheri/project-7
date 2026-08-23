@@ -24,54 +24,82 @@ import type { Warmed } from '../lib/fact.mts'
 const LOOKAHEAD_DAYS = 4
 
 /**
- * How many lines one run may write.
+ * How many times one run may call the model — successes and failures alike.
  *
- * Measured: a search plus an answer runs from thirteen to twenty-two seconds,
- * inside a function that has about thirty. That is room for exactly one. A
- * second would be killed partway and its work thrown away, so the rest wait for
- * the next run three hours later — and with roughly one new destination a day
- * against eight runs, waiting costs nothing.
+ * Measured: a search plus an answer runs from fifteen to over twenty-five
+ * seconds, inside a function that has about thirty. That is room for exactly
+ * one attempt. Counting only successes would be the trap: two places that each
+ * time out at twenty-five seconds would take fifty, and the run would be killed
+ * partway with nothing to show for it.
+ *
+ * So a run makes one attempt and stops. With roughly one new destination a day
+ * against eight runs, that is ample.
  */
-const WRITES_PER_RUN = 1
+const ATTEMPTS_PER_RUN = 1
 
 interface Day {
   date: string
   to: string | null
+  kind: string
+  miles: number | null
 }
 
-/** Destinations for today and the next few days, in order, without repeats. */
-function upcoming(today: string): string[] {
+/**
+ * Destinations for today and the next few days, with the distance he rides to
+ * reach each — the distance sentence is written about that number, so it has to
+ * come from the same row as the destination.
+ *
+ * A place reached more than once keeps its riding day's mileage rather than a
+ * rest day's absence of one.
+ */
+function upcoming(today: string): { to: string; miles: number | null }[] {
   const last = new Date(Date.parse(`${today}T00:00:00Z`) + LOOKAHEAD_DAYS * 86_400_000)
     .toISOString()
     .slice(0, 10)
 
-  const seen = new Set<string>()
+  const byDestination = new Map<string, number | null>()
   for (const day of itinerary.days as Day[]) {
     if (day.date < today || day.date > last) continue
-    if (day.to) seen.add(day.to)
+    if (!day.to) continue
+    const known = byDestination.get(day.to)
+    if (known == null) byDestination.set(day.to, day.kind === 'ride' ? day.miles : null)
   }
-  return [...seen]
+  return [...byDestination].map(([to, miles]) => ({ to, miles }))
 }
 
 export default async function handler(): Promise<Response> {
   // The server's date, not the rider's. A day either side of his does no harm
   // when the window is four days wide, and it saves waking the database to ask
   // where he is.
-  const today = new Date().toISOString().slice(0, 10)
+  const now = new Date()
+  const today = now.toISOString().slice(0, 10)
   const started = Date.now()
   const counts: Record<Warmed, number> = {
     curated: 0, stored: 0, written: 0, declined: 0, failed: 0, skipped: 0,
   }
 
   try {
-    for (const destination of upcoming(today)) {
-      // Reads are cheap and tell us whether there is anything to do; writing is
-      // the part that is rationed.
-      const outcome = await ensureFact(destination, counts.written < WRITES_PER_RUN)
+    // Rotated by the hour so a place that keeps timing out cannot sit at the
+    // front of the queue taking every run's single attempt and starving the
+    // days behind it. Tence has already proved it can do that.
+    const queue = upcoming(today)
+    // Floored: the cron fires on multiples of three, but a manual invocation at
+    // 14:00 would otherwise index the queue with 4.666 and read undefined.
+    const start = queue.length ? Math.floor(now.getUTCHours() / 3) % queue.length : 0
+
+    let attempts = 0
+    for (let i = 0; i < queue.length; i++) {
+      const { to, miles } = queue[(start + i) % queue.length]
+      // Reads are cheap and tell us whether there is anything to do; calling
+      // the model is the part that is rationed.
+      const outcome = await ensureFact(to, miles, attempts < ATTEMPTS_PER_RUN)
       counts[outcome] += 1
-      if (outcome === 'written' && counts.written >= WRITES_PER_RUN) {
-        console.log('fact-warm: wrote one, the rest waits for the next run')
-        break
+      if (outcome === 'written' || outcome === 'declined' || outcome === 'failed') {
+        attempts += 1
+        if (attempts >= ATTEMPTS_PER_RUN) {
+          console.log(`fact-warm: one attempt spent on ${to} (${outcome}), the rest waits`)
+          break
+        }
       }
     }
 

@@ -89,7 +89,9 @@ await pg.exec(`
   );
   create table destination_facts (
     destination text primary key, fact text not null,
-    model text not null, created_at timestamptz not null default now()
+    model text not null,
+    distance_line text,
+    format_version int not null default 1, created_at timestamptz not null default now()
   );
   create table sent_emails (
     local_date date not null, kind text not null default 'daily',
