@@ -82,12 +82,19 @@ they are the things a reasonable change would otherwise undo.
    only way those mornings get one — but its fact is never regenerated.
 
 7. **`FORMAT_VERSION` in `lib/fact.mts` is what makes a change to the brief
-   take effect.** Rows below it are rewritten on the next warming run.
-   Without bumping it, a longer or differently-shaped line only ever appears
-   for places nobody has warmed yet, and two shapes of email go out depending
-   on when a place happened to come up.
+   take effect.** Rows below it are rewritten on the next warming run, and
+   every place previously given up on is asked again. Without bumping it, a
+   longer or differently-shaped line only ever appears for places nobody has
+   warmed yet, and two shapes of email go out depending on when a place
+   happened to come up.
 
-8. **Bootstrap owners cannot be removed from the sharing page.** Every address
+8. **A row in `destination_facts` with a null `fact` is a record of having
+   tried.** The model answering "nothing" is correct behaviour, not an error,
+   but nothing was stored when it did, so the same village was re-asked every
+   run forever. After `GIVE_UP_AFTER` refusals the warmer stops asking. The
+   send treats a null fact exactly like no row at all.
+
+9. **Bootstrap owners cannot be removed from the sharing page.** Every address
    in `TRACK_OWNER_EMAILS` is re-seeded as an owner on each load and re-promoted
    on each sign-in, so a delete succeeds and is undone a moment later. The API
    refuses with a 409 that says so; the row is tagged "Always owner".
@@ -122,7 +129,7 @@ own schema before the code that needs a column can ship.
 | `VITE_MAPBOX_TOKEN` | Maps in the browser, static maps in email, reverse geocoding the country |
 | `DATABASE_URL` / `NETLIFY_DATABASE_URL` | Postgres. Injected at runtime; absent locally |
 | `GOOGLE_CLIENT_ID`, `SESSION_SECRET` | Sign-in and the session cookie |
-| `TRACK_OWNER_EMAILS` | Bootstrap owners — see rule 8 |
+| `TRACK_OWNER_EMAILS` | Bootstrap owners — see rule 9 |
 | `TRACK_TEST_DEVICES` | Devices whose fixes are test data; everything else is real |
 | `RESEND_API_KEY`, `EMAIL_FROM` | The daily email |
 | `EMAIL_PAUSED`, `EMAIL_SEND_FROM_HOUR`, `EMAIL_SEND_UNTIL_HOUR` | Hold or shift the send without a deploy |

@@ -288,10 +288,12 @@ export async function factFor(destination: string): Promise<DestinationLines> {
     await ensureSchema()
     const stored = (await db()`
       select fact, distance_line from destination_facts where destination = ${destination}
-    `) as unknown as { fact: string; distance_line: string | null }[]
+    `) as unknown as { fact: string | null; distance_line: string | null }[]
     return {
       // Hand-written still wins outright. The stored row may exist anyway,
-      // holding the distance sentence written about that hand-written fact.
+      // holding the distance sentence written about that hand-written fact —
+      // or nothing but the record of having tried, in which case its fact is
+      // null and the email opens without a line, as it always has.
       fact: written ?? stored[0]?.fact ?? null,
       distance: stored[0]?.distance_line ?? null,
     }
@@ -302,7 +304,28 @@ export async function factFor(destination: string): Promise<DestinationLines> {
 }
 
 /** What a warming run did about one place, for the log. */
-export type Warmed = 'curated' | 'stored' | 'written' | 'declined' | 'failed' | 'skipped'
+export type Warmed =
+  | 'curated'
+  | 'stored'
+  | 'written'
+  | 'declined'
+  | 'failed'
+  | 'skipped'
+  | 'exhausted'
+
+/**
+ * How many times the model may answer "I have nothing" about one place before
+ * it stops being asked.
+ *
+ * The empty answer is correct behaviour, not an error — many of these are
+ * villages of a few hundred people. But nothing was stored when it happened, so
+ * the next run asked again, and the one after that, at about two cents and
+ * twenty-five seconds a time, forever. Three refusals is enough to believe it.
+ *
+ * Raising FORMAT_VERSION revives every place given up on, which is right: a new
+ * brief is a different question and deserves a fresh answer.
+ */
+const GIVE_UP_AFTER = 3
 
 /**
  * Makes sure a line exists for a place, writing one if it does not.
@@ -324,9 +347,14 @@ export async function ensureFact(
     const sql = db()
 
     const stored = (await sql`
-      select fact, distance_line, format_version
+      select fact, distance_line, format_version, attempts
       from destination_facts where destination = ${destination}
-    `) as unknown as { fact: string; distance_line: string | null; format_version: number }[]
+    `) as unknown as {
+      fact: string | null
+      distance_line: string | null
+      format_version: number
+      attempts: number
+    }[]
 
     // Written to an older brief — a single sentence, no distance line. Replace
     // it rather than leave two shapes of email going out depending on when a
@@ -341,24 +369,53 @@ export async function ensureFact(
       return 'stored'
     }
 
+    // Asked enough times already and told each time that there is nothing to
+    // say. Believe it, and stop spending a run's one attempt on it.
+    if (!outdated && (stored[0]?.attempts ?? 0) >= GIVE_UP_AFTER) return 'exhausted'
+
     // Already used this run's one attempt; the next run will pick this up.
     if (!mayWrite) return 'skipped'
 
     const attempt = await generate(destination, miles, written)
+
+    // A decline is recorded rather than forgotten. The row may hold no fact at
+    // all — it exists only to say that this was tried, and how often.
+    if (attempt.type === 'declined') {
+      const attempts = (outdated ? 0 : (stored[0]?.attempts ?? 0)) + 1
+      await sql`
+        insert into destination_facts
+          (destination, fact, model, format_version, attempts, declined_at)
+        values (${destination}, null, ${'claude-opus-5'}, ${FORMAT_VERSION}, ${attempts}, now())
+        on conflict (destination) do update set
+          format_version = excluded.format_version,
+          attempts = excluded.attempts,
+          declined_at = now()
+      `
+      if (attempts >= GIVE_UP_AFTER) {
+        console.log(`fact: giving up on ${destination} after ${attempts} attempts`)
+      }
+      return 'declined'
+    }
+
     if (attempt.type !== 'written') return attempt.type
 
     const { generated } = attempt
     await sql`
-      insert into destination_facts (destination, fact, distance_line, model, format_version)
+      insert into destination_facts
+        (destination, fact, distance_line, model, format_version, attempts)
       values (
         ${destination}, ${generated.fact}, ${generated.distance},
-        ${generated.model}, ${FORMAT_VERSION}
+        ${generated.model}, ${FORMAT_VERSION}, 0
       )
       on conflict (destination) do update set
         fact = excluded.fact,
         distance_line = excluded.distance_line,
         model = excluded.model,
         format_version = excluded.format_version,
+        -- A place that finally answered is no longer one that has been given up
+        -- on, so the count of refusals goes back to nothing.
+        attempts = 0,
+        declined_at = null,
         created_at = now()
     `
     // Logged in full: the only place a generated sentence can be read back

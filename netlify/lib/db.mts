@@ -106,6 +106,12 @@ export function ensureSchema(): Promise<void> {
       // Which brief the row was written to, so a change of shape replaces the
       // old lines instead of leaving two kinds of email going out.
       await sql`alter table destination_facts add column if not exists format_version int not null default 1`
+      // How many times the model has been asked about this place and answered
+      // that it had nothing. A row can exist with no fact at all: that is the
+      // record of having tried, so it is not tried forever.
+      await sql`alter table destination_facts add column if not exists attempts int not null default 0`
+      await sql`alter table destination_facts add column if not exists declined_at timestamptz`
+      await sql`alter table destination_facts alter column fact drop not null`
 
       // Finished days, computed once and then read back rather than derived
       // from the whole history on every poll. Keyed by mode so the owner's

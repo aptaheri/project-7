@@ -75,7 +75,7 @@ export default async function handler(): Promise<Response> {
   const today = now.toISOString().slice(0, 10)
   const started = Date.now()
   const counts: Record<Warmed, number> = {
-    curated: 0, stored: 0, written: 0, declined: 0, failed: 0, skipped: 0,
+    curated: 0, stored: 0, written: 0, declined: 0, failed: 0, skipped: 0, exhausted: 0,
   }
 
   try {

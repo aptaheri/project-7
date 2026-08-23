@@ -39,10 +39,12 @@ export async function ensureSchema() {}
 await pg.exec(`
   create table destination_facts (
     destination    text primary key,
-    fact           text not null,
+    fact           text,
     distance_line  text,
     model          text not null,
     format_version int not null default 1,
+    attempts       int not null default 0,
+    declined_at    timestamptz,
     created_at     timestamptz not null default now()
   );
 `)
@@ -174,11 +176,13 @@ check('with no line', (await row('Rambling Compare'))?.distance_line === null)
 
 reply = { fact: '', distance: 'A comparison with nothing to compare.' }
 check('an empty fact is a decline', (await ensureFact('Tiny Hamlet', 70)) === 'declined')
-check('and nothing is stored', (await row('Tiny Hamlet')) === undefined)
+// A row is written, but it holds the record of having tried rather than a fact.
+check('leaving a marker, not a fact', (await row('Tiny Hamlet'))?.fact === null)
+check('and the send reads it as blank', (await factFor('Tiny Hamlet')).fact === null)
 
 reply = { fact: 'x'.repeat(900), distance: 'fine' }
 check('an overlong fact is a decline', (await ensureFact('Rambling Place', 70)) === 'declined')
-check('and not stored', (await row('Rambling Place')) === undefined)
+check('and no fact is stored for it', (await row('Rambling Place'))?.fact === null)
 
 // ── Failing and declining are told apart ────────────────────────────────────
 // A decline is permanent and fine; a failure is worth retrying next run, and a
@@ -201,6 +205,44 @@ calls = 0
 check('a place with no mileage is still warmed', (await ensureFact('Rest Day Town', null)) === 'written')
 check('and the model is told the distance is unknown',
   lastPrompt.includes('unknown distance'), 'unknown distance')
+
+// ── Tried, and given up on ─────────────────────────────────────────────────
+// An empty answer is the brief working, but nothing was stored when it
+// happened, so the same village was re-asked every run at two cents a time.
+reply = { fact: '', distance: '' }
+calls = 0
+check('a decline is recorded', (await ensureFact('Hopeless Hamlet', 40)) === 'declined')
+check('as a row with no fact', (await row('Hopeless Hamlet'))?.fact === null)
+check('counting the attempt', (await row('Hopeless Hamlet'))?.attempts === 1)
+check('and stamped with when it gave up', (await row('Hopeless Hamlet'))?.declined_at !== null)
+
+check('a second refusal counts too', (await ensureFact('Hopeless Hamlet', 40)) === 'declined')
+check('a third as well', (await ensureFact('Hopeless Hamlet', 40)) === 'declined')
+check('three attempts recorded', (await row('Hopeless Hamlet'))?.attempts === 3)
+check('the model was asked three times', calls === 3, `${calls} call(s)`)
+
+calls = 0
+check('the fourth run does not ask', (await ensureFact('Hopeless Hamlet', 40)) === 'exhausted')
+check('and spends nothing', calls === 0, `${calls} call(s)`)
+check('the send still reads it as blank', (await factFor('Hopeless Hamlet')).fact === null)
+
+// The row must not consume a run's single attempt either — the whole point is
+// that it stops costing anything.
+check('nor does it use the run\'s one attempt',
+  (await ensureFact('Hopeless Hamlet', 40, false)) === 'exhausted')
+
+// A new brief is a different question, so everything given up on is revived.
+await pg.query(
+  `update destination_facts set format_version = $1 where destination = 'Hopeless Hamlet'`,
+  [FORMAT_VERSION - 1],
+)
+reply = { fact: 'It turns out there was something after all. Two sentences of it.', distance: 'A line.' }
+calls = 0
+check('a newer brief revives a given-up place',
+  (await ensureFact('Hopeless Hamlet', 40)) === 'written')
+check('which asks the model again', calls === 1, `${calls} call(s)`)
+check('and clears the refusals', (await row('Hopeless Hamlet'))?.attempts === 0)
+check('and the record of giving up', (await row('Hopeless Hamlet'))?.declined_at === null)
 
 // ── No key configured ───────────────────────────────────────────────────────
 delete process.env.ANTHROPIC_API_KEY
