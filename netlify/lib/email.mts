@@ -32,6 +32,11 @@ export interface DailyEmailInput {
    * are true by construction.
    */
   distanceLine: string | null
+  /**
+   * The cycling route for the day, thinned for a URL. Null draws the two pins
+   * alone, as it always did.
+   */
+  routeLine: [number, number][] | null
   liveUrl: string
   unsubscribeUrl: string
   mapboxToken: string | null
@@ -90,10 +95,32 @@ export function legMapUrl(
   from: [number, number],
   to: [number, number],
   token: string,
+  /** The roads he means to ride, already thinned to fit a URL. */
+  line: [number, number][] | null = null,
 ): string {
   const pin = (coords: [number, number], label: string, colour: string) =>
     `pin-s-${label}+${colour.replace('#', '')}(${coords[0].toFixed(4)},${coords[1].toFixed(4)})`
-  const overlay = `${pin(from, 'a', BLUE)},${pin(to, 'b', RED)}`
+
+  // The road itself, when the day has been routed. Before this the map showed
+  // two pins and the reader's imagination: a hundred miles through the Massif
+  // Central looked exactly like a hundred miles across a plain.
+  const road = line?.length
+    ? encodeURIComponent(
+        JSON.stringify({
+          type: 'Feature',
+          properties: { stroke: RED, 'stroke-width': 3, 'stroke-opacity': 0.9 },
+          geometry: {
+            type: 'LineString',
+            coordinates: line.map(([lon, lat]) => [Number(lon.toFixed(4)), Number(lat.toFixed(4))]),
+          },
+        }),
+      )
+    : null
+
+  // Drawn first so the pins sit on top of it.
+  const overlay = [road ? `geojson(${road})` : null, pin(from, 'a', BLUE), pin(to, 'b', RED)]
+    .filter(Boolean)
+    .join(',')
   return (
     'https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/static/' +
     // Sized for the 544px column at 2x, not the 2400px the larger request
@@ -121,7 +148,7 @@ export function buildDailyEmail(input: DailyEmailInput): {
   const scale = input.distanceLine ?? scaleLine(input.plannedMiles, input.dayNumber)
   const planned = input.plannedMiles !== null ? `${input.plannedMiles} miles` : null
   const mapUrl = input.mapboxToken
-    ? legMapUrl(input.fromCoords, input.toCoords, input.mapboxToken)
+    ? legMapUrl(input.fromCoords, input.toCoords, input.mapboxToken, input.routeLine)
     : null
 
   const subject = planned

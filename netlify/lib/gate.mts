@@ -14,7 +14,9 @@ import type { Role } from './session.mts'
  * so revoking someone takes effect on their next poll rather than whenever a
  * thirty-day session happens to expire.
  */
-export async function requireTrackViewer(req: Request): Promise<{ role: Role } | Response> {
+export async function requireTrackViewer(
+  req: Request,
+): Promise<{ role: Role; email: string } | Response> {
   const session = currentSession(req)
   if (!session) return json({ error: 'unauthorized' }, 401)
 
@@ -25,7 +27,7 @@ export async function requireTrackViewer(req: Request): Promise<{ role: Role } |
     `) as unknown as { role: Role }[]
     const role = rows[0]?.role ?? 'pending'
     if (!canViewTrack(role)) return json({ error: 'forbidden' }, 403)
-    return { role }
+    return { role, email: normalizeEmail(session.email) }
   } catch (error) {
     console.error('role check failed', error)
     return json({ error: 'query failed' }, 500)

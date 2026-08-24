@@ -41,6 +41,7 @@ await pg.exec(`
     destination    text primary key,
     fact           text,
     distance_line  text,
+    distance_miles double precision,
     model          text not null,
     format_version int not null default 1,
     attempts       int not null default 0,
@@ -205,6 +206,30 @@ calls = 0
 check('a place with no mileage is still warmed', (await ensureFact('Rest Day Town', null)) === 'written')
 check('and the model is told the distance is unknown',
   lastPrompt.includes('unknown distance'), 'unknown distance')
+
+// ── A changed distance rewrites the sentence about it ──────────────────────
+// The line is written about a number — "today's 114 km covered more than a
+// third of the Stevenson Trail". When John corrects a day's distance the fact
+// stays true and that sentence quietly becomes wrong.
+reply = { fact: 'A place with a fact. And a second sentence.', distance: 'Eighty miles is twice the lake.' }
+check('a day is warmed at 80 miles', (await ensureFact('Corrected Place', 80)) === 'written')
+check('recording the distance it was written about',
+  (await row('Corrected Place'))?.distance_miles === 80)
+check('the same distance is a no-op', (await ensureFact('Corrected Place', 80)) === 'stored')
+
+calls = 0
+reply = { fact: 'IGNORED', distance: 'Sixty miles is one and a half lakes.' }
+check('a corrected distance is rewritten', (await ensureFact('Corrected Place', 60)) === 'written')
+check('with a new sentence', (await row('Corrected Place'))?.distance_line === reply.distance)
+check('about the new number', (await row('Corrected Place'))?.distance_miles === 60)
+check('and the fact it already had is kept, not rewritten',
+  (await row('Corrected Place'))?.fact === 'A place with a fact. And a second sentence.')
+check('the model was shown that fact rather than asked for a new one',
+  lastPrompt.includes('already written'), 'distance-only brief')
+check('one call, not two', calls === 1, `${calls} call(s)`)
+
+// A rounding difference is not a correction.
+check('a trivial difference is ignored', (await ensureFact('Corrected Place', 60.4)) === 'stored')
 
 // ── Tried, and given up on ─────────────────────────────────────────────────
 // An empty answer is the brief working, but nothing was stored when it

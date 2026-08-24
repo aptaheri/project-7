@@ -112,6 +112,31 @@ export function ensureSchema(): Promise<void> {
       await sql`alter table destination_facts add column if not exists attempts int not null default 0`
       await sql`alter table destination_facts add column if not exists declined_at timestamptz`
       await sql`alter table destination_facts alter column fact drop not null`
+      // The mileage the distance sentence was written about. When the day's
+      // distance changes, the sentence is about the wrong number and has to go.
+      await sql`alter table destination_facts add column if not exists distance_miles double precision`
+
+      // The route as it now stands — see lib/route.mts. Only days he has
+      // changed live here; the rest are the plan in src/data/itinerary.json.
+      await sql`
+        create table if not exists route_days (
+          date          date primary key,
+          kind          text not null,
+          from_place    text,
+          to_place      text,
+          miles         double precision,
+          note          text,
+          from_lon      double precision,
+          from_lat      double precision,
+          to_lon        double precision,
+          to_lat        double precision,
+          cycling_miles double precision,
+          route_coords  jsonb,
+          needs_review  boolean not null default false,
+          updated_by    text,
+          updated_at    timestamptz not null default now()
+        )
+      `
 
       // Finished days, computed once and then read back rather than derived
       // from the whole history on every poll. Keyed by mode so the owner's

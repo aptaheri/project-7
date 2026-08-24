@@ -90,7 +90,7 @@ await pg.exec(`
   create table destination_facts (
     destination text primary key, fact text,
     model text not null,
-    distance_line text,
+    distance_line text, distance_miles double precision,
     format_version int not null default 1, attempts int not null default 0,
     declined_at timestamptz, created_at timestamptz not null default now()
   );

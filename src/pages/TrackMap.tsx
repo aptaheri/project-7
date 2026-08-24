@@ -82,6 +82,8 @@ interface Feed {
   today: DaySummary | null
   /** Refetch the history when this changes, and not otherwise. */
   historyVersion: string
+  /** The roads he means to ride today, or null on a rest day. */
+  plannedRoute: [number, number][] | null
   leg: {
     date: string
     kind: 'ride' | 'rest'
@@ -383,6 +385,23 @@ export default function TrackMap({ emailPref }: Props) {
 
       // Reconstructed riding from before the tracker existed. Dashed and
       // dimmer so it never reads as a measured track.
+      // Where he is going today, drawn under everything else so his actual
+      // trail sits on top of it. A tracker answers "where is he" well enough
+      // already; the question people actually ask next is where he is headed.
+      map.addSource('planned', { type: 'geojson', data: EMPTY_LINE })
+      map.addLayer({
+        id: 'planned-line',
+        type: 'line',
+        source: 'planned',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': '#ffffff',
+          'line-width': 3,
+          'line-opacity': 0.32,
+          'line-dasharray': [1.5, 2],
+        },
+      })
+
       map.addSource('backfill', { type: 'geojson', data: EMPTY_LINE })
       map.addLayer({
         id: 'backfill-line',
@@ -481,6 +500,12 @@ export default function TrackMap({ emailPref }: Props) {
         // The journey so far and today, joined at the point he woke up at.
         coordinates: [...(history?.trail ?? []), ...feed.trail],
       },
+    })
+
+    const planned = map.getSource('planned') as mapboxgl.GeoJSONSource | undefined
+    planned?.setData({
+      ...EMPTY_LINE,
+      geometry: { type: 'LineString', coordinates: feed.plannedRoute ?? [] },
     })
 
     const backfill = map.getSource('backfill') as mapboxgl.GeoJSONSource | undefined

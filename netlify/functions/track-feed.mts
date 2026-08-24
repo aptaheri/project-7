@@ -2,7 +2,8 @@ import tzLookup from 'tz-lookup'
 import { json } from '../lib/auth.mts'
 import { db } from '../lib/db.mts'
 import { requireTrackViewer } from '../lib/gate.mts'
-import { currentLeg } from '../lib/itinerary.mts'
+import { currentLeg, daysFromPlan } from '../lib/itinerary.mts'
+import { lineForMap, loadRoute } from '../lib/route.mts'
 import { testDevices } from '../lib/devices.mts'
 import { localDayRange } from '../lib/day.mts'
 import {
@@ -121,6 +122,11 @@ interface Payload {
   backfillKm: number
   /** The planned leg he appears to be on, or null when nothing fits. */
   leg: CurrentLeg | null
+  /**
+   * The roads he means to ride today, if the day has been routed. Drawn ahead
+   * of him on the map. Null on a rest day, or a day nobody has routed.
+   */
+  plannedRoute: [number, number][] | null
   /** Sun times and weather where he is. */
   local: LocalConditions | null
   trailPoints: number
@@ -202,6 +208,7 @@ export default async function handler(req: Request): Promise<Response> {
         profileToday: [],
         today: null,
         historyVersion: 'empty',
+        plannedRoute: null,
         days: [],
         backfillTrail: [],
         backfillKm: 0,
@@ -517,6 +524,21 @@ export default async function handler(req: Request): Promise<Response> {
     // seconds to move a marker a few hundred metres.
     const trail: [number, number][] = trailRows.map((r) => [r.lon, r.lat])
 
+    // Matched against the route as it now stands rather than the plan, so a
+    // reroute he entered last night shows up here. Drift is still measured
+    // against the plan — see daysFromPlan.
+    const route = await loadRoute()
+    const legNow = currentLeg([latest.lon, latest.lat], today, route)
+    const behind = daysFromPlan([latest.lon, latest.lat], today)
+
+    // The roads he means to ride today, when we know them. Drawn ahead of him
+    // on the map, which is the question everyone actually asks of a tracker:
+    // not where has he been, but where is he going.
+    // Thinned before it goes on the wire: at full detail one day is seventeen
+    // kilobytes, which is five times the rest of this payload put together.
+    const plannedFull = route.find((d) => d.date === today)?.routeCoords ?? null
+    const plannedToday = plannedFull?.length ? lineForMap(plannedFull) : null
+
     // The newest fix can fall inside an already-represented slice, which would
     // leave the drawn line stopping short of the marker.
     const tail = trail[trail.length - 1]
@@ -540,7 +562,8 @@ export default async function handler(req: Request): Promise<Response> {
       days: [],
       backfillTrail: [],
       backfillKm: 0,
-      leg: currentLeg([latest.lon, latest.lat], today),
+      leg: legNow ? { ...legNow, daysFromSchedule: behind ?? legNow.daysFromSchedule } : null,
+      plannedRoute: plannedToday,
       local: await localConditions(latest.lat, latest.lon),
       trailPoints: trail.length,
       mode,

@@ -134,8 +134,8 @@ function bestMatch(
   today: string,
   /** Ignore legs he has already ridden to the end of. */
   skipFinished: boolean,
+  legs: Leg[],
 ): CurrentLeg | null {
-  const legs = itinerary.days as Leg[]
 
   let best: CurrentLeg | null = null
   let bestScore = Infinity
@@ -207,8 +207,13 @@ function bestMatch(
 export function currentLeg(
   position: [number, number],
   today: string,
+  /**
+   * The route as it now stands. Defaults to the plan, which is what it was
+   * before he could change it and what it still is on any day he has not.
+   */
+  route: Leg[] = itinerary.days as Leg[],
 ): CurrentLeg | null {
-  const best = bestMatch(position, today, false)
+  const best = bestMatch(position, today, false, route)
 
   // If the winner is a leg he finished on an earlier day, he is not behind on
   // it — he is standing at the end of it, most likely asleep, with the next one
@@ -217,9 +222,23 @@ export function currentLeg(
   // original: still being in yesterday's town having ridden nowhere since is
   // exactly what falling behind looks like.
   if (best && best.daysFromSchedule < 0 && best.distanceToDestinationKm <= ARRIVED_RADIUS_KM) {
-    const ahead = bestMatch(position, today, true)
+    const ahead = bestMatch(position, today, true, route)
     if (ahead) return ahead
   }
 
   return best
+}
+
+/**
+ * How far off the original plan he is, in days.
+ *
+ * Measured against `src/data/itinerary.json` and never against the route he is
+ * actually riding, which is the whole reason the two are separate. Once he can
+ * edit his own route, matching him against it would report zero every morning:
+ * he would always be exactly on the schedule he had just rewritten to say where
+ * he was.
+ */
+export function daysFromPlan(position: [number, number], today: string): number | null {
+  const against = bestMatch(position, today, false, itinerary.days as Leg[])
+  return against ? against.daysFromSchedule : null
 }

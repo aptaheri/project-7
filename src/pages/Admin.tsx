@@ -153,6 +153,11 @@ export default function Admin() {
           to let them see the live map. Changes take effect on their next poll.
         </p>
 
+        <p className="admin-lead">
+          <Link to="/track/route">Change the route</Link> — where a day ends, how
+          far it was, a rest day moved. John can do this himself from the road.
+        </p>
+
         <div className="admin-email-check">
           <button
             type="button"

@@ -1,5 +1,5 @@
-import itinerary from '../../src/data/itinerary.json'
 import { ensureFact } from '../lib/fact.mts'
+import { loadRoute } from '../lib/route.mts'
 import type { Warmed } from '../lib/fact.mts'
 
 /**
@@ -37,13 +37,6 @@ const LOOKAHEAD_DAYS = 4
  */
 const ATTEMPTS_PER_RUN = 1
 
-interface Day {
-  date: string
-  to: string | null
-  kind: string
-  miles: number | null
-}
-
 /**
  * Destinations for today and the next few days, with the distance he rides to
  * reach each — the distance sentence is written about that number, so it has to
@@ -52,19 +45,27 @@ interface Day {
  * A place reached more than once keeps its riding day's mileage rather than a
  * rest day's absence of one.
  */
-function upcoming(today: string): { to: string; miles: number | null }[] {
+async function upcoming(
+  today: string,
+): Promise<{ to: string; date: string; miles: number | null }[]> {
   const last = new Date(Date.parse(`${today}T00:00:00Z`) + LOOKAHEAD_DAYS * 86_400_000)
     .toISOString()
     .slice(0, 10)
 
-  const byDestination = new Map<string, number | null>()
-  for (const day of itinerary.days as Day[]) {
+  const byDestination = new Map<string, { date: string; miles: number | null }>()
+  // The route as it now stands, so a destination he entered last night is
+  // warmed tonight rather than whenever somebody edits a file.
+  for (const day of await loadRoute()) {
     if (day.date < today || day.date > last) continue
     if (!day.to) continue
     const known = byDestination.get(day.to)
-    if (known == null) byDestination.set(day.to, day.kind === 'ride' ? day.miles : null)
+    // First occurrence wins, so a place he reaches on a riding day keeps that
+    // day's distance rather than the rest day that follows it.
+    if (!byDestination.has(day.to) || (known && known.miles === null && day.kind === 'ride')) {
+      byDestination.set(day.to, { date: day.date, miles: day.kind === 'ride' ? day.miles : null })
+    }
   }
-  return [...byDestination].map(([to, miles]) => ({ to, miles }))
+  return [...byDestination].map(([to, at]) => ({ to, date: at.date, miles: at.miles }))
 }
 
 export default async function handler(): Promise<Response> {
@@ -79,17 +80,28 @@ export default async function handler(): Promise<Response> {
   }
 
   try {
-    // Rotated by the hour so a place that keeps timing out cannot sit at the
-    // front of the queue taking every run's single attempt and starving the
-    // days behind it. Tence has already proved it can do that.
-    const queue = upcoming(today)
-    // Floored: the cron fires on multiples of three, but a manual invocation at
-    // 14:00 would otherwise index the queue with 4.666 and read undefined.
-    const start = queue.length ? Math.floor(now.getUTCHours() / 3) % queue.length : 0
+    // Today and tomorrow first, always. Those are the destinations an email is
+    // about to be written about, and a reroute entered at nine in the evening
+    // has only three runs before the morning send — spending them on a village
+    // four days out would be the wrong choice every time.
+    //
+    // The rest rotate by the hour, so a place that keeps timing out cannot sit
+    // at the front taking every run's single attempt and starving the days
+    // behind it. Tence has already proved it can do that. Floored, because the
+    // cron fires on multiples of three but a manual run at 14:00 would
+    // otherwise index the queue with 4.666 and read undefined.
+    const all = await upcoming(today)
+    const tomorrow = new Date(Date.parse(`${today}T00:00:00Z`) + 86_400_000)
+      .toISOString()
+      .slice(0, 10)
+    const soon = all.filter((d) => d.date <= tomorrow)
+    const later = all.filter((d) => d.date > tomorrow)
+    const start = later.length ? Math.floor(now.getUTCHours() / 3) % later.length : 0
+    const queue = [...soon, ...later.map((_, i) => later[(start + i) % later.length])]
 
     let attempts = 0
     for (let i = 0; i < queue.length; i++) {
-      const { to, miles } = queue[(start + i) % queue.length]
+      const { to, miles } = queue[i]
       // Reads are cheap and tell us whether there is anything to do; calling
       // the model is the part that is rationed.
       const outcome = await ensureFact(to, miles, attempts < ATTEMPTS_PER_RUN)

@@ -7,6 +7,8 @@
 # Ahead of /api/track because the first match wins and the longer path is the
 # more specific one.
 /api/track/history /.netlify/functions/track-history          200!
+# Owner-only: the route as it now stands, which John edits from the road.
+/api/route         /.netlify/functions/route                  200!
 /api/track         /.netlify/functions/track-feed             200!
 # Public on purpose: country only, no coordinates. See where.mts.
 /api/where         /.netlify/functions/where                  200!

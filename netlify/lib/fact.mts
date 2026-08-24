@@ -347,14 +347,23 @@ export async function ensureFact(
     const sql = db()
 
     const stored = (await sql`
-      select fact, distance_line, format_version, attempts
+      select fact, distance_line, distance_miles, format_version, attempts
       from destination_facts where destination = ${destination}
     `) as unknown as {
       fact: string | null
       distance_line: string | null
+      distance_miles: number | null
       format_version: number
       attempts: number
     }[]
+
+    // The sentence was written about a number, and the number has changed —
+    // John corrected the day's distance, or routed it differently. The fact is
+    // still true; the comparison is not.
+    const staleDistance =
+      Boolean(stored[0]?.distance_line) &&
+      miles !== null &&
+      Math.abs((stored[0]?.distance_miles ?? miles) - miles) >= 1
 
     // Written to an older brief — a single sentence, no distance line. Replace
     // it rather than leave two shapes of email going out depending on when a
@@ -364,8 +373,8 @@ export async function ensureFact(
     // A hand-written place needs nothing but its distance sentence, and needs
     // that only once. Its fact is never regenerated.
     if (written) {
-      if (stored[0]?.distance_line && !outdated) return 'stored'
-    } else if (stored[0]?.fact && !outdated) {
+      if (stored[0]?.distance_line && !outdated && !staleDistance) return 'stored'
+    } else if (stored[0]?.fact && !outdated && !staleDistance) {
       return 'stored'
     }
 
@@ -376,7 +385,11 @@ export async function ensureFact(
     // Already used this run's one attempt; the next run will pick this up.
     if (!mayWrite) return 'skipped'
 
-    const attempt = await generate(destination, miles, written)
+    // Rewriting a stale comparison does not mean rewriting the paragraph above
+    // it: the place has not changed, only the distance to it. The existing fact
+    // is handed back to the model as context, exactly as a hand-written one is.
+    const keepFact = written ?? (staleDistance ? stored[0]?.fact ?? null : null)
+    const attempt = await generate(destination, miles, keepFact)
 
     // A decline is recorded rather than forgotten. The row may hold no fact at
     // all — it exists only to say that this was tried, and how often.
@@ -402,14 +415,15 @@ export async function ensureFact(
     const { generated } = attempt
     await sql`
       insert into destination_facts
-        (destination, fact, distance_line, model, format_version, attempts)
+        (destination, fact, distance_line, distance_miles, model, format_version, attempts)
       values (
-        ${destination}, ${generated.fact}, ${generated.distance},
+        ${destination}, ${generated.fact}, ${generated.distance}, ${miles},
         ${generated.model}, ${FORMAT_VERSION}, 0
       )
       on conflict (destination) do update set
         fact = excluded.fact,
         distance_line = excluded.distance_line,
+        distance_miles = excluded.distance_miles,
         model = excluded.model,
         format_version = excluded.format_version,
         -- A place that finally answered is no longer one that has been given up

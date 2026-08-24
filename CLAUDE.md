@@ -40,6 +40,22 @@ export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; nvm use 22
 Public pages: `/` (hero, with the country line), `/map`, `/about`, `/donate`.
 Behind sign-in: `/track` (the live map), `/track/sharing` (owner-only admin).
 
+## The route: plan versus actual
+
+`src/data/itinerary.json` is **the plan he set out with** — 467 days, written
+before he left. It is never written to at runtime, and it is the only thing
+"a day behind schedule" can honestly be measured against (`daysFromPlan`).
+
+`route_days` is **the route as it now stands**, and John edits it himself from
+`/track/route`. Only days he has changed are in it; `loadRoute()` lays them over
+the plan and everything downstream — email, tracker, fact warmer — reads that
+merge. A day's distance is his if he gives one and Mapbox's cycling route
+otherwise, and the cycling geometry is stored with it for the map and the email.
+
+If an edit ever reaches the plan, the drift figure silently becomes zero
+forever and looks entirely plausible while doing it. `check-route` asserts the
+plan on disk is unchanged after a save.
+
 ## Rules that are load-bearing
 
 Each of these has a check that fails if it is broken. They are listed because

@@ -4,6 +4,7 @@ import { db, ensureSchema } from './db.mts'
 import { factFor } from './fact.mts'
 import { buildDailyEmail } from './email.mts'
 import { currentLeg } from './itinerary.mts'
+import { lineForEmail, loadRoute } from './route.mts'
 import { mailerConfigured, sendBatch, unsubscribeUrl } from './mailer.mts'
 import type { OutgoingEmail } from './mailer.mts'
 
@@ -260,7 +261,10 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
   // Gate 5: we know where he is heading. Without a matched riding leg there is
   // no destination, no planned distance and nothing to say — the schedule alone
   // is not evidence, since he can be days off it.
-  const leg = currentLeg([latest.lon, latest.lat], today)
+  // The route as it now stands, so a reroute he entered last night reaches this
+  // morning's email rather than waiting for somebody to edit a file.
+  const route = await loadRoute()
+  const leg = currentLeg([latest.lon, latest.lat], today, route)
   if (!leg || leg.kind !== 'ride' || !leg.from) {
     return {
       ...base,
@@ -302,6 +306,11 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
   // earlier; a destination it has not reached yet simply has no line.
   const { fact, distance } = await factFor(leg.to)
 
+  // Drawn on the map in the email when the day has been routed; two pins and a
+  // straight line when it has not, exactly as before.
+  const plannedToday = route.find((d) => d.date === leg.date)?.routeCoords ?? null
+  const routeLineToday = plannedToday?.length ? lineForEmail(plannedToday) : null
+
   const render = (to: string) =>
     buildDailyEmail({
       dayNumber: record.day,
@@ -314,6 +323,8 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
       milesSoFar: todayKm / KM_PER_MILE,
       fact,
       distanceLine: distance,
+      // The roads he means to ride, thinned to fit inside a static-map URL.
+      routeLine: routeLineToday,
       liveUrl: `${origin}/track`,
       unsubscribeUrl: unsubscribeUrl(to, origin),
       mapboxToken: process.env.VITE_MAPBOX_TOKEN ?? process.env.MAPBOX_TOKEN ?? null,
