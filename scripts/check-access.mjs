@@ -104,6 +104,19 @@ globalThis.__ensureSchema = async () => {
     alter table viewers add column if not exists first_name text;
     alter table viewers add column if not exists last_name text;
   `)
+  // The route editor's table, so its gate can be exercised here alongside
+  // every other question of who may do what.
+  await pg.exec(`
+    create table if not exists route_days (
+      date date primary key, kind text not null,
+      from_place text, to_place text, miles double precision, note text,
+      from_lon double precision, from_lat double precision,
+      to_lon double precision, to_lat double precision,
+      cycling_miles double precision, route_coords jsonb,
+      needs_review boolean not null default false,
+      updated_by text, updated_at timestamptz not null default now()
+    );
+  `)
 }
 const users = await bundle('netlify/lib/users.mts', 'users-access.mjs')
 const { buildAccessRequestEmail } = await bundle(
@@ -223,6 +236,57 @@ const built = buildAccessRequestEmail({
 })
 check('the subject names who asked', built.subject.includes('Jane Doe'), built.subject)
 check('the body links to the sharing page', built.html.includes('/track/sharing'))
+
+// ── Who may change the route ───────────────────────────────────────────────
+// This endpoint decides what forty people are told every morning, and it is the
+// one place a non-owner could rewrite the trip. Both verbs are checked: the
+// gate sits above the method branch, and a later refactor that moves it below
+// would leave reads open while the tests still passed on writes.
+const routeFn = await bundle('netlify/functions/route.mts', 'route-access.mjs')
+const { createSession } = await bundle('netlify/lib/session.mts', 'session-access.mjs', false)
+
+await pg.query(`insert into route_days (date, kind, to_place)
+                values ('2026-08-24', 'ride', 'Aubenas')
+                on conflict (date) do nothing`)
+
+const asUser = (email) => {
+  const { value } = createSession(email)
+  return { cookie: `p7_session=${encodeURIComponent(value)}` }
+}
+
+const callRoute = async (method, headers) => {
+  const init = { method, headers: { ...headers } }
+  if (method === 'POST') {
+    init.headers['content-type'] = 'application/json'
+    init.body = JSON.stringify({
+      date: new Date().toISOString().slice(0, 10),
+      kind: 'ride', to: 'Somewhere Else', toCoords: [4.0, 45.0], miles: 50, note: '',
+    })
+  }
+  const res = await routeFn.default(new Request('https://project7.bike/api/route', init))
+  return res.status
+}
+
+for (const method of ['GET', 'POST']) {
+  check(`${method} is refused with no session`, (await callRoute(method, {})) === 401)
+  check(`${method} is refused for a pending account`,
+    (await callRoute(method, asUser('jane@example.com'))) === 403)
+}
+
+// A viewer can watch the tracker and still may not rewrite the trip.
+await pg.query(`insert into viewers (email, role) values ('watcher@example.com', 'viewer')
+                on conflict (email) do update set role = 'viewer'`)
+for (const method of ['GET', 'POST']) {
+  check(`${method} is refused for a viewer`,
+    (await callRoute(method, asUser('watcher@example.com'))) === 403)
+}
+
+// And an owner can.
+check('GET is allowed for an owner', (await callRoute('GET', asUser('boss@example.com'))) === 200)
+
+// A forged cookie is not a session.
+check('a tampered cookie is refused',
+  (await callRoute('GET', { cookie: 'p7_session=boss%40example.com.notasignature' })) === 401)
 check('there is a plain text part', built.text.includes('jane.doe@example.com'))
 
 const nameless2 = buildAccessRequestEmail({ name: null, email: 'x@y.com', origin: 'https://p' })
