@@ -471,16 +471,16 @@
       "stage": "1",
       "kind": "ride",
       "from": "Rieupeyroux",
-      "to": "Mende",
-      "miles": 94,
-      "note": "",
+      "to": "Chanac",
+      "miles": 82,
+      "note": "Stopped 12 miles short of Mende — heavy climbing",
       "fromCoords": [
         2.236322,
         44.306225
       ],
       "toCoords": [
-        3.5014879,
-        44.5179297
+        3.344524,
+        44.465214
       ],
       "needsReview": false
     },
@@ -489,17 +489,17 @@
       "date": "2026-08-24",
       "stage": "1",
       "kind": "ride",
-      "from": "Mende",
-      "to": "Tence",
-      "miles": 83,
+      "from": "Chanac",
+      "to": "Aubenas",
+      "miles": 78,
       "note": "",
       "fromCoords": [
-        3.5014879,
-        44.5179297
+        3.344524,
+        44.465214
       ],
       "toCoords": [
-        4.2904534,
-        45.1144854
+        4.388357,
+        44.62072
       ],
       "needsReview": false
     },
@@ -509,13 +509,13 @@
       "stage": "1",
       "kind": "rest",
       "from": null,
-      "to": "Tence",
+      "to": "Aubenas",
       "miles": null,
       "note": "",
       "fromCoords": null,
       "toCoords": [
-        4.2904534,
-        45.1144854
+        4.388357,
+        44.62072
       ],
       "needsReview": false
     },
@@ -524,19 +524,19 @@
       "date": "2026-08-26",
       "stage": "1",
       "kind": "ride",
-      "from": "Tence",
+      "from": "Aubenas",
       "to": "Chambéry",
-      "miles": 107,
-      "note": "",
+      "miles": null,
+      "note": "Reroute from Aubenas — destination and distance to be confirmed",
       "fromCoords": [
-        4.2904534,
-        45.1144854
+        4.388357,
+        44.62072
       ],
       "toCoords": [
         5.917781,
         45.564601
       ],
-      "needsReview": false
+      "needsReview": true
     },
     {
       "day": 27,
