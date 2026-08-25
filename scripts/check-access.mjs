@@ -219,8 +219,22 @@ check('an absurd name is truncated, not rejected', jane.first_name.length === 80
 const boss = await users.recordSignIn('boss@example.com', { firstName: 'Bo', lastName: 'Ss' })
 check('a bootstrap owner is an owner', boss.role === 'owner', boss.role)
 check('an owner signing in is never a request', boss.newRequest === false)
+// Everyone else the site knows about, so the next assertion means what it says:
+// the notification list excludes viewers and pending requests rather than
+// happening to contain one address because there is only one row.
+await pg.query(`insert into viewers (email, role) values ('sees@example.com', 'viewer')
+                on conflict (email) do update set role = 'viewer'`)
+await pg.query(`insert into viewers (email, role) values ('waiting@example.com', 'pending')
+                on conflict (email) do update set role = 'pending'`)
+const everyone = (await pg.query('select email, role from viewers order by email')).rows
+check('the fixture holds owners, a viewer and pending accounts',
+  everyone.length >= 4 && everyone.some((v) => v.role === 'viewer') &&
+    everyone.some((v) => v.role === 'pending'),
+  everyone.map((v) => `${v.email}:${v.role}`).join(', '))
+
 const owners = await users.ownerEmails()
-check('owners are listable for notification', JSON.stringify(owners) === '["boss@example.com"]',
+check('only owners are told about an access request',
+  JSON.stringify(owners) === '["boss@example.com"]',
   JSON.stringify(owners))
 
 // ── The list carries names ──────────────────────────────────────────────────
