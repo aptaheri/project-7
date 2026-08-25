@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import { GeocodeError, searchPlaces } from '../lib/geocode'
+import type { Place } from '../lib/geocode'
 import './RouteEditor.scss'
 
 /**
@@ -34,12 +36,6 @@ interface Day {
   editedBy?: string | null
 }
 
-interface Place {
-  name: string
-  context: string
-  coords: [number, number]
-}
-
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN as string | undefined
 
 function label(date: string): string {
@@ -48,25 +44,6 @@ function label(date: string): string {
     day: 'numeric',
     month: 'short',
   })
-}
-
-/** Towns matching what he has typed, nearest to where the day starts. */
-async function search(query: string, near: [number, number] | null): Promise<Place[]> {
-  if (!MAPBOX_TOKEN || query.trim().length < 2) return []
-  const proximity = near ? `&proximity=${near[0]},${near[1]}` : ''
-  const url =
-    `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json` +
-    `?types=place,locality,village,town&limit=5${proximity}&access_token=${MAPBOX_TOKEN}`
-  const response = await fetch(url)
-  if (!response.ok) return []
-  const body = (await response.json()) as {
-    features: { text: string; place_name: string; center: [number, number] }[]
-  }
-  return body.features.map((f) => ({
-    name: f.text,
-    context: f.place_name,
-    coords: f.center,
-  }))
 }
 
 export default function RouteEditor() {
@@ -82,6 +59,7 @@ export default function RouteEditor() {
   const [place, setPlace] = useState('')
   const [results, setResults] = useState<Place[]>([])
   const [chosen, setChosen] = useState<Place | null>(null)
+  const [searchError, setSearchError] = useState<string | null>(null)
   const [miles, setMiles] = useState('')
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
@@ -114,13 +92,27 @@ export default function RouteEditor() {
     }
     const day = days.find((d) => d.date === editing)
     const timer = setTimeout(() => {
-      void search(place, day?.fromCoords ?? day?.toCoords ?? null).then(setResults)
+      searchPlaces(place, day?.fromCoords ?? day?.toCoords ?? null, MAPBOX_TOKEN)
+        .then((found) => {
+          setResults(found)
+          setSearchError(found.length === 0 ? `No town found matching "${place}".` : null)
+        })
+        .catch((e: unknown) => {
+          setResults([])
+          // Said out loud rather than swallowed. An empty list and a broken
+          // lookup look identical to somebody typing, and only one of them is
+          // something they can do anything about.
+          setSearchError(
+            e instanceof GeocodeError ? e.message : 'Place search is not responding.',
+          )
+        })
     }, 250)
     return () => clearTimeout(timer)
   }, [place, editing, days])
 
   function begin(day: Day) {
     setEditing(day.date)
+    setSearchError(null)
     setPlace(day.to ?? '')
     setChosen(null)
     setResults([])
@@ -132,11 +124,33 @@ export default function RouteEditor() {
     setEditing(null)
     setChosen(null)
     setResults([])
+    setSearchError(null)
   }
 
   async function save(day: Day, kind: Day['kind'], rechain: boolean) {
     setSaving(true)
     try {
+      // What he typed, resolved to somewhere real. Previously this fell back to
+      // the day's existing destination whenever no suggestion had been tapped,
+      // so typing a new town and pressing Save changed the mileage and silently
+      // kept the old destination — which is exactly what happened to John on
+      // the 26th: 76 miles saved, Chambéry stayed.
+      let destination = chosen
+      const typed = place.trim()
+      if (!destination && typed && typed !== (day.to ?? '')) {
+        const found = await searchPlaces(
+          typed,
+          day.fromCoords ?? day.toCoords ?? null,
+          MAPBOX_TOKEN,
+        ).catch(() => [])
+        if (found.length === 0) {
+          throw new Error(
+            `Couldn't find "${typed}". Check the spelling, or try the nearest larger town.`,
+          )
+        }
+        destination = found[0]
+      }
+
       const response = await fetch('/api/route', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -145,8 +159,11 @@ export default function RouteEditor() {
           kind,
           from: day.from,
           fromCoords: day.fromCoords,
-          to: chosen ? chosen.name : day.to,
-          toCoords: chosen ? chosen.coords : day.toCoords,
+          // Name and coordinates always move together. Saving a new name
+          // against the old coordinates would put him on the map in a town he
+          // is not riding to, which is worse than not saving at all.
+          to: destination ? destination.name : day.to,
+          toCoords: destination ? destination.coords : day.toCoords,
           // Blank asks for the cycling distance rather than storing nothing.
           miles: miles.trim() === '' ? null : Number(miles),
           note,
@@ -258,6 +275,12 @@ export default function RouteEditor() {
                   )}
 
                   {chosen && <p className="chosen">{chosen.context}</p>}
+                  {searchError && !chosen && <p className="search-error">{searchError}</p>}
+                  {!chosen && !searchError && place.trim() && place.trim() !== (day.to ?? '') && (
+                    <p className="chosen">
+                      Pick a town from the list, or press Save and it will be looked up.
+                    </p>
+                  )}
 
                   <label>
                     <span>Miles <em>— leave blank to use the cycling route</em></span>

@@ -162,5 +162,39 @@ const fallback = await loadRoute()
 check('a broken database falls back to the plan', fallback.length === PLAN.length)
 check('rather than to nothing', fallback.find((d) => d.date === target.date)?.to === before.to)
 
+// ── The place lookup asks for types that exist ─────────────────────────────
+// The editor shipped asking Mapbox for "village" and "town". Neither is a
+// Mapbox type, so every search returned 422, the suggestion list was always
+// empty, and the one thing the page exists to do could not be done. Nothing
+// reported it: a failed lookup and a town that does not exist looked the same.
+const geo = await esbuild.build({
+  entryPoints: ['src/lib/geocode.ts'],
+  bundle: true, format: 'esm', platform: 'node', write: false,
+})
+writeFileSync(join(dir, 'geocode.mjs'), geo.outputFiles[0].text)
+const { DESTINATION_TYPES, MAPBOX_TYPES, searchPlaces, GeocodeError } =
+  await import(pathToFileURL(resolve(join(dir, 'geocode.mjs'))).href)
+
+const unknown = DESTINATION_TYPES.filter((t) => !MAPBOX_TYPES.includes(t))
+check('every geocoding type is one Mapbox knows', unknown.length === 0,
+  unknown.length ? unknown.join(', ') : DESTINATION_TYPES.join(', '))
+
+// A lookup that fails must say so rather than come back empty-handed, or the
+// page tells him the town does not exist.
+globalThis.fetch = async () => new Response('{"message":"nope"}', { status: 422 })
+let raised = null
+await searchPlaces('Saint-Marcellin', null, 'pk.test').catch((e) => { raised = e })
+check('a failed lookup throws rather than returning nothing', raised instanceof GeocodeError,
+  raised?.message)
+
+globalThis.fetch = async () => new Response(JSON.stringify({
+  features: [{ text: 'Saint-Marcellin', place_name: 'Saint-Marcellin, Isère, France', center: [5.32, 45.15] }],
+}), { status: 200, headers: { 'content-type': 'application/json' } })
+const found = await searchPlaces('Saint-Marcellin', [4.38, 44.62], 'pk.test')
+check('a good lookup returns the town and its coordinates',
+  found[0]?.name === 'Saint-Marcellin' && found[0]?.coords[0] === 5.32, found[0]?.context)
+check('a query too short to mean anything asks nothing',
+  (await searchPlaces('S', null, 'pk.test')).length === 0)
+
 console.log(failures === 0 ? '\nAll route checks passed.' : `\n${failures} check(s) failed.`)
 process.exit(failures === 0 ? 0 : 1)
