@@ -3,6 +3,7 @@ import itinerary from '../../src/data/itinerary.json'
 import { db, ensureSchema } from './db.mts'
 import { factFor } from './fact.mts'
 import { buildDailyEmail } from './email.mts'
+import { countryAt } from './country.mts'
 import { currentLeg } from './itinerary.mts'
 import { lineForEmail, loadRoute } from './route.mts'
 import { mailerConfigured, sendBatch, unsubscribeUrl } from './mailer.mts'
@@ -275,7 +276,12 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
     }
   }
 
-  const record = dayRecords().find((d) => d.date === leg.date)
+  // From the route as it now stands, not the plan. These two disagreed once
+  // John started editing his own route: the header read "Saint-Marcellin →
+  // Albertville" from the live route while the map's start pin sat on Chambéry,
+  // because that is what the plan still said for the 27th. A name and a
+  // coordinate for the same place have to come from the same place.
+  const record = route.find((d) => d.date === leg.date)
   if (!record?.fromCoords) {
     return { ...base, sent: false, reason: `no start coordinates for the leg dated ${leg.date}` }
   }
@@ -308,6 +314,14 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
 
   // Drawn on the map in the email when the day has been routed; two pins and a
   // straight line when it has not, exactly as before.
+  // Where in the world this is. Most recipients have never heard of Saint-
+  // Marcellin or Albertville, and a day's ride that crosses a border is worth
+  // saying out loud — this route changes country seventeen times.
+  const [fromCountry, toCountry] = await Promise.all([
+    countryAt(record.fromCoords[1], record.fromCoords[0]),
+    countryAt(leg.destination[1], leg.destination[0]),
+  ])
+
   const plannedToday = route.find((d) => d.date === leg.date)?.routeCoords ?? null
   const routeLineToday = plannedToday?.length ? lineForEmail(plannedToday) : null
 
@@ -325,6 +339,18 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
       distanceLine: distance,
       // The roads he means to ride, thinned to fit inside a static-map URL.
       routeLine: routeLineToday,
+      country: toCountry
+        ? {
+            name: toCountry.name,
+            flag: toCountry.flag,
+            // Only when the day actually crosses one; otherwise it reads as
+            // though every ride were an international departure.
+            crossingFrom:
+              fromCountry && fromCountry.code !== toCountry.code
+                ? { name: fromCountry.name, flag: fromCountry.flag }
+                : null,
+          }
+        : null,
       liveUrl: `${origin}/track`,
       unsubscribeUrl: unsubscribeUrl(to, origin),
       mapboxToken: process.env.VITE_MAPBOX_TOKEN ?? process.env.MAPBOX_TOKEN ?? null,

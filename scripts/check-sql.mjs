@@ -94,6 +94,15 @@ await pg.exec(`
     format_version int not null default 1, attempts int not null default 0,
     declined_at timestamptz, created_at timestamptz not null default now()
   );
+  create table route_days (
+    date date primary key, kind text not null,
+    from_place text, to_place text, miles double precision, note text,
+    from_lon double precision, from_lat double precision,
+    to_lon double precision, to_lat double precision,
+    cycling_miles double precision, route_coords jsonb,
+    needs_review boolean not null default false,
+    updated_by text, updated_at timestamptz not null default now()
+  );
   create table sent_emails (
     local_date date not null, kind text not null default 'daily',
     sent_at timestamptz not null default now(),
@@ -136,6 +145,32 @@ await pg.query(`insert into viewers (email, role) values ('d@example.com', 'pend
 
 process.env.SESSION_SECRET ??= 'test-secret-for-sql-check'
 
+const realFetch = globalThis.fetch
+globalThis.fetch = async (url, init) => {
+  const href = String(url)
+  // The v6 reverse shape country.mts actually reads.
+  if (href.includes('api.mapbox.com/search/geocode')) {
+    return new Response(
+      JSON.stringify({
+        features: [
+          { properties: { name: 'France', context: { country: { name: 'France', country_code: 'fr' } } } },
+        ],
+      }),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    )
+  }
+  if (href.includes('api.mapbox.com/directions')) {
+    return new Response(
+      JSON.stringify({ code: 'Ok', routes: [{ distance: 96_000, geometry: { coordinates: [[1.1, 44.1], [2.2, 45.2]] } }] }),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    )
+  }
+  if (href.includes('api.resend.com')) {
+    return new Response(JSON.stringify({ id: 'test-message-id' }), { status: 200 })
+  }
+  return realFetch(url, init)
+}
+
 const { runDailyEmail } = await import(pathToFileURL(outPath).href)
 
 let failures = 0
@@ -161,6 +196,47 @@ check('map omitted when no token', !forced.preview?.html.includes('api.mapbox.co
 process.env.VITE_MAPBOX_TOKEN = 'pk.test'
 const withMap = await runDailyEmail({ force: true, dryRun: true })
 check('map included when a token is set', withMap.preview?.html.includes('api.mapbox.com'))
+
+// ── The map's pins agree with the header ───────────────────────────────────
+// These came from different places once John could edit his own route: the
+// header read the live route while the start pin read the plan, so an email
+// went out headed "Saint-Marcellin → Albertville" with its A pin on Chambéry.
+//
+// The rerouted start is nudged rather than moved across France, because the leg
+// matcher still has to recognise where the fixture is riding.
+const movedFrom = [Number((lon0 + 0.02).toFixed(4)), Number((lat0 + 0.02).toFixed(4))]
+await pg.query(
+  `insert into route_days (date, kind, from_place, to_place, from_lon, from_lat, to_lon, to_lat, miles)
+   values ($1::date, 'ride', 'Rerouted Start', 'Rerouted End', $2, $3, $4, $5, 60)
+   on conflict (date) do update set
+     from_place = excluded.from_place, to_place = excluded.to_place,
+     from_lon = excluded.from_lon, from_lat = excluded.from_lat,
+     to_lon = excluded.to_lon, to_lat = excluded.to_lat, miles = excluded.miles`,
+  [leg.date, movedFrom[0], movedFrom[1], lon1, lat1],
+)
+
+const rerouted = await runDailyEmail({ force: true, dryRun: true })
+const reroutedHtml = rerouted.preview?.html ?? ''
+check('an edited route reaches the email header',
+  reroutedHtml.includes('Rerouted Start') && reroutedHtml.includes('Rerouted End'),
+  rerouted.subject)
+check('and the map pin moves with it',
+  reroutedHtml.includes(movedFrom[0].toFixed(4)),
+  `expected ${movedFrom[0].toFixed(4)} in the map url`)
+check('rather than staying on the planned start',
+  !reroutedHtml.includes(`(${lon0.toFixed(4)},${lat0.toFixed(4)})`),
+  `planned start ${lon0.toFixed(4)},${lat0.toFixed(4)} should not be pinned`)
+check('and his own distance is what is shown', rerouted.subject?.includes('60 miles'),
+  rerouted.subject)
+
+// ── The country is named ───────────────────────────────────────────────────
+// Nobody outside France has heard of Saint-Marcellin.
+check('the country is named in the body', reroutedHtml.includes('France'),
+  (reroutedHtml.match(/Day \d+ &middot; [^<]*/) || [''])[0].slice(0, 80))
+check('and in the plain text part', (rerouted.preview?.text ?? '').includes('France'))
+
+// Put it back, so the gates below are tested against the plan as before.
+await pg.query('delete from route_days')
 
 // The clock gate, at whatever hour this happens to run.
 const unforced = await runDailyEmail({ dryRun: true })

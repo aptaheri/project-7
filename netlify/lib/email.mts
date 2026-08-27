@@ -37,6 +37,16 @@ export interface DailyEmailInput {
    * alone, as it always did.
    */
   routeLine: [number, number][] | null
+  /**
+   * Where in the world today is. Null when the geocoder cannot say, which
+   * drops the line rather than guessing — the same rule the homepage follows.
+   */
+  country: {
+    name: string
+    flag: string
+    /** Set only on a day that crosses a border. */
+    crossingFrom: { name: string; flag: string } | null
+  } | null
   liveUrl: string
   unsubscribeUrl: string
   mapboxToken: string | null
@@ -179,7 +189,15 @@ export function buildDailyEmail(input: DailyEmailInput): {
 
     <tr><td style="padding:28px 28px 0;">
       <div style="font:700 13px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${RED};letter-spacing:.18em;text-transform:uppercase;">Project 7</div>
-      <div style="font:500 13px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${MUTED};padding-top:10px;">Day ${input.dayNumber} &middot; ${escape(input.dateLabel)}</div>
+      <div style="font:500 13px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${MUTED};padding-top:10px;">Day ${input.dayNumber} &middot; ${escape(input.dateLabel)}${
+        input.country
+          ? ` &middot; ${escape(
+              input.country.crossingFrom
+                ? `${input.country.crossingFrom.flag} ${input.country.crossingFrom.name} → ${input.country.flag} ${input.country.name}`
+                : `${input.country.flag} ${input.country.name}`,
+            )}`
+          : ''
+      }</div>
     </td></tr>
 
     <tr><td style="padding:18px 28px 0;">
@@ -251,7 +269,15 @@ export function buildDailyEmail(input: DailyEmailInput): {
 </html>`
 
   const text = [
-    `PROJECT 7 — Day ${input.dayNumber}, ${input.dateLabel}`,
+    `PROJECT 7 — Day ${input.dayNumber}, ${input.dateLabel}${
+      input.country
+        ? `, ${
+            input.country.crossingFrom
+              ? `${input.country.crossingFrom.name} to ${input.country.name}`
+              : input.country.name
+          }`
+        : ''
+    }`,
     '',
     `${input.from} -> ${input.to}${planned ? ` (${planned})` : ''}`,
     `${input.milesSoFar.toFixed(1)} miles covered so far today.`,
