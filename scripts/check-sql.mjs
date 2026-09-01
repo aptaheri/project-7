@@ -280,5 +280,85 @@ const second = await pg.query(
 )
 check('second claim is refused', second.rows.length === 0)
 
+// ── Sending a morning the schedule missed ──────────────────────────────────
+// The gates can only ever decide not to send, so a day skipped at 7am because
+// he had not set off yet stayed skipped once the window closed. A broadcast is
+// an owner overruling that, and it has to reach the real list, record the day,
+// and then leave nothing for the schedule to send a second time.
+await pg.query(`delete from sent_emails`)
+
+// Everyone whose pref is 'daily' — c was switched back on further up.
+const subscribers = ['a@example.com', 'b@example.com', 'c@example.com']
+
+const posted = []
+const sendingFetch = globalThis.fetch
+globalThis.fetch = async (url, init) => {
+  const href = String(url)
+  if (href.includes('api.resend.com')) {
+    posted.push(...JSON.parse(init.body))
+    return new Response(JSON.stringify({ data: [{ id: 'broadcast-id' }] }), { status: 200 })
+  }
+  return sendingFetch(url, init)
+}
+const addressed = () => posted.map((m) => m.to[0])
+
+const cast = await runDailyEmail({ broadcast: true, origin: 'https://example.test' })
+check('a broadcast sends', cast.sent === true, cast.reason)
+check(
+  'to the whole subscriber list, not just the owner',
+  JSON.stringify(addressed()) === JSON.stringify(subscribers),
+  JSON.stringify(addressed()),
+)
+// One message each rather than one message bcc'd to everybody, because the
+// unsubscribe link only means anything if it is that reader's own.
+const unsubscribes = new Set(posted.map((m) => m.headers?.['List-Unsubscribe']))
+check('each carrying its own unsubscribe link', unsubscribes.size === subscribers.length,
+  `${unsubscribes.size} distinct link(s) for ${subscribers.length} recipients`)
+
+const recorded = await pg.query(`select recipients, subject from sent_emails where local_date = $1`, [
+  cast.localDate,
+])
+check('and the day is recorded as sent', recorded.rows.length === 1, JSON.stringify(recorded.rows[0]))
+check(
+  'with what actually went out',
+  recorded.rows[0]?.recipients === subscribers.length && recorded.rows[0]?.subject === cast.subject,
+  JSON.stringify(recorded.rows[0]),
+)
+
+// The point of recording it: the hourly schedule must not now send it again.
+const afterCast = await runDailyEmail({ dryRun: true })
+check('so the schedule will not send it again', afterCast.reason.startsWith('already sent'), afterCast.reason)
+
+// A day claimed by a run whose send then failed is exactly the day that most
+// needs sending. The claim is what a broadcast overrules, not what stops it.
+await pg.query(`update sent_emails set subject = 'claimed but never sent', recipients = 0`)
+posted.length = 0
+const recovered = await runDailyEmail({ broadcast: true, origin: 'https://example.test' })
+check('a claimed-but-unsent day can still be broadcast', recovered.sent === true, recovered.reason)
+check('reaching everybody', JSON.stringify(addressed()) === JSON.stringify(subscribers),
+  JSON.stringify(addressed()))
+const rewritten = await pg.query(`select recipients, subject from sent_emails where local_date = $1`, [
+  cast.localDate,
+])
+check(
+  'and the record is rewritten rather than left stale',
+  rewritten.rows[0]?.subject === recovered.subject &&
+    rewritten.rows[0]?.recipients === subscribers.length,
+  JSON.stringify(rewritten.rows[0]),
+)
+
+// A test send is still one address and still leaves the day unclaimed, so it
+// cannot be mistaken for the morning's send.
+await pg.query(`delete from sent_emails`)
+posted.length = 0
+const mine = await runDailyEmail({ force: true, onlyTo: 'a@example.com' })
+check('a test send goes to one address',
+  JSON.stringify(addressed()) === JSON.stringify(['a@example.com']), JSON.stringify(addressed()))
+const afterTest = await pg.query(`select 1 from sent_emails`)
+check('and does not claim the day', afterTest.rows.length === 0)
+check('so the real send can still happen', mine.sent === true, mine.reason)
+
+globalThis.fetch = sendingFetch
+
 console.log(failures === 0 ? '\nAll SQL checks passed.' : `\n${failures} check(s) failed.`)
 process.exit(failures === 0 ? 0 : 1)

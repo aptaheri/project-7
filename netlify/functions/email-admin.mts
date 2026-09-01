@@ -25,13 +25,22 @@ export default async function handler(req: Request): Promise<Response> {
   const url = new URL(req.url)
   const format = url.searchParams.get('format')
   const force = url.searchParams.get('force') === '1'
+  const send = url.searchParams.get('send')
   // A test send goes to the signed-in owner, never to an address off the query
   // string — otherwise this endpoint is a way to mail strangers from our domain.
-  const test = url.searchParams.get('send') === 'me'
+  const test = send === 'me'
+  // The whole subscriber list, on an owner's say-so. The schedule can only
+  // decide not to send, so a morning it skipped — he had not set off before the
+  // window closed — used to be unrecoverable. This is the way back.
+  const broadcast = send === 'all'
 
   const outcome = await runDailyEmail({
-    dryRun: !test,
-    force,
+    dryRun: !test && !broadcast,
+    // Somebody looking at the live map has already answered the questions the
+    // clock and movement gates ask, and they are the reason a broadcast is
+    // being asked for at all.
+    force: force || broadcast,
+    broadcast,
     onlyTo: test ? normalizeEmail(session.email) : undefined,
   })
 

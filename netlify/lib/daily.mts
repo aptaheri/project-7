@@ -93,6 +93,20 @@ export interface DailyOptions {
   force?: boolean
   /** Send to this one address instead of the subscriber list. */
   onlyTo?: string
+  /**
+   * Send today's email to the whole list now, because an owner said so.
+   *
+   * The schedule can only ever decide *not* to send: every gate it applies is a
+   * reason to stay quiet, and once the window has passed there is no way back.
+   * A morning it skipped for a good reason at 7am — he had not set off yet — is
+   * still a morning worth writing about at two in the afternoon, and until this
+   * existed the only way to recover one was to wait for the next.
+   *
+   * So this is deliberately not another gate to satisfy. It is a person who has
+   * looked at the map answering the movement and clock questions themselves,
+   * and it records the day as sent so the schedule does not send it again.
+   */
+  broadcast?: boolean
   origin?: string
 }
 
@@ -159,14 +173,21 @@ function testDevices(): string[] {
 }
 
 export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOutcome> {
-  const { dryRun = false, force = false, onlyTo, origin = SITE } = options
+  const { dryRun = false, force = false, broadcast = false, onlyTo, origin = SITE } = options
+
+  // A broadcast overrules exactly what force overrules: the clock, the fix
+  // age, the movement, and the record of having already sent. Deriving that
+  // here rather than at the call site keeps a caller that passes broadcast on
+  // its own from getting a half-forced run, which is how the already-sent gate
+  // came to turn away the one send that existed to overrule it.
+  const ungated = force || broadcast
 
   const window = sendWindow()
 
   // Gate 0: is it even plausibly morning where he is? Answered from the
   // itinerary, so a run that stops here costs nothing at all — no connection,
   // no query, no waking a database that charges for being awake.
-  if (!force) {
+  if (!ungated) {
     const guess = plannedLocalHour()
     if (guess !== null && (guess < window.from - GUESS_SLACK_HOURS || guess > window.until + GUESS_SLACK_HOURS)) {
       return {
@@ -197,7 +218,7 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
   const base = { localDate: today, localHour: hour, timezone: zone }
 
   // Gate 1: his morning, now from his actual position rather than the plan.
-  if (!force && (hour < window.from || hour > window.until)) {
+  if (!ungated && (hour < window.from || hour > window.until)) {
     return {
       ...base,
       sent: false,
@@ -207,7 +228,7 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
 
   // Gate 2: not already done. The claim below is what actually prevents a
   // double send; this only avoids the work when the answer is already known.
-  if (!force) {
+  if (!ungated) {
     const already = (await sql`
       select 1 from sent_emails where local_date = ${today}::date and kind = 'daily'
     `) as unknown as unknown[]
@@ -218,7 +239,7 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
 
   // Gate 3: he is out there now, not last night.
   const ageMinutes = latest.age_s / 60
-  if (!force && ageMinutes > MAX_FIX_AGE_MINUTES) {
+  if (!ungated && ageMinutes > MAX_FIX_AGE_MINUTES) {
     return {
       ...base,
       sent: false,
@@ -251,7 +272,7 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
   `) as unknown as { today_m: number }[]
 
   const todayKm = (movedRows[0]?.today_m ?? 0) / 1000
-  if (!force && todayKm < MIN_MOVING_KM) {
+  if (!ungated && todayKm < MIN_MOVING_KM) {
     return {
       ...base,
       sent: false,
@@ -398,15 +419,34 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
   // function is killed mid-flight, the row is already there and the next run
   // will not mail everyone a second time. Sending twice is worse than not at
   // all: the first is a mistake people notice, the second they never see.
-  if (!force && !onlyTo) {
-    const claim = (await sql`
-      insert into sent_emails (local_date, kind, recipients, subject)
-      values (${today}::date, 'daily', ${recipients.length}, ${sample.subject})
-      on conflict (local_date, kind) do nothing
-      returning local_date
-    `) as unknown as unknown[]
-    if (claim.length === 0) {
-      return { ...base, sent: false, reason: `another run claimed ${today} first` }
+  //
+  // A broadcast is the deliberate opposite of a claim. It is how a morning the
+  // schedule missed gets sent at all, so an existing row is the very thing it
+  // has been asked to overrule rather than a reason to stop — a day claimed by
+  // a run whose send then failed would otherwise stay unsendable forever. It
+  // still writes the row, so the hourly schedule will not send it a second
+  // time. Nothing reaches this branch by accident: it needs an owner session
+  // and an explicit send=all.
+  if (!onlyTo) {
+    if (broadcast) {
+      await sql`
+        insert into sent_emails (local_date, kind, recipients, subject)
+        values (${today}::date, 'daily', ${recipients.length}, ${sample.subject})
+        on conflict (local_date, kind) do update set
+          sent_at = now(),
+          recipients = excluded.recipients,
+          subject = excluded.subject
+      `
+    } else if (!force) {
+      const claim = (await sql`
+        insert into sent_emails (local_date, kind, recipients, subject)
+        values (${today}::date, 'daily', ${recipients.length}, ${sample.subject})
+        on conflict (local_date, kind) do nothing
+        returning local_date
+      `) as unknown as unknown[]
+      if (claim.length === 0) {
+        return { ...base, sent: false, reason: `another run claimed ${today} first` }
+      }
     }
   }
 

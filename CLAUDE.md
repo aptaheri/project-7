@@ -115,6 +115,17 @@ they are the things a reasonable change would otherwise undo.
    on each sign-in, so a delete succeeds and is undone a moment later. The API
    refuses with a 409 that says so; the row is tagged "Always owner".
 
+10. **A morning the schedule missed can only be recovered by hand.** Every gate
+    in `runDailyEmail` can decide *not* to send and nothing more, so a day it
+    skipped at 07:00 — he had not set off yet — stayed skipped once the window
+    closed. `/api/email-admin?send=all` is an owner overruling that: it ignores
+    the clock, the fix age and the movement gate, sends to the whole subscriber
+    list, and writes `sent_emails` **over** whatever is there, so the hourly
+    schedule will not then send the same day again and a day claimed by a run
+    whose send failed is not stuck forever. `send=me` still goes only to the
+    signed-in owner and still leaves the day unclaimed. `check-sql` asserts all
+    of it.
+
 ## Testing
 
 Every change to SQL or to a rule gets an assertion in `scripts/check-*.mjs`.
