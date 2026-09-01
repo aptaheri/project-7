@@ -105,6 +105,10 @@ export interface DailyOptions {
    * So this is deliberately not another gate to satisfy. It is a person who has
    * looked at the map answering the movement and clock questions themselves,
    * and it records the day as sent so the schedule does not send it again.
+   *
+   * It does not, however, send a day that is already on record: this is reached
+   * by opening a URL, and reloading one is not a decision to mail fifteen
+   * people a second copy. Pair it with `force` to say that it is.
    */
   broadcast?: boolean
   origin?: string
@@ -420,15 +424,18 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
   // will not mail everyone a second time. Sending twice is worse than not at
   // all: the first is a mistake people notice, the second they never see.
   //
-  // A broadcast is the deliberate opposite of a claim. It is how a morning the
-  // schedule missed gets sent at all, so an existing row is the very thing it
-  // has been asked to overrule rather than a reason to stop — a day claimed by
-  // a run whose send then failed would otherwise stay unsendable forever. It
-  // still writes the row, so the hourly schedule will not send it a second
-  // time. Nothing reaches this branch by accident: it needs an owner session
-  // and an explicit send=all.
+  // A broadcast takes the day the same way, and for a sharper reason: it is
+  // reached by opening a URL, and a URL gets reloaded, bookmarked and clicked
+  // again when the first click seems not to have done anything. It did — the
+  // JSON is the receipt — and three clicks put three copies of the same
+  // morning in fifteen inboxes, which cannot be taken back. So the record
+  // stands in the way of a repeat by default.
+  //
+  // Overruling it is still possible and still necessary: a day claimed by a
+  // run whose send then failed would otherwise be unsendable forever. That
+  // needs force as well, which is a second, deliberate thing to type.
   if (!onlyTo) {
-    if (broadcast) {
+    if (broadcast && force) {
       await sql`
         insert into sent_emails (local_date, kind, recipients, subject)
         values (${today}::date, 'daily', ${recipients.length}, ${sample.subject})
@@ -437,7 +444,7 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
           recipients = excluded.recipients,
           subject = excluded.subject
       `
-    } else if (!force) {
+    } else if (broadcast || !force) {
       const claim = (await sql`
         insert into sent_emails (local_date, kind, recipients, subject)
         values (${today}::date, 'daily', ${recipients.length}, ${sample.subject})
@@ -445,7 +452,13 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
         returning local_date
       `) as unknown as unknown[]
       if (claim.length === 0) {
-        return { ...base, sent: false, reason: `another run claimed ${today} first` }
+        return {
+          ...base,
+          sent: false,
+          reason: broadcast
+            ? `already sent for ${today} — nothing sent. Add force=1 to send it again on purpose`
+            : `another run claimed ${today} first`,
+        }
       }
     }
   }

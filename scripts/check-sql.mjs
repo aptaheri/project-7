@@ -329,11 +329,21 @@ check(
 const afterCast = await runDailyEmail({ dryRun: true })
 check('so the schedule will not send it again', afterCast.reason.startsWith('already sent'), afterCast.reason)
 
+// Reloading the URL that sent it must not send it again. Three clicks put
+// three copies of one morning in fifteen real inboxes, and Resend can only
+// cancel mail that has not gone yet — which this never is.
+posted.length = 0
+const again = await runDailyEmail({ broadcast: true, origin: 'https://example.test' })
+check('a second broadcast of the same day is refused',
+  again.sent === false && again.reason.startsWith('already sent'), again.reason)
+check('and puts nothing on the wire', posted.length === 0, JSON.stringify(addressed()))
+
 // A day claimed by a run whose send then failed is exactly the day that most
-// needs sending. The claim is what a broadcast overrules, not what stops it.
+// needs sending, so overruling the record stays possible — with force, which
+// is a second deliberate thing to type.
 await pg.query(`update sent_emails set subject = 'claimed but never sent', recipients = 0`)
 posted.length = 0
-const recovered = await runDailyEmail({ broadcast: true, origin: 'https://example.test' })
+const recovered = await runDailyEmail({ broadcast: true, force: true, origin: 'https://example.test' })
 check('a claimed-but-unsent day can still be broadcast', recovered.sent === true, recovered.reason)
 check('reaching everybody', JSON.stringify(addressed()) === JSON.stringify(subscribers),
   JSON.stringify(addressed()))

@@ -120,9 +120,13 @@ they are the things a reasonable change would otherwise undo.
     skipped at 07:00 — he had not set off yet — stayed skipped once the window
     closed. `/api/email-admin?send=all` is an owner overruling that: it ignores
     the clock, the fix age and the movement gate, sends to the whole subscriber
-    list, and writes `sent_emails` **over** whatever is there, so the hourly
-    schedule will not then send the same day again and a day claimed by a run
-    whose send failed is not stuck forever. `send=me` still goes only to the
+    list, and records `sent_emails`, so the hourly schedule will not then send
+    the same day again. It **refuses a day already on record** — it is reached
+    by opening a URL, and reloading one is not a decision to mail everybody a
+    second copy; three clicks sent three copies on 1 September and none of them
+    could be recalled, because Resend can only cancel mail that has not gone
+    yet. `send=all&force=1` overrules that, which is how a day claimed by a run
+    whose send then failed gets unstuck. `send=me` still goes only to the
     signed-in owner and still leaves the day unclaimed. `check-sql` asserts all
     of it.
 
