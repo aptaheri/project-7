@@ -187,20 +187,33 @@ export default function RouteEditor() {
   /**
    * Turns a riding day into a rest day, or back again, without asking anything.
    *
-   * The destination is the one thing that stays: a rest day is still somewhere,
-   * and it is almost always the town he was riding to anyway. So the only
-   * question this would otherwise have to ask — where? — already has an answer,
-   * and asking it would make a one-tap change into a form.
+   * A rest day happens where he already is, which is where the day before left
+   * him — not where the ride he is no longer doing was going. The plan follows
+   * that rule everywhere: the rest at Innsbruck sits after the ride that
+   * arrives in Innsbruck. Keeping the abandoned destination instead would put
+   * him in a town he has not reached, on the map and in the morning email.
    *
-   * Going back the other way needs a starting point, which is likewise already
-   * known: it is wherever the day before ends, the same rule rechainNextDay
-   * follows. The distance is dropped either way and refills itself from the
-   * cycling route, because a distance carried across a change of kind is a
-   * number about a day that no longer exists.
+   * Going back to a riding day starts from the same place, for the same reason,
+   * and keeps whatever destination the day already had. When those two turn out
+   * to be the same town there is nowhere to ride to, so it is flagged rather
+   * than saved as a day of zero miles.
+   *
+   * The distance is dropped both ways and refills from the cycling route: a
+   * distance carried across a change of kind describes a day that no longer
+   * exists.
    */
   async function changeKind(day: Day, index: number) {
     const toRest = day.kind !== 'rest'
     const previous = index > 0 ? days[index - 1] : null
+    // Where the day before left him. The start of a ride and the whole of a
+    // rest day are both this same place.
+    const standing = previous?.to ?? null
+    const standingCoords = previous?.toCoords ?? null
+
+    const to = toRest ? standing ?? day.to : day.to
+    const toCoords = toRest ? standingCoords ?? day.toCoords : day.toCoords
+    const from = toRest ? null : standing ?? day.from
+    const fromCoords = toRest ? null : standingCoords ?? day.fromCoords
 
     setSaving(true)
     try {
@@ -210,15 +223,16 @@ export default function RouteEditor() {
         body: JSON.stringify({
           date: day.date,
           kind: toRest ? 'rest' : 'ride',
-          from: toRest ? null : day.from ?? previous?.to ?? null,
-          fromCoords: toRest ? null : day.fromCoords ?? previous?.toCoords ?? null,
-          to: day.to,
-          toCoords: day.toCoords,
+          from,
+          fromCoords,
+          to,
+          toCoords,
           miles: null,
           note: day.note ?? '',
-          // A riding day with nowhere to ride to is worth flagging rather than
-          // saving quietly, since it is the email's destination as well.
-          needsReview: !toRest && !day.to,
+          // A ride with nowhere to go — no destination, or one he is already
+          // standing in. Flagged rather than saved quietly as zero miles,
+          // because it is the morning email's destination too.
+          needsReview: !toRest && (!to || to === from),
           rechain: false,
         }),
       })

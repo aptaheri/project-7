@@ -159,7 +159,7 @@ await saveDay(
 )
 const rested = await dayOn(swap.date)
 check('a riding day can be made a rest day', rested.kind === 'rest', rested.kind)
-check('and keeps the place it was heading for', rested.to === swap.to, String(rested.to))
+check('and rests where the day before left him', rested.to === swap.to, String(rested.to))
 check('while losing the start it no longer has', rested.from === null, String(rested.from))
 check('and the distance, which was about a different day', rested.miles === null, String(rested.miles))
 
