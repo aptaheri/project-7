@@ -146,6 +146,39 @@ await saveDay({
 check('a rest day asks for no directions', directionsCalls === 0, `${directionsCalls} call(s)`)
 check('and carries no distance', (await dayOn(rest.date)).miles === null)
 
+// ── A day can change from riding to resting, and back ─────────────────────
+// The editor had no way to do this at all: it read each day's kind and saved
+// the same one straight back, so a rest day could never move. What matters on
+// the way in is that the destination survives — a rest day is still somewhere,
+// and it is the town he was riding to.
+const swap = PLAN.find((d) => d.kind === 'ride' && d.date > rest.date && d.to && d.fromCoords)
+await saveDay(
+  { date: swap.date, kind: 'rest', from: null, fromCoords: null,
+    to: swap.to, toCoords: swap.toCoords, miles: null, note: '', needsReview: false },
+  'john@example.com',
+)
+const rested = await dayOn(swap.date)
+check('a riding day can be made a rest day', rested.kind === 'rest', rested.kind)
+check('and keeps the place it was heading for', rested.to === swap.to, String(rested.to))
+check('while losing the start it no longer has', rested.from === null, String(rested.from))
+check('and the distance, which was about a different day', rested.miles === null, String(rested.miles))
+
+// And back the other way, taking its start from wherever the day before ends.
+await saveDay(
+  { date: swap.date, kind: 'ride', from: swap.from, fromCoords: swap.fromCoords,
+    to: swap.to, toCoords: swap.toCoords, miles: null, note: '', needsReview: false },
+  'john@example.com',
+)
+const riding = await dayOn(swap.date)
+check('and back to a riding day', riding.kind === 'ride', riding.kind)
+check('with a start again', riding.from === swap.from, String(riding.from))
+check('and a distance worked out for it', riding.miles !== null, `${riding.miles} mi`)
+
+// The plan is still the plan. This is the one that would go unnoticed.
+const planStill = JSON.parse(readFileSync('src/data/itinerary.json', 'utf8'))
+  .days.find((d) => d.date === swap.date)
+check('and the plan on disk still calls it a riding day', planStill.kind === 'ride', planStill.kind)
+
 // ── The drawn line fits where it has to go ─────────────────────────────────
 const long = (await dayOn(target.date)).routeCoords
 check('the full line is kept in the database', long.length === 500)

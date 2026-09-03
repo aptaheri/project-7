@@ -114,7 +114,20 @@
     }
   }
 
-  .actions { margin-top: 12px; }
+  // Two buttons now, so the layout does the spacing rather than the buttons
+  // touching. Stacked on a phone, side by side once there is room — the same
+  // shape .edit-actions takes.
+  .actions {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    @media (min-width: 520px) {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+  }
 }
 
 // Every button is a full-height target: this gets used with cold hands.

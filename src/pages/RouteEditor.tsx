@@ -184,6 +184,56 @@ export default function RouteEditor() {
     }
   }
 
+  /**
+   * Turns a riding day into a rest day, or back again, without asking anything.
+   *
+   * The destination is the one thing that stays: a rest day is still somewhere,
+   * and it is almost always the town he was riding to anyway. So the only
+   * question this would otherwise have to ask — where? — already has an answer,
+   * and asking it would make a one-tap change into a form.
+   *
+   * Going back the other way needs a starting point, which is likewise already
+   * known: it is wherever the day before ends, the same rule rechainNextDay
+   * follows. The distance is dropped either way and refills itself from the
+   * cycling route, because a distance carried across a change of kind is a
+   * number about a day that no longer exists.
+   */
+  async function changeKind(day: Day, index: number) {
+    const toRest = day.kind !== 'rest'
+    const previous = index > 0 ? days[index - 1] : null
+
+    setSaving(true)
+    try {
+      const response = await fetch('/api/route', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          date: day.date,
+          kind: toRest ? 'rest' : 'ride',
+          from: toRest ? null : day.from ?? previous?.to ?? null,
+          fromCoords: toRest ? null : day.fromCoords ?? previous?.toCoords ?? null,
+          to: day.to,
+          toCoords: day.toCoords,
+          miles: null,
+          note: day.note ?? '',
+          // A riding day with nowhere to ride to is worth flagging rather than
+          // saving quietly, since it is the email's destination as well.
+          needsReview: !toRest && !day.to,
+          rechain: false,
+        }),
+      })
+      if (!response.ok) {
+        const body = (await response.json()) as { error?: string }
+        throw new Error(body.error ?? 'Could not save.')
+      }
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not save.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (authLoading) return <main className="route-editor"><p className="muted">Loading…</p></main>
   if (!isOwner) {
     return (
@@ -211,7 +261,7 @@ export default function RouteEditor() {
       {error && <p className="error" role="alert">{error}</p>}
 
       <ol className="days">
-        {days.map((day) => {
+        {days.map((day, index) => {
           const isToday = day.date === today
           const isPast = day.date < today
           const open = editing === day.date
@@ -245,6 +295,13 @@ export default function RouteEditor() {
                 <div className="actions">
                   <button type="button" onClick={() => begin(day)}>
                     {isPast || isToday ? 'I stopped somewhere else' : 'Change where I am going'}
+                  </button>
+                  {/* Past tense for a day that has happened, future for one he
+                      is still planning — the same split the button above makes. */}
+                  <button type="button" className="ghost" disabled={saving} onClick={() => void changeKind(day, index)}>
+                    {day.kind === 'rest'
+                      ? (isPast || isToday ? 'I rode after all' : 'Make this a riding day')
+                      : (isPast || isToday ? 'I took the day off' : 'Make this a rest day')}
                   </button>
                 </div>
               )}
