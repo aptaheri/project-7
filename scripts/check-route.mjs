@@ -68,7 +68,7 @@ const bundle = await esbuild.build({
 })
 const outPath = join(dir, 'route.mjs')
 writeFileSync(outPath, bundle.outputFiles[0].text)
-const { loadRoute, saveDay, rechainNextDay, lineForEmail, lineForMap, PLAN } =
+const { loadRoute, saveDay, rechainNextDay, shiftFrom, lineForEmail, lineForMap, PLAN } =
   await import(pathToFileURL(resolve(outPath)).href)
 
 let failures = 0
@@ -178,6 +178,57 @@ check('and a distance worked out for it', riding.miles !== null, `${riding.miles
 const planStill = JSON.parse(readFileSync('src/data/itinerary.json', 'utf8'))
   .days.find((d) => d.date === swap.date)
 check('and the plan on disk still calls it a riding day', planStill.kind === 'ride', planStill.kind)
+
+// ── Losing a day moves every day after it ─────────────────────────────────
+// He is behind more often than not, and the only way to say so used to be to
+// retype every remaining day — so it never got said, and the tracker went on
+// believing he was resting somewhere he had not reached.
+const callsBeforeShift = directionsCalls
+const window0 = (await loadRoute()).filter((d) => d.date >= '2026-09-04' && d.date <= '2026-09-10')
+const wasOn = new Map(window0.map((d) => [d.date, { kind: d.kind, to: d.to, miles: d.miles }]))
+
+const moved = await shiftFrom('2026-09-05', '2026-09-10', 'john@example.com')
+check('a shift writes every day in the window', moved === 6, `${moved} day(s)`)
+check('and asks Mapbox for nothing', directionsCalls === callsBeforeShift,
+  `${directionsCalls - callsBeforeShift} call(s)`)
+
+const after = await loadRoute()
+const on = (date) => after.find((d) => d.date === date)
+
+// The 5th was the rest day; it now holds what the 4th held — the ride in.
+check('each day takes what the day before it held',
+  on('2026-09-05').to === wasOn.get('2026-09-04').to &&
+  on('2026-09-05').kind === wasOn.get('2026-09-04').kind,
+  `${on('2026-09-05').kind} to ${on('2026-09-05').to}`)
+check('so the rest day lands a day later',
+  on('2026-09-06').kind === 'rest' && on('2026-09-06').to === wasOn.get('2026-09-05').to,
+  `${on('2026-09-06').kind} at ${on('2026-09-06').to}`)
+check('and its distance travels with it',
+  on('2026-09-07').miles === wasOn.get('2026-09-06').miles,
+  `${on('2026-09-07').miles} mi`)
+
+// The day before the one he named is his own business — he corrects that with
+// "I stopped somewhere else", and a shift must not quietly rewrite it.
+check('the day before the shift is untouched',
+  on('2026-09-04').to === wasOn.get('2026-09-04').to, String(on('2026-09-04').to))
+// And nothing past the window, which is the whole bargain of shifting only what
+// he can see.
+check('and nothing past the window moves',
+  on('2026-09-11').to === PLAN.find((d) => d.date === '2026-09-11').to,
+  String(on('2026-09-11').to))
+
+check('every shifted day is marked as changed',
+  ['2026-09-05', '2026-09-06', '2026-09-07'].every((d) => on(d).edited === true))
+
+// Nothing to take a schedule from is a refusal, not a silent no-op on day one.
+const nothingBefore = await shiftFrom(PLAN[0].date, PLAN[3].date, 'john@example.com')
+check('a shift from the first day of the trip does nothing', nothingBefore === 0, `${nothingBefore}`)
+
+const planOnDisk = JSON.parse(readFileSync('src/data/itinerary.json', 'utf8')).days
+const planAfterShift = planOnDisk.find((d) => d.date === '2026-09-06')
+check('the plan on disk still rests on the 5th',
+  planOnDisk.find((d) => d.date === '2026-09-05').kind === 'rest')
+check('and the plan on disk is still the plan', planAfterShift.kind === 'ride', planAfterShift.kind)
 
 // ── The drawn line fits where it has to go ─────────────────────────────────
 const long = (await dayOn(target.date)).routeCoords

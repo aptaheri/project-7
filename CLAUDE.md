@@ -130,6 +130,19 @@ they are the things a reasonable change would otherwise undo.
     signed-in owner and still leaves the day unclaimed. `check-sql` asserts all
     of it.
 
+11. **Falling behind is an edit, not a special case.** He loses days routinely —
+    that is why `daysFromPlan` measures against the plan and never against
+    `route_days`. `shiftFrom` slides the editor's window one day later, each day
+    taking what the day before it held, and it deliberately touches **only the
+    window** `/api/route` already shows: he replans as he rides and the days
+    beyond it are left on the plan to be shifted when they come into view. It
+    fetches no directions — a leg moved to another date is the same road between
+    the same two towns, so its distance and geometry travel with it — and it
+    writes every day in **one statement**, because a shift that stopped halfway
+    would leave a route half slipped and half not. `check-route` asserts the
+    window moves, the day before it does not, nothing past it does, and no
+    Mapbox call is made.
+
 ## Testing
 
 Every change to SQL or to a rule gets an assertion in `scripts/check-*.mjs`.

@@ -1,6 +1,6 @@
 import { json } from '../lib/auth.mts'
 import { requireTrackViewer } from '../lib/gate.mts'
-import { loadRoute, rechainNextDay, saveDay } from '../lib/route.mts'
+import { loadRoute, rechainNextDay, saveDay, shiftFrom } from '../lib/route.mts'
 import type { DayKind, SaveDay } from '../lib/route.mts'
 
 /**
@@ -60,7 +60,35 @@ export default async function handler(req: Request): Promise<Response> {
 
     if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405)
 
-    const body = (await req.json()) as Partial<SaveDay> & { rechain?: boolean }
+    const body = (await req.json()) as Partial<SaveDay> & {
+      rechain?: boolean
+      shift?: { from?: unknown }
+    }
+
+    // Losing a day moves every day after it, which is one action rather than a
+    // dozen saves. Handled here, before the single-day path, because it carries
+    // no destination of its own — the days it writes already have theirs.
+    if (body.shift) {
+      const at = body.shift.from
+      if (typeof at !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(at)) {
+        return json({ error: 'shift.from must be a date' }, 400)
+      }
+      if (at < from || at > until) {
+        return json({ error: `date must be between ${from} and ${until}` }, 400)
+      }
+      const moved = await shiftFrom(at, until, gate.email)
+      if (moved === 0) {
+        return json({ error: 'there is no earlier day to take a schedule from' }, 400)
+      }
+      const days = await loadRoute()
+      return json({
+        shifted: moved,
+        today,
+        days: days
+          .filter((d) => d.date >= from && d.date <= until)
+          .map(({ routeCoords: _routeCoords, ...day }) => day),
+      })
+    }
 
     if (typeof body.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(body.date)) {
       return json({ error: 'a date is required' }, 400)

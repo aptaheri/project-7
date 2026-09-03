@@ -269,6 +269,88 @@ export async function saveDay(input: SaveDay, editor: string): Promise<RouteDay>
 }
 
 /**
+ * Slides a run of days one day later, because he has lost a day.
+ *
+ * Falling behind is the ordinary state of this trip, not an exception — it is
+ * the whole reason `daysFromPlan` measures against the plan rather than against
+ * this table. Until now the only way to record it was to retype every remaining
+ * day, so it did not get recorded, and the tracker went on believing he was
+ * resting in a town he had not reached.
+ *
+ * Each day in the window takes what the day before it held, so the day named is
+ * the first one that happens late. Nothing outside the window moves: he replans
+ * as he rides and never looks ten days ahead from a phone, so the days beyond
+ * it are left on the plan to be shifted when they come into view.
+ *
+ * No directions are fetched. A leg moved to a different date is the same road
+ * between the same two towns, so its distance and its geometry travel with it —
+ * which is what makes this one statement rather than a dozen Mapbox calls on a
+ * phone with one bar.
+ */
+export async function shiftFrom(from: string, until: string, editor: string): Promise<number> {
+  await ensureSchema()
+  const sql = db()
+
+  const days = await loadRoute()
+  const start = days.findIndex((d) => d.date === from)
+  // Nothing to take content from, or nothing to move.
+  if (start < 1) return 0
+
+  const rows = days
+    .filter((d) => d.date >= from && d.date <= until)
+    .map((target, offset) => {
+      const source = days[start + offset - 1]
+      return {
+        date: target.date,
+        kind: source.kind,
+        from_place: source.from,
+        to_place: source.to,
+        miles: source.miles,
+        note: source.note ?? '',
+        from_lon: source.fromCoords?.[0] ?? null,
+        from_lat: source.fromCoords?.[1] ?? null,
+        to_lon: source.toCoords?.[0] ?? null,
+        to_lat: source.toCoords?.[1] ?? null,
+        cycling_miles: source.cyclingMiles ?? null,
+        route_coords: source.routeCoords ?? null,
+        needs_review: source.needsReview ?? false,
+      }
+    })
+
+  if (rows.length === 0) return 0
+
+  // One statement, so a shift is all of the days or none of them. Written a day
+  // at a time it could stop halfway down a mountain and leave a route that is
+  // half slipped and half not, which is worse than not having shifted at all.
+  await sql`
+    insert into route_days (
+      date, kind, from_place, to_place, miles, note,
+      from_lon, from_lat, to_lon, to_lat,
+      cycling_miles, route_coords, needs_review, updated_by, updated_at
+    )
+    select
+      (r->>'date')::date, r->>'kind', r->>'from_place', r->>'to_place',
+      (r->>'miles')::float8, coalesce(r->>'note', ''),
+      (r->>'from_lon')::float8, (r->>'from_lat')::float8,
+      (r->>'to_lon')::float8, (r->>'to_lat')::float8,
+      (r->>'cycling_miles')::float8, r->'route_coords',
+      (r->>'needs_review')::boolean, ${editor}, now()
+    from jsonb_array_elements(${JSON.stringify(rows)}::jsonb) as r
+    on conflict (date) do update set
+      kind = excluded.kind,
+      from_place = excluded.from_place, to_place = excluded.to_place,
+      miles = excluded.miles, note = excluded.note,
+      from_lon = excluded.from_lon, from_lat = excluded.from_lat,
+      to_lon = excluded.to_lon, to_lat = excluded.to_lat,
+      cycling_miles = excluded.cycling_miles, route_coords = excluded.route_coords,
+      needs_review = excluded.needs_review,
+      updated_by = excluded.updated_by, updated_at = now()
+  `
+
+  return rows.length
+}
+
+/**
  * Moves the following day's start to wherever this one now ends.
  *
  * Called after a destination changes, because the alternative is an itinerary

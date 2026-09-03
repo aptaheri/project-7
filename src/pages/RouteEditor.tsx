@@ -63,6 +63,8 @@ export default function RouteEditor() {
   const [miles, setMiles] = useState('')
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
+  // The day a shift would start from, while he is looking at what it would do.
+  const [shifting, setShifting] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -248,6 +250,45 @@ export default function RouteEditor() {
     }
   }
 
+  /**
+   * What the days would say if everything from one of them happened a day later.
+   *
+   * Worked out here rather than asked of the server, because the page already
+   * holds every day it would touch — so the preview is instant, and he is
+   * looking at the same arithmetic the server is about to do rather than a
+   * description of it.
+   */
+  function shiftPreview(fromDate: string): { date: string; before: Day; after: Day }[] {
+    const start = days.findIndex((d) => d.date === fromDate)
+    if (start < 1) return []
+    return days.slice(start).map((day, offset) => ({
+      date: day.date,
+      before: day,
+      after: days[start + offset - 1],
+    }))
+  }
+
+  async function applyShift(fromDate: string) {
+    setSaving(true)
+    try {
+      const response = await fetch('/api/route', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ shift: { from: fromDate } }),
+      })
+      if (!response.ok) {
+        const body = (await response.json()) as { error?: string }
+        throw new Error(body.error ?? 'Could not shift the schedule.')
+      }
+      setShifting(null)
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not shift the schedule.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (authLoading) return <main className="route-editor"><p className="muted">Loading…</p></main>
   if (!isOwner) {
     return (
@@ -317,6 +358,44 @@ export default function RouteEditor() {
                       ? (isPast || isToday ? 'I rode after all' : 'Make this a riding day')
                       : (isPast || isToday ? 'I took the day off' : 'Make this a rest day')}
                   </button>
+                  {/* Only forward, and never on the first card — a shift takes
+                      its schedule from the day above, and there isn't one. */}
+                  {!isPast && index > 0 && (
+                    <button type="button" className="ghost" disabled={saving} onClick={() => setShifting(day.date)}>
+                      Everything from here is a day later
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {shifting === day.date && (
+                <div className="shift">
+                  <p className="shift-lead">
+                    Every day from here takes what the day before it says. Nothing after{' '}
+                    {label(days[days.length - 1].date)} moves — shift those when they come round.
+                  </p>
+                  <ul className="shift-preview">
+                    {shiftPreview(day.date).map((row) => (
+                      <li key={row.date}>
+                        <span className="shift-date">{label(row.date)}</span>
+                        <span className="shift-was">
+                          {row.before.kind === 'rest' ? 'Rest' : row.before.to ?? '—'}
+                        </span>
+                        <span className="arrow">→</span>
+                        <span className="shift-now">
+                          {row.after.kind === 'rest' ? `Rest at ${row.after.to ?? '—'}` : row.after.to ?? '—'}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="edit-actions">
+                    <button type="button" className="primary" disabled={saving} onClick={() => void applyShift(day.date)}>
+                      {saving ? 'Shifting…' : 'Shift them'}
+                    </button>
+                    <button type="button" className="ghost" disabled={saving} onClick={() => setShifting(null)}>
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               )}
 

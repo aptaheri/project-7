@@ -159,6 +159,51 @@
   }
 }
 
+// What a shift would do, before it does it. Rewriting ten days on one tap is
+// not something to hand somebody without showing them the ten days first.
+.shift {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shift-lead {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.shift-preview {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+
+  li {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .shift-date { color: rgba(255, 255, 255, 0.55); }
+  .shift-was {
+    color: rgba(255, 255, 255, 0.4);
+    text-decoration: line-through;
+    overflow-wrap: anywhere;
+  }
+  .arrow { color: rgba(255, 255, 255, 0.4); }
+  .shift-now { color: #fff; overflow-wrap: anywhere; }
+}
+
 .edit {
   margin-top: 14px;
   display: flex;

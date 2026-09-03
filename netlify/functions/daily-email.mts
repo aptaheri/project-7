@@ -27,6 +27,12 @@ export default async function handler(): Promise<Response> {
 //
 // Typed loosely because the site does not depend on @netlify/functions —
 // Netlify reads this shape either way.
+// Seven minutes past, not on the hour. The hour mark stopped firing at the end
+// of August — fact-warm kept running on the same deploy while this logged
+// nothing at all across three separate hours, so the schedule itself had gone
+// stale rather than the function failing. Changing the expression is what
+// re-registers it. The minute is arbitrary; that it is a different string is
+// the point.
 export const config = {
-  schedule: '0 * * * *',
+  schedule: '7 * * * *',
 }
