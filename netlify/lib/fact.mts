@@ -54,9 +54,18 @@ const NOTHING = 'NONE'
 /**
  * Bumped when the brief changes shape, so stored lines written to an older
  * brief are replaced rather than sitting alongside new ones forever. Version 1
- * was a single sentence and no distance line.
+ * was a single sentence and no second line. Version 2 asked for two sentences
+ * of 45 to 70 words, which is what produced paragraphs like the one about
+ * Scuol: three clauses spliced together, four dates, and the best thing in it —
+ * the mouthwash millionaire who bought a castle — buried at the very end.
+ *
+ * Version 3 asks for short sentences, one idea each, the best thing first, and
+ * a second line about the day's riding rather than an arithmetic comparison.
+ * It is often shorter than the ceiling it is given, and that is the brief
+ * working: the model writes what it verified and stops, which is the same
+ * instinct that makes it return nothing at all for a village.
  */
-export const FORMAT_VERSION = 2
+export const FORMAT_VERSION = 3
 
 /**
  * The brief for a place whose fact is already written by hand.
@@ -67,41 +76,68 @@ export const FORMAT_VERSION = 2
  * gives the model the fact that will sit above it so the two read as one
  * thought rather than two unrelated remarks.
  */
-const DISTANCE_ONLY_PROMPT = (destination: string, miles: number | null, fact: string) => `A daily email about a cycling expedition goes out tomorrow morning. Tonight the rider arrives in ${destination}, and this paragraph about the place is already written and will appear above your sentence:
+const DISTANCE_ONLY_PROMPT = (destination: string, ride: RideContext, fact: string) => `A daily email about a cycling expedition goes out tomorrow morning. Tonight the rider arrives in ${destination}, and this paragraph about the place is already written and will appear above your sentence:
 
 "${fact}"
 
-Search the web if it helps, then write ONE sentence, under 30 words, that makes today's ride of ${
-  miles === null ? 'an unknown distance' : `${Math.round(miles)} miles (${Math.round(miles * 1.609)} km)`
-} mean something — anchored to this place or its region, and ideally picking up something from the paragraph above rather than repeating it.
+Search the web if it helps, then write one or two sentences about what kind of day today is for the rider.
+
+Today he rides ${ride.from ? `from ${ride.from} ` : ''}to ${destination}${
+  ride.miles === null
+    ? ', distance unknown'
+    : `, ${Math.round(ride.miles)} miles (${Math.round(ride.miles * 1.609)} km)`
+}.${ride.note ? ` The route notes say: ${ride.note}.` : ''}
+
+A hundred miles or more is a century and a big day. Under forty is a short one. A mountain pass is a day of climbing, and it is worth saying which pass and roughly how high if you can verify it.
 
 Rules:
-- No preamble, no quotes, no source list. Do not restate the paragraph.
-- Numbers are where you are most likely to be wrong. Use only the figures given above, plus at most one length or height you actually found in the search, and keep the comparison simple enough to be checked. Do not estimate, do not multiply your way to a figure you did not verify.
+- No preamble, no quotes, no source list. Do not restate the paragraph above.
+- This is about the riding, not the town's history.
+- Numbers are where you are most likely to be wrong. Use only the distance given above, plus at most one height you actually found. Do not estimate.
 - No superlatives unless a source says so plainly.
-- Return an empty string for "distance" if you have nothing you are confident of. An empty string is much better than a plausible guess.
+- Return an empty string for "ride" if you have nothing you are confident of. An empty string is much better than a plausible guess.
 - Return an empty string for "fact" — it is already written.
 `
 
-const PROMPT = (destination: string, miles: number | null) => `You write two short pieces of a daily email about a cycling expedition across seven continents. Tonight the rider arrives in the place named below.
+const PROMPT = (destination: string, ride: RideContext) => `You write two short pieces of a daily email about a cycling expedition across seven continents. Tonight the rider arrives in the place named below.
 
-Search the web first. Both pieces are read by people who know the rider personally, so anything you write has to be true and specific to that exact place.
+Search the web first. Both pieces are read by people who know the rider personally, over breakfast, on a phone. Anything you write has to be true and specific to that exact place.
 
-PIECE ONE — "fact": two sentences, 45 to 70 words, about the place itself. History, geography, an industry, something that happened there. Give the reader something they would repeat to someone else: a detail, a date, a name, a consequence. Not a guidebook summary.
+PIECE ONE — "fact": up to 120 words, and as much of that as you can actually verify. Two true sentences beat five padded ones — do not stretch thin material to fill a length.
 
-PIECE TWO — "distance": one sentence, under 30 words, that makes today's ride of ${
-  miles === null ? 'an unknown distance' : `${Math.round(miles)} miles (${Math.round(miles * 1.609)} km)`
-} mean something, anchored to this place or its region rather than to a generic landmark. ${
-  miles === null ? 'You do not know the distance, so return an empty string for this piece.' : ''
-}
+Where there is more to say, say it in this order:
+
+1. The single most surprising or human thing you found. Not where the place is — the thing worth repeating to somebody.
+2. A second, different detail. A person, an industry, something that happened there, something that failed.
+3. What the place is actually like now.
+
+Write it the way you would tell it to someone at a table, not the way an encyclopaedia would.
+
+- Lead with the single most surprising or human thing you found, not with where the place is. If a mouthwash millionaire bought the castle above the town, that is the first sentence, not the last.
+- One idea per sentence. Short sentences.
+- No semicolons. At most one comma in a sentence.
+- Plain words. Say "spa town" rather than "internationally known spa resort destination".
+- At most two dates in the whole thing, and only if they carry weight.
+- Facts a reader would repeat to somebody else. Not a survey of the place.
+
+PIECE TWO — "ride": one or two sentences about what kind of day today is for the rider.
+
+Today he rides ${ride.from ? `from ${ride.from} ` : ''}to ${destination}${
+  ride.miles === null
+    ? ', distance unknown'
+    : `, ${Math.round(ride.miles)} miles (${Math.round(ride.miles * 1.609)} km)`
+}.${ride.note ? ` The route notes say: ${ride.note}.` : ''}
+
+Say what that means for him today. A hundred miles or more is a century and a big day. Under forty is a short one. A mountain pass is a day of climbing, and it is worth saying which pass and roughly how high if you can verify it. A river valley or a border crossing is worth saying too.
+
+This piece is about the riding, not about the town's history — leave that to piece one. Return an empty string if you have nothing true and specific to say.
 
 Rules for both:
 - No preamble, no quotes, no source list.
-- Write about the place, not about cycling as a sport or the expedition itself.
 - Do not describe anywhere as charming, picturesque, quaint, or a hidden gem.
 - No superlatives — only, first, oldest, largest, unique — unless a source says so plainly. A true fact with an invented "the only one ever" is a wrong fact.
-- Numbers are where you are most likely to be wrong. In the distance sentence use only the figures given above, plus at most one length or height you actually found in the search, and keep any comparison simple enough to be checked. Do not estimate, do not multiply your way to a figure you did not verify.
-- If the search does not give you something you are confident of, return an empty string for that piece. Many of these are villages of a few hundred people; an empty string is a perfectly good answer and much better than a plausible guess. The two pieces are independent — an empty distance sentence alongside a good fact is fine.
+- Numbers are where you are most likely to be wrong. Use the distance given above, plus at most one height or length you actually found. Do not estimate, do not multiply your way to a figure you did not verify.
+- If the search does not give you something you are confident of, return an empty string for that piece. Many of these are villages of a few hundred people; an empty string is a perfectly good answer and much better than a plausible guess. The two pieces are independent.
 
 Place: ${destination}`
 
@@ -110,11 +146,25 @@ const SCHEMA = {
   type: 'object',
   properties: {
     fact: { type: 'string' },
-    distance: { type: 'string' },
+    ride: { type: 'string' },
   },
-  required: ['fact', 'distance'],
+  required: ['fact', 'ride'],
   additionalProperties: false,
 } as const
+
+/**
+ * What today's riding actually is, so the second line can be about the day
+ * rather than an arithmetic comparison nobody asked for.
+ *
+ * `note` is whatever the route says about the day — "Klausen Pass", "Alps" —
+ * which is the only signal there is for whether it is a climbing day, since
+ * nothing here knows elevation ahead of time.
+ */
+export interface RideContext {
+  miles: number | null
+  from?: string | null
+  note?: string | null
+}
 
 interface Generated {
   fact: string
@@ -157,7 +207,7 @@ function tidy(text: string): string {
  */
 async function generate(
   destination: string,
-  miles: number | null,
+  ride: RideContext,
   existingFact: string | null = null,
 ): Promise<Attempt> {
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -197,8 +247,8 @@ async function generate(
       messages: [{
         role: 'user',
         content: existingFact
-          ? DISTANCE_ONLY_PROMPT(destination, miles, existingFact)
-          : PROMPT(destination, miles),
+          ? DISTANCE_ONLY_PROMPT(destination, ride, existingFact)
+          : PROMPT(destination, ride),
       }],
     })])
 
@@ -214,7 +264,7 @@ async function generate(
     const blocks = response.content.filter((block) => block.type === 'text')
     const answer = blocks[blocks.length - 1]?.text ?? ''
 
-    let parsed: { fact?: unknown; distance?: unknown }
+    let parsed: { fact?: unknown; ride?: unknown }
     try {
       parsed = JSON.parse(answer)
     } catch {
@@ -225,7 +275,7 @@ async function generate(
     // When the fact is already written by hand, that is the fact — the model
     // was asked for the second piece only and told to leave this one empty.
     const fact = existingFact ?? tidy(typeof parsed.fact === 'string' ? parsed.fact : '')
-    const distance = tidy(typeof parsed.distance === 'string' ? parsed.distance : '')
+    const distance = tidy(typeof parsed.ride === 'string' ? parsed.ride : '')
 
     // For a place being written from scratch, an empty fact is the model doing
     // as it was told about a village it could not verify. Nothing to store.
@@ -234,9 +284,9 @@ async function generate(
     // For a hand-written place there is nothing new without a distance line.
     if (existingFact && !distance) return { type: 'declined' }
 
-    // Two sentences. Anything much longer is the model ignoring the brief, and
-    // an email is not the place to find out how much longer.
-    if (fact.length > 700) {
+    // The brief asks for a hundred words. Anything approaching double that is
+    // the model ignoring it, and an email is not the place to find out.
+    if (fact.length > 900) {
       console.warn(`discarded an overlong fact for ${destination}: ${fact.slice(0, 120)}…`)
       return { type: 'declined' }
     }
@@ -339,6 +389,8 @@ export async function ensureFact(
   destination: string,
   miles: number | null,
   mayWrite = true,
+  /** The rest of what today's ride is, for the second line. */
+  ride: Omit<RideContext, 'miles'> = {},
 ): Promise<Warmed> {
   const written = curated(destination)
 
@@ -389,7 +441,7 @@ export async function ensureFact(
     // it: the place has not changed, only the distance to it. The existing fact
     // is handed back to the model as context, exactly as a hand-written one is.
     const keepFact = written ?? (staleDistance ? stored[0]?.fact ?? null : null)
-    const attempt = await generate(destination, miles, keepFact)
+    const attempt = await generate(destination, { ...ride, miles }, keepFact)
 
     // A decline is recorded rather than forgotten. The row may hold no fact at
     // all — it exists only to say that this was tried, and how often.

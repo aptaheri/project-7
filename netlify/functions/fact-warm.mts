@@ -47,12 +47,15 @@ const ATTEMPTS_PER_RUN = 1
  */
 async function upcoming(
   today: string,
-): Promise<{ to: string; date: string; miles: number | null }[]> {
+): Promise<{ to: string; date: string; miles: number | null; from: string | null; note: string | null }[]> {
   const last = new Date(Date.parse(`${today}T00:00:00Z`) + LOOKAHEAD_DAYS * 86_400_000)
     .toISOString()
     .slice(0, 10)
 
-  const byDestination = new Map<string, { date: string; miles: number | null }>()
+  const byDestination = new Map<
+    string,
+    { date: string; miles: number | null; from: string | null; note: string | null }
+  >()
   // The route as it now stands, so a destination he entered last night is
   // warmed tonight rather than whenever somebody edits a file.
   for (const day of await loadRoute()) {
@@ -62,10 +65,20 @@ async function upcoming(
     // First occurrence wins, so a place he reaches on a riding day keeps that
     // day's distance rather than the rest day that follows it.
     if (!byDestination.has(day.to) || (known && known.miles === null && day.kind === 'ride')) {
-      byDestination.set(day.to, { date: day.date, miles: day.kind === 'ride' ? day.miles : null })
+      byDestination.set(day.to, {
+        date: day.date,
+        miles: day.kind === 'ride' ? day.miles : null,
+        // Where he sets off from and whatever the route says about the day —
+        // "Klausen Pass", "Alps". The only advance signal there is for whether
+        // today is a climbing day.
+        from: day.from,
+        note: day.note || null,
+      })
     }
   }
-  return [...byDestination].map(([to, at]) => ({ to, date: at.date, miles: at.miles }))
+  return [...byDestination].map(([to, at]) => ({
+    to, date: at.date, miles: at.miles, from: at.from, note: at.note,
+  }))
 }
 
 export default async function handler(): Promise<Response> {
@@ -101,10 +114,10 @@ export default async function handler(): Promise<Response> {
 
     let attempts = 0
     for (let i = 0; i < queue.length; i++) {
-      const { to, miles } = queue[i]
+      const { to, miles, from, note } = queue[i]
       // Reads are cheap and tell us whether there is anything to do; calling
       // the model is the part that is rationed.
-      const outcome = await ensureFact(to, miles, attempts < ATTEMPTS_PER_RUN)
+      const outcome = await ensureFact(to, miles, attempts < ATTEMPTS_PER_RUN, { from, note })
       counts[outcome] += 1
       if (outcome === 'written' || outcome === 'declined' || outcome === 'failed') {
         attempts += 1

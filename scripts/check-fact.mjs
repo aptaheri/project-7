@@ -76,7 +76,7 @@ globalThis.fetch = async (url, init) => {
     return new Response(JSON.stringify({ type: 'error', error: { type: 'api_error', message: 'boom' } }),
       { status: reply.status, headers: { 'content-type': 'application/json' } })
   }
-  const answer = reply.raw ?? JSON.stringify({ fact: reply.fact ?? '', distance: reply.distance ?? '' })
+  const answer = reply.raw ?? JSON.stringify({ fact: reply.fact ?? '', ride: reply.distance ?? '' })
   const blocks = reply.narrate ? [reply.narrate, answer] : [answer]
   return new Response(JSON.stringify({
     id: 'msg_test', type: 'message', role: 'assistant', model: 'claude-opus-5',
@@ -181,7 +181,7 @@ check('an empty fact is a decline', (await ensureFact('Tiny Hamlet', 70)) === 'd
 check('leaving a marker, not a fact', (await row('Tiny Hamlet'))?.fact === null)
 check('and the send reads it as blank', (await factFor('Tiny Hamlet')).fact === null)
 
-reply = { fact: 'x'.repeat(900), distance: 'fine' }
+reply = { fact: 'x'.repeat(1200), distance: 'fine' }
 check('an overlong fact is a decline', (await ensureFact('Rambling Place', 70)) === 'declined')
 check('and no fact is stored for it', (await row('Rambling Place'))?.fact === null)
 
@@ -205,7 +205,7 @@ reply = { fact: 'A fact about a rest day town.', distance: '' }
 calls = 0
 check('a place with no mileage is still warmed', (await ensureFact('Rest Day Town', null)) === 'written')
 check('and the model is told the distance is unknown',
-  lastPrompt.includes('unknown distance'), 'unknown distance')
+  lastPrompt.includes('distance unknown'), 'distance unknown')
 
 // ── A changed distance rewrites the sentence about it ──────────────────────
 // The line is written about a number — "today's 114 km covered more than a
