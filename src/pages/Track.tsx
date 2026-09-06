@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import GoogleSignIn from '../components/GoogleSignIn'
+import SignInOptions from '../components/SignInOptions'
 import TrackMap from './TrackMap'
 import { signOut, useAuth } from '../lib/auth'
 import './Track.scss'
@@ -50,7 +50,11 @@ export default function Track() {
             Sign in to continue. Access is granted per account — if yours is new,
             an owner has to approve it before the map appears.
           </p>
-          <GoogleSignIn clientId={me?.clientId ?? null} onSignedIn={setMe} />
+          <SignInOptions
+            clientId={me?.clientId ?? null}
+            microsoftClientId={me?.microsoftClientId ?? null}
+            onSignedIn={setMe}
+          />
         </div>
       </div>
     )

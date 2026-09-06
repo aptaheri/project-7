@@ -441,5 +441,59 @@ check('the sweep clears links that have had their day', swept > 0, `${swept} row
 check('and leaves the table empty when they all have',
   (await pg.query('select count(*)::int as n from magic_link_tokens')).rows[0].n === 0)
 
+// ── An identity is what gets access, not an address ────────────────────────
+// The reason this exists: the app accepts Microsoft tokens from any tenant,
+// because every university is its own. Microsoft lets a tenant set a user's
+// email attribute to anything and signs no email_verified claim, so a token
+// bearing a viewer's address is a claim. Binding is what turns a proved
+// address into access, and nothing else may.
+const ident = await bundle('netlify/lib/identity.mts', 'identity.mjs')
+
+await pg.query(`insert into viewers (email, role) values ('bound@example.com', 'viewer')
+                on conflict (email) do nothing`)
+
+check('an unbound identity owns no address',
+  (await ident.boundEmail('microsoft', 'tenant-a:user-1')) === null)
+
+await ident.bindIdentity({
+  provider: 'microsoft', subject: 'tenant-a:user-1',
+  email: 'bound@example.com', firstName: 'Bound', lastName: 'Person',
+})
+check('once bound it owns that one',
+  (await ident.boundEmail('microsoft', 'tenant-a:user-1')) === 'bound@example.com')
+
+// The attack, stated plainly: somebody else's tenant, claiming the same
+// address. It is a different subject, so it is a different identity, and it
+// inherits nothing.
+check('a different tenant claiming the same address is a stranger',
+  (await ident.boundEmail('microsoft', 'tenant-evil:user-1')) === null)
+check('and so is the same user id in a different tenant',
+  (await ident.boundEmail('microsoft', 'tenant-b:user-1')) === null)
+
+// Providers are separate namespaces: a Google sub is not a Microsoft oid even
+// if the strings ever collided.
+check('providers do not share subjects',
+  (await ident.boundEmail('google', 'tenant-a:user-1')) === null)
+
+// Rebinding follows a person who changes address rather than stranding them.
+await ident.bindIdentity({
+  provider: 'microsoft', subject: 'tenant-a:user-1',
+  email: 'moved@example.com', firstName: null, lastName: null,
+})
+check('a rebind moves the identity to the new address',
+  (await ident.boundEmail('microsoft', 'tenant-a:user-1')) === 'moved@example.com')
+const keptName = (await pg.query(
+  `select first_name from auth_identities where provider='microsoft' and subject='tenant-a:user-1'`,
+)).rows[0]
+check('and keeps the name already on file', keptName.first_name === 'Bound', keptName.first_name)
+
+// What worked last time is observed, never inferred from a mail domain — that
+// was tried, and Cornell's MX says Microsoft while its people use Google.
+await ident.rememberProvider('bound@example.com', 'microsoft')
+check('the way in that worked is remembered',
+  (await ident.lastProvider('bound@example.com')) === 'microsoft')
+check('and is null for somebody who has never got in',
+  (await ident.lastProvider('nobody@example.com')) === null)
+
 console.log(failures === 0 ? '\nAll access checks passed.' : `\n${failures} check(s) failed.`)
 process.exit(failures === 0 ? 0 : 1)

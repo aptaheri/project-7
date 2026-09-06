@@ -143,6 +143,25 @@ they are the things a reasonable change would otherwise undo.
     window moves, the day before it does not, nothing past it does, and no
     Mapbox call is made.
 
+12. **Access is granted to an identity, never to an email address.** Microsoft
+    lets any tenant set a user's email attribute to anything and signs no
+    `email_verified` claim, and this app accepts tokens from **any** tenant
+    because every university is its own — so an address in a Microsoft token is
+    a claim, not proof. `auth_identities` holds the `(provider, subject)` an
+    owner actually approved; the address beside it is what the owner reads and
+    where the daily mail goes. A Microsoft identity signing in for the first
+    time is **not** signed in: a link goes to the address it claims, and
+    clicking it is what binds them. Google binds directly, because its
+    `email_verified` means something. `check-access` asserts that a second
+    tenant claiming a bound address is a stranger.
+
+13. **Which way in somebody uses is observed, not inferred.** Guessing from the
+    domain's MX records was tried and does not survive this list: Cornell's mail
+    is Microsoft's and its people sign in with Google, Mayo runs its own, and
+    Harvard, Stanford and JPMorgan sit behind gateways that say nothing about
+    who authenticates them. All three buttons are offered; `viewers.last_provider`
+    records what worked so it can be offered first next time.
+
 ## Testing
 
 Every change to SQL or to a rule gets an assertion in `scripts/check-*.mjs`.

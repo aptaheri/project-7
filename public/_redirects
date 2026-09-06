@@ -17,6 +17,13 @@
 /api/auth/me       /.netlify/functions/auth?action=me         200!
 /api/auth/google   /.netlify/functions/auth?action=google      200!
 /api/auth/logout   /.netlify/functions/auth?action=logout      200!
+# The other two ways in. Microsoft verifies an ID token; magic sends a link and
+# verify spends one. One rule each for the same reason as above — a :placeholder
+# is not substituted into the destination's query string, so the function would
+# see no action at all.
+/api/auth/microsoft /.netlify/functions/auth?action=microsoft  200!
+/api/auth/magic    /.netlify/functions/auth?action=magic       200!
+/api/auth/verify   /.netlify/functions/auth?action=verify      200!
 /api/viewers       /.netlify/functions/viewers                200!
 /api/unsubscribe   /.netlify/functions/unsubscribe            200!
 /api/email-admin   /.netlify/functions/email-admin            200!
