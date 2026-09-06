@@ -104,6 +104,29 @@ globalThis.__ensureSchema = async () => {
     alter table viewers add column if not exists first_name text;
     alter table viewers add column if not exists last_name text;
   `)
+  // Sign-in for people on neither Google nor Microsoft. Hashed tokens, so a
+  // leaked table is not a set of live sessions.
+  await pg.exec(`
+    create table if not exists magic_link_tokens (
+      token_hash text primary key,
+      email      text not null,
+      created_at timestamptz not null default now(),
+      expires_at timestamptz not null,
+      used_at    timestamptz
+    );
+    create table if not exists auth_identities (
+      provider   text not null,
+      subject    text not null,
+      email      text not null,
+      first_name text,
+      last_name  text,
+      created_at timestamptz not null default now(),
+      last_seen  timestamptz not null default now(),
+      primary key (provider, subject)
+    );
+  `)
+  await pg.exec(`alter table viewers add column if not exists last_provider text;`)
+
   // The route editor's table, so its gate can be exercised here alongside
   // every other question of who may do what.
   await pg.exec(`
@@ -345,6 +368,78 @@ check('and it is not everyone', users.isBootstrapOwner('nameless@example.com') =
 await users.removeViewer('boss@example.com')
 check('a bootstrap owner deleted at the database level reappears on the next list',
   (await users.listViewers()).some((v) => v.email === 'boss@example.com'))
+
+// ── A magic link is possession of an address, and nothing more ─────────────
+// This is the one method whose proof is stronger than the token it replaces:
+// Google's carries email_verified and Microsoft's carries nothing of the kind,
+// but clicking a link delivered to an address is possession of that address.
+// Everything below is about it staying that narrow.
+const magic = await bundle('netlify/lib/magic.mts', 'magic.mjs')
+
+const link = await magic.issueLink('Someone@Example.com  ')
+check('a link is minted for an address', typeof link.token === 'string' && link.token.length > 30,
+  `${link.token.length} chars`)
+
+// The row is a record that a link exists, not the link itself.
+const stored = await pg.query('select token_hash, email from magic_link_tokens')
+check('the token is never stored in the clear',
+  !stored.rows.some((r) => r.token_hash === link.token))
+check('only its hash is', stored.rows[0].token_hash.length === 64, stored.rows[0].token_hash.length)
+check('and the address is normalised on the way in',
+  stored.rows[0].email === 'someone@example.com', stored.rows[0].email)
+
+const good = await magic.redeemLink(link.token)
+check('redeeming it returns the address it was sent to',
+  good.ok === true && good.email === 'someone@example.com', JSON.stringify(good))
+
+// The property the whole thing rests on: one click, once.
+const again = await magic.redeemLink(link.token)
+check('a second click is refused', again.ok === false, JSON.stringify(again))
+check('and says so, rather than pretending the link never existed',
+  again.ok === false && again.reason === 'used', again.ok === false ? again.reason : '')
+
+// A token nobody issued is not a way in, and does not look different from one
+// that has expired.
+const forged = await magic.redeemLink('not-a-token-anybody-issued')
+check('an unissued token is refused', forged.ok === false && forged.reason === 'unknown',
+  forged.ok === false ? forged.reason : '')
+
+// Expiry is enforced in the statement that spends it, not by a later sweep.
+const stale = await magic.issueLink('stale@example.com')
+await pg.query(`update magic_link_tokens set expires_at = now() - interval '1 minute'
+                where email = 'stale@example.com'`)
+const dead = await magic.redeemLink(stale.token)
+check('an expired link is refused', dead.ok === false && dead.reason === 'expired',
+  dead.ok === false ? dead.reason : '')
+
+// The one that would be catastrophic and would look fine in a demo: a link
+// minted for one address must never come back holding another.
+const mine = await magic.issueLink('viewer@example.com')
+const theirs = await magic.issueLink('attacker@example.com')
+const redeemed = await magic.redeemLink(theirs.token)
+check('a link redeems as its own address, never a neighbour',
+  redeemed.ok === true && redeemed.email === 'attacker@example.com',
+  redeemed.ok === true ? redeemed.email : '')
+const stillMine = await magic.redeemLink(mine.token)
+check('and spending one leaves the other alone',
+  stillMine.ok === true && stillMine.email === 'viewer@example.com',
+  stillMine.ok === true ? stillMine.email : '')
+
+// Asking twice does not invalidate the copy already on its way — the first
+// email to arrive is often the second one sent.
+const askedOnce = await magic.issueLink('twice@example.com')
+const askedAgain = await magic.issueLink('twice@example.com')
+check('a second request does not kill the first link',
+  (await magic.redeemLink(askedOnce.token)).ok === true)
+check('and the newer one still works too',
+  (await magic.redeemLink(askedAgain.token)).ok === true)
+
+// Spent rows are kept a while, which is what lets a second click be explained
+// rather than denied. The sweep is what stops that being forever.
+const swept = await magic.sweepLinks(0)
+check('the sweep clears links that have had their day', swept > 0, `${swept} row(s)`)
+check('and leaves the table empty when they all have',
+  (await pg.query('select count(*)::int as n from magic_link_tokens')).rows[0].n === 0)
 
 console.log(failures === 0 ? '\nAll access checks passed.' : `\n${failures} check(s) failed.`)
 process.exit(failures === 0 ? 0 : 1)

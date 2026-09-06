@@ -90,6 +90,66 @@ export function ensureSchema(): Promise<void> {
       await sql`alter table viewers add column if not exists first_name text`
       await sql`alter table viewers add column if not exists last_name text`
 
+      // How somebody proved they are who they say, per provider.
+      //
+      // Access is granted to an *identity*, not to a string. An email address
+      // is not proof of anything: Microsoft lets any tenant set a user's email
+      // attribute to whatever it likes and issues no email_verified claim at
+      // all, so a token claiming a viewer's address is a claim and nothing
+      // more. Keying access on the address would hand the live map to anyone
+      // willing to spend ten minutes creating a tenant.
+      //
+      // So the subject — Google's `sub`, Microsoft's `oid`+`tid`, or the
+      // address a magic link was actually delivered to and clicked from — is
+      // what an owner approves and what a session is issued against. The email
+      // beside it is what the owner reads when deciding, and how the daily
+      // mail reaches them.
+      await sql`
+        create table if not exists auth_identities (
+          provider   text not null,
+          subject    text not null,
+          email      text not null,
+          first_name text,
+          last_name  text,
+          created_at timestamptz not null default now(),
+          last_seen  timestamptz not null default now(),
+          primary key (provider, subject)
+        )
+      `
+      // Every identity for one person, for the sharing page and for deciding
+      // which button to offer them first.
+      await sql`
+        create index if not exists auth_identities_email_idx on auth_identities (email)
+      `
+
+      // One-time sign-in links, for everybody whose mail is neither Google's
+      // nor Microsoft's — which on the addresses actually on this list is most
+      // of them.
+      //
+      // The token is stored as a SHA-256 hash, never in the clear. A leaked
+      // table of live tokens is a leaked set of sessions; a leaked table of
+      // hashes is not, and nothing here ever needs the original back — a link
+      // is checked by hashing what arrives and looking for the result.
+      await sql`
+        create table if not exists magic_link_tokens (
+          token_hash text primary key,
+          email      text not null,
+          created_at timestamptz not null default now(),
+          expires_at timestamptz not null,
+          used_at    timestamptz
+        )
+      `
+      // Expiry is the hot column: every redemption asks whether this hash is
+      // live, and the sweep asks which have died.
+      await sql`
+        create index if not exists magic_link_tokens_expires_idx
+          on magic_link_tokens (expires_at)
+      `
+
+      // Which way in worked last time, so a returning viewer is offered that
+      // one first rather than being asked again. Null until they get in once.
+      await sql`alter table viewers add column if not exists last_provider text`
+
       // Generated destination lines, kept so the same place is never invented
       // twice and so a sentence that turns out to be wrong can be found again.
       await sql`
