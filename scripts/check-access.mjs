@@ -538,5 +538,59 @@ const replay = await authFn.default(
 )
 check('and the same link cannot be used twice', replay.status === 401, String(replay.status))
 
+// ── A session that is used stays alive; one that is not, does not ─────────
+// Thirty days from sign-in and nothing renewed it, so somebody who opened the
+// map every morning was still thrown out on the thirty-first — fifteen times
+// over a ride this long, each looking like a bug to the person it happened to.
+const sessionLib = await bundle('netlify/lib/session.mts', 'session-access.mjs', false)
+const { createHmac: hmac } = await import('node:crypto')
+
+// A cookie for any expiry, signed the way the real one is, so the renewal
+// window can be tested without waiting a fortnight.
+function cookieExpiring(email, secondsFromNow) {
+  const payload = Buffer.from(
+    JSON.stringify({ email, exp: Math.floor(Date.now() / 1000) + secondsFromNow }),
+    'utf8',
+  ).toString('base64url')
+  const sig = hmac('sha256', process.env.SESSION_SECRET).update(payload).digest('base64url')
+  return `p7_session=${payload}.${sig}`
+}
+
+const DAY = 86400
+const meWith = (cookie) =>
+  authFn.default(new Request('https://project7.bike/api/auth/me?action=me', { headers: { cookie } }))
+
+const fresh = await meWith(cookieExpiring('bruce.alison@mayo.edu', 29 * DAY))
+check('a signed-in browser is recognised', (await fresh.json()).authenticated === true)
+check('and a fresh session is left alone', fresh.headers.get('set-cookie') === null,
+  String(fresh.headers.get('set-cookie')))
+
+// Past halfway, so it is worth extending.
+const ageing = await meWith(cookieExpiring('bruce.alison@mayo.edu', 3 * DAY))
+check('a session past halfway is renewed', (ageing.headers.get('set-cookie') ?? '').includes('p7_session='))
+check('for a full term again',
+  (ageing.headers.get('set-cookie') ?? '').includes(`Max-Age=${30 * DAY}`),
+  ageing.headers.get('set-cookie'))
+check('and still says who they are', (await ageing.json()).email === 'bruce.alison@mayo.edu')
+
+// The half of the bargain that matters: renewal extends a live session and can
+// never resurrect a dead one.
+const lapsed = await meWith(cookieExpiring('bruce.alison@mayo.edu', -60))
+check('an expired session is not authenticated', (await lapsed.json()).authenticated === false)
+check('and is never renewed', lapsed.headers.get('set-cookie') === null,
+  String(lapsed.headers.get('set-cookie')))
+
+// Nor can an unsigned one talk its way into a fresh thirty days.
+const unsignedPayload = Buffer.from(
+  JSON.stringify({ email: 'attacker@example.com', exp: Math.floor(Date.now() / 1000) + 3 * DAY }),
+  'utf8',
+).toString('base64url')
+const unsigned = await meWith(`p7_session=${unsignedPayload}.not-a-real-signature`)
+check('an unsigned cookie is nobody', (await unsigned.json()).authenticated === false)
+check('and gets no cookie either', unsigned.headers.get('set-cookie') === null)
+
+check('the window itself is halfway', sessionLib.dueForRenewal({ email: 'x', exp: Math.floor(Date.now() / 1000) + 14 * DAY }) === true)
+check('and not before', sessionLib.dueForRenewal({ email: 'x', exp: Math.floor(Date.now() / 1000) + 16 * DAY }) === false)
+
 console.log(failures === 0 ? '\nAll access checks passed.' : `\n${failures} check(s) failed.`)
 process.exit(failures === 0 ? 0 : 1)

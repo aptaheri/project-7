@@ -58,6 +58,25 @@ export function readSession(value: string | null): Session | null {
   }
 }
 
+/**
+ * Whether a live session is old enough to be worth extending.
+ *
+ * The cookie lasts thirty days from the moment it is issued and nothing renewed
+ * it, so somebody who checked the map every morning was still thrown out on the
+ * thirty-first — fifteen times over a ride this long, each one looking like a
+ * bug to the person it happened to.
+ *
+ * Renewing past the halfway mark rather than on every request keeps that from
+ * costing a Set-Cookie on all forty-odd polls a browser makes in a session,
+ * while still meaning anybody who visits even once a fortnight never sees a
+ * sign-in screen again. Somebody who stops visiting still expires on schedule,
+ * which is the half of the bargain worth keeping.
+ */
+export function dueForRenewal(session: Session): boolean {
+  const remaining = session.exp - Math.floor(Date.now() / 1000)
+  return remaining < MAX_AGE_SECONDS / 2
+}
+
 export function getCookie(req: Request, name: string): string | null {
   const header = req.headers.get('cookie')
   if (!header) return null

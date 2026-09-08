@@ -1,6 +1,6 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import { json } from '../lib/auth.mts'
-import { clearedCookie, createSession, currentSession, sessionCookie } from '../lib/session.mts'
+import { clearedCookie, createSession, currentSession, dueForRenewal, sessionCookie } from '../lib/session.mts'
 import { canViewTrack, cleanName, normalizeEmail, ownerEmails, recordSignIn } from '../lib/users.mts'
 import { buildAccessRequestEmail } from '../lib/access-email.mts'
 import { buildMagicEmail } from '../lib/magic-email.mts'
@@ -181,7 +181,7 @@ export default async function handler(req: Request): Promise<Response> {
       // TRACK_OWNER_EMAILS promotes them on their next poll instead of
       // requiring them to sign out and back in.
       const { role, emailPref } = await recordSignIn(session.email)
-      return json({
+      const body = JSON.stringify({
         authenticated: true,
         email: session.email,
         role,
@@ -190,6 +190,22 @@ export default async function handler(req: Request): Promise<Response> {
         clientId,
         microsoftClientId,
       })
+
+      // Extended in passing, on the one request every signed-in browser already
+      // makes. Nothing else has to change and nobody has to click anything —
+      // which is the point, since the alternative is a viewer being asked to
+      // find a sign-in link again for no reason they can see.
+      const headers: Record<string, string> = {
+        'content-type': 'application/json',
+        'cache-control': 'no-store',
+      }
+      if (dueForRenewal(session)) {
+        // A fresh thirty days for the address the cookie already proved. This
+        // is reached only through currentSession, which refuses an expired or
+        // unsigned cookie — so a dead session can never renew itself.
+        headers['set-cookie'] = sessionCookie(req, createSession(session.email).value)
+      }
+      return new Response(body, { status: 200, headers })
     } catch (error) {
       console.error('role lookup failed', error)
       return json({ error: 'lookup failed' }, 500)
