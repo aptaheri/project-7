@@ -25,7 +25,12 @@ function escape(value: string): string {
 }
 
 export interface AccessRequestInput {
-  /** Whoever asked, as Google reported them. Null when Google gave no name. */
+  /**
+   * Whoever asked, as their provider reported them. Null when none was given —
+   * which is now the ordinary case rather than an odd one: a magic link proves
+   * an address and knows nothing else about the person, so most requests
+   * arrive with an address and no name at all.
+   */
   name: string | null
   email: string
   /** Site origin, so the link works from a deploy preview as well as live. */
@@ -39,7 +44,7 @@ export function buildAccessRequestEmail(input: AccessRequestInput): {
 } {
   // The name is the useful half of the subject line — an owner reading a phone
   // notification should recognise the person without opening anything. The
-  // address stands in when Google gave no name, which beats "Somebody".
+  // address stands in when no name was given, which beats "Somebody".
   const who = input.name ?? input.email
   const subject = `Tracker access requested: ${who}`
   const sharingUrl = `${input.origin}/track/sharing`
@@ -97,7 +102,7 @@ export function buildAccessRequestEmail(input: AccessRequestInput): {
 
     <tr><td style="padding:18px 28px 28px;">
       <div style="font:400 13px/1.5 ${FONT};color:${MUTED};">
-        ${input.name ? '' : 'Google gave no name for this account, so there is only an address to go on. '}You can set or correct anyone's name on that page.
+        ${input.name ? '' : 'No name came with this request, so there is only an address to go on. '}You can set or correct anyone's name on that page.
       </div>
     </td></tr>
 

@@ -495,5 +495,48 @@ check('the way in that worked is remembered',
 check('and is null for somebody who has never got in',
   (await ident.lastProvider('nobody@example.com')) === null)
 
+// ── Clicking a link puts somebody on the sharing page ──────────────────────
+// Alison asked for a link, clicked it, and the owners were told she had signed
+// in — but she was not on the sharing page. Everything in this file passed
+// while that was true, because nothing here drove the endpoint. So: the real
+// handler, the real link, and then a look at the table an owner reads.
+const authFn = await bundle('netlify/functions/auth.mts', 'auth-access.mjs')
+const magicFor = await bundle('netlify/lib/magic.mts', 'magic-endpoint.mjs')
+
+const hers = await magicFor.issueLink('bruce.alison@mayo.edu')
+const verified = await authFn.default(
+  new Request('https://project7.bike/api/auth/verify?action=verify', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ token: hers.token }),
+  }),
+)
+const verifiedBody = await verified.json()
+check('clicking a link signs somebody in', verified.status === 200,
+  `${verified.status} ${JSON.stringify(verifiedBody).slice(0, 90)}`)
+check('and sets a session cookie', (verified.headers.get('set-cookie') ?? '').includes('p7_session='))
+
+// The thing that was actually wrong.
+const onList = (await users.listViewers()).find((v) => v.email === 'bruce.alison@mayo.edu')
+check('and puts them on the sharing page', Boolean(onList), JSON.stringify(onList))
+check('as a pending request', onList?.role === 'pending', onList?.role)
+check('with the way they got in recorded', onList !== undefined &&
+  (await ident.lastProvider('bruce.alison@mayo.edu')) === 'email')
+
+// The identity is bound to the address the link was delivered to, which is the
+// only thing that was actually proved.
+check('and the identity is bound to that address',
+  (await ident.boundEmail('email', 'bruce.alison@mayo.edu')) === 'bruce.alison@mayo.edu')
+
+// A spent link cannot be replayed into a second session.
+const replay = await authFn.default(
+  new Request('https://project7.bike/api/auth/verify?action=verify', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ token: hers.token }),
+  }),
+)
+check('and the same link cannot be used twice', replay.status === 401, String(replay.status))
+
 console.log(failures === 0 ? '\nAll access checks passed.' : `\n${failures} check(s) failed.`)
 process.exit(failures === 0 ? 0 : 1)
