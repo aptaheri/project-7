@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import ElevationChart from '../components/ElevationChart'
-import { BACKFILL_BLUE, LIVE_BLUE, ROUTE_RED } from '../lib/mapColors'
+import { AHEAD_RED, BACKFILL_BLUE, LIVE_BLUE, ROUTE_RED } from '../lib/mapColors'
 import {
   compass, dateIn, daylight, fahrenheit, mph, restingLabel, timeIn, weatherDescription,
 } from '../lib/conditions'
@@ -57,12 +57,26 @@ interface LatestFix {
  * day rather than once every thirty seconds. Sending it with every poll meant
  * re-transmitting the whole expedition to move a marker.
  */
+interface UpcomingDay {
+  date: string
+  kind: 'ride' | 'rest' | 'travel' | 'other'
+  from: string | null
+  to: string
+  miles: number | null
+  origin: [number, number] | null
+  destination: [number, number]
+  /** Null where nobody has fetched the road yet; drawn as a straight hop. */
+  line: [number, number][] | null
+}
+
 interface History {
   version: string
   days: DaySummary[]
   trail: [number, number][]
   backfillTrail: [number, number][]
   backfillKm: number
+  /** Today and the fortnight after it, from the route as it now stands. */
+  upcoming?: UpcomingDay[]
 }
 
 interface Feed {
@@ -388,6 +402,33 @@ export default function TrackMap({ emailPref }: Props) {
       // Where he is going today, drawn under everything else so his actual
       // trail sits on top of it. A tracker answers "where is he" well enough
       // already; the question people actually ask next is where he is headed.
+      // The fortnight ahead, drawn first so everything real sits on top of it.
+      // Two layers rather than one: a routed day is a road and says so with a
+      // solid line, an unrouted day is two towns and a guess, and drawing them
+      // alike would claim to know a road nobody has looked up.
+      map.addSource('ahead', { type: 'geojson', data: EMPTY_LINE })
+      map.addLayer({
+        id: 'ahead-line',
+        type: 'line',
+        source: 'ahead',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        filter: ['==', ['get', 'routed'], true],
+        paint: { 'line-color': AHEAD_RED, 'line-width': 3, 'line-opacity': 0.55 },
+      })
+      map.addLayer({
+        id: 'ahead-guess',
+        type: 'line',
+        source: 'ahead',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        filter: ['==', ['get', 'routed'], false],
+        paint: {
+          'line-color': AHEAD_RED,
+          'line-width': 2,
+          'line-opacity': 0.3,
+          'line-dasharray': [1, 2.5],
+        },
+      })
+
       map.addSource('planned', { type: 'geojson', data: EMPTY_LINE })
       map.addLayer({
         id: 'planned-line',
@@ -441,6 +482,21 @@ export default function TrackMap({ emailPref }: Props) {
         paint: { 'line-color': LIVE_BLUE, 'line-width': 5 },
       })
 
+      // Where he is heading, one marker per night. Hollow, so they read as
+      // somewhere he has not been yet rather than somewhere he has.
+      map.addSource('ahead-stops', { type: 'geojson', data: EMPTY_POINTS })
+      map.addLayer({
+        id: 'ahead-stop-markers',
+        type: 'circle',
+        source: 'ahead-stops',
+        paint: {
+          'circle-radius': 5,
+          'circle-color': 'rgba(10,10,15,0.85)',
+          'circle-stroke-width': 2,
+          'circle-stroke-color': AHEAD_RED,
+        },
+      })
+
       // Where each day ended. Added above the trail so they stay clickable.
       map.addSource('days', { type: 'geojson', data: EMPTY_POINTS })
       map.addLayer({
@@ -457,6 +513,36 @@ export default function TrackMap({ emailPref }: Props) {
             'case', ['get', 'reconstructed'], BACKFILL_BLUE, LIVE_BLUE,
           ],
         },
+      })
+
+      // Same gesture as a past stop, because it answers the same question —
+      // what is this place. A popup rather than the day panel: there are no
+      // rollups for a night he has not spent yet, so there is nothing for that
+      // panel to show.
+      map.on('click', 'ahead-stop-markers', (e) => {
+        const f = e.features?.[0]
+        if (!f) return
+        const p = f.properties ?? {}
+        const when = new Date(`${String(p.date)}T12:00:00Z`).toLocaleDateString('en-GB', {
+          weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC',
+        })
+        const detail = p.kind === 'rest'
+          ? 'Rest day'
+          : [p.from ? `from ${String(p.from)}` : null, p.miles ? `${String(p.miles)} mi` : null]
+              .filter(Boolean).join(' · ')
+        new mapboxgl.Popup({ closeButton: false, offset: 12 })
+          .setLngLat((f.geometry as GeoJSON.Point).coordinates as [number, number])
+          .setHTML(
+            `<div class="ahead-pop"><strong>${String(p.to)}</strong>` +
+            `<span>${when}${detail ? ` · ${detail}` : ''}</span></div>`,
+          )
+          .addTo(map)
+      })
+      map.on('mouseenter', 'ahead-stop-markers', () => {
+        map.getCanvas().style.cursor = 'pointer'
+      })
+      map.on('mouseleave', 'ahead-stop-markers', () => {
+        map.getCanvas().style.cursor = ''
       })
 
       map.on('click', 'day-markers', (e) => {
@@ -500,6 +586,40 @@ export default function TrackMap({ emailPref }: Props) {
         // The journey so far and today, joined at the point he woke up at.
         coordinates: [...(history?.trail ?? []), ...feed.trail],
       },
+    })
+
+    // The road ahead. A routed day draws its actual cycling line; one nobody
+    // has looked up yet draws the straight hop between its two towns, dashed,
+    // so it does not claim to be a road.
+    const ahead = map.getSource('ahead') as mapboxgl.GeoJSONSource | undefined
+    const aheadDays = history?.upcoming ?? []
+    ahead?.setData({
+      type: 'FeatureCollection',
+      features: aheadDays.flatMap((d) => {
+        // A rest day has no riding to draw.
+        if (d.kind === 'rest') return []
+        // The road if somebody has looked it up, otherwise the straight line
+        // between the two towns — which is drawn dashed, because it is not one.
+        const geometry = d.line ?? (d.origin ? [d.origin, d.destination] : null)
+        if (!geometry || geometry.length < 2) return []
+        return [{
+          type: 'Feature' as const,
+          properties: { routed: d.line !== null, date: d.date },
+          geometry: { type: 'LineString' as const, coordinates: geometry },
+        }]
+      }),
+    })
+
+    const aheadStops = map.getSource('ahead-stops') as mapboxgl.GeoJSONSource | undefined
+    aheadStops?.setData({
+      type: 'FeatureCollection',
+      features: aheadDays.map((d) => ({
+        type: 'Feature' as const,
+        properties: {
+          date: d.date, to: d.to, from: d.from, miles: d.miles, kind: d.kind,
+        },
+        geometry: { type: 'Point' as const, coordinates: d.destination },
+      })),
     })
 
     const planned = map.getSource('planned') as mapboxgl.GeoJSONSource | undefined

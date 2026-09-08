@@ -39,6 +39,13 @@ await pg.exec(`
     needs_review boolean not null default false,
     updated_by text, updated_at timestamptz not null default now()
   );
+  create table route_geometry (
+    date date primary key,
+    from_lon double precision not null, from_lat double precision not null,
+    to_lon double precision not null, to_lat double precision not null,
+    coords jsonb not null,
+    computed_at timestamptz not null default now()
+  );
 `)
 globalThis.__pg = tagged
 
@@ -68,7 +75,7 @@ const bundle = await esbuild.build({
 })
 const outPath = join(dir, 'route.mjs')
 writeFileSync(outPath, bundle.outputFiles[0].text)
-const { loadRoute, saveDay, rechainNextDay, shiftFrom, lineForEmail, lineForMap, PLAN } =
+const { loadRoute, saveDay, rechainNextDay, shiftFrom, upcomingRoute, warmGeometry, lineForEmail, lineForMap, PLAN } =
   await import(pathToFileURL(resolve(outPath)).href)
 
 let failures = 0
@@ -239,6 +246,66 @@ check('the email line fits a URL', emailLine.length <= 60, `${emailLine.length} 
 check('and still bends', emailLine.length > 5, `${emailLine.length} points`)
 check('the map line stays inside the wire budget', mapLine.length <= 120, `${mapLine.length} points`)
 check('and is the more detailed of the two', mapLine.length >= emailLine.length)
+
+await pg.query('delete from route_days')
+await pg.query('delete from route_geometry')
+
+// ── The fortnight ahead ────────────────────────────────────────────────────
+// What people actually ask, after "where is he": where will he be. Read from
+// the merge, so a reroute entered last night is what they see this morning.
+const from0 = PLAN.find((d) => d.kind === 'ride' && d.to && d.fromCoords && d.toCoords)
+const ahead = await upcomingRoute(from0.date, 14)
+check('the road ahead covers a fortnight', ahead.length >= 14 && ahead.length <= 15, `${ahead.length} days`)
+check('starting today', ahead[0].date === from0.date, ahead[0].date)
+check('and every day carries somewhere to be', ahead.every((d) => d.to && d.destination))
+check('with no road looked up yet', ahead.every((d) => d.line === null))
+check('but a start to draw a straight hop from',
+  ahead.filter((d) => d.kind === 'ride').every((d) => d.origin !== null))
+
+// A day he has edited was routed when he saved it, so its line is already
+// there and nothing needs fetching.
+await saveDay(
+  { date: from0.date, kind: 'ride', from: from0.from, fromCoords: from0.fromCoords,
+    to: 'Rerouted Tonight', toCoords: from0.toCoords, miles: null, note: '', needsReview: false },
+  'john@example.com',
+)
+const afterEdit = await upcomingRoute(from0.date, 14)
+check('an edited day shows where he is now going',
+  afterEdit[0].to === 'Rerouted Tonight', afterEdit[0].to)
+check('and draws the road he was given', Array.isArray(afterEdit[0].line) && afterEdit[0].line.length > 1,
+  `${afterEdit[0].line?.length} points`)
+check('thinned to the wire budget', (afterEdit[0].line?.length ?? 0) <= 120,
+  `${afterEdit[0].line?.length} points`)
+
+// An unedited day gets its road from the cache, once something has warmed it.
+const plain = afterEdit.find((d) => d.kind === 'ride' && d.line === null && d.origin)
+const callsBefore = directionsCalls
+const warmed = await warmGeometry((await loadRoute()).find((d) => d.date === plain.date))
+check('an unrouted day can be warmed', warmed === true)
+check('which costs one directions call', directionsCalls === callsBefore + 1)
+const afterWarm = await upcomingRoute(from0.date, 14)
+check('and it then has a road', (afterWarm.find((d) => d.date === plain.date)?.line?.length ?? 0) > 1)
+
+// The cache is only right while the towns either end of it are unchanged.
+await pg.query(
+  `update route_geometry set to_lon = to_lon + 1, to_lat = to_lat + 1 where date = $1`,
+  [plain.date],
+)
+const afterMove = await upcomingRoute(from0.date, 14)
+check('a cached road for different towns is discarded',
+  afterMove.find((d) => d.date === plain.date)?.line === null)
+
+// Caching a road must never make the plan look edited — the drift figure and
+// the editor both read that flag.
+const stillPlan = (await loadRoute()).find((d) => d.date === plain.date)
+check('and warming a day does not mark it as edited', stillPlan.edited !== true)
+
+// A rest day is somewhere to be, not something to draw.
+const resting = afterWarm.find((d) => d.kind === 'rest')
+if (resting) check('a rest day has a destination but no line', resting.line === null && Boolean(resting.to))
+
+await pg.query('delete from route_days')
+await pg.query('delete from route_geometry')
 
 // ── An unreachable database is the plan, not an empty map ──────────────────
 globalThis.__pg = () => { throw new Error('no database') }

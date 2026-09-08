@@ -4,6 +4,8 @@ import { requireTrackViewer } from '../lib/gate.mts'
 import { testDevices } from '../lib/devices.mts'
 import { localDayRange } from '../lib/day.mts'
 import { loadHistory } from '../lib/rollups.mts'
+import { upcomingRoute } from '../lib/route.mts'
+import type { UpcomingDay } from '../lib/route.mts'
 import type { DaySummary } from '../lib/rollups.mts'
 import tzLookup from 'tz-lookup'
 
@@ -33,6 +35,16 @@ interface HistoryPayload {
   /** Reconstructed riding from before the tracker existed. Drawn dashed. */
   backfillTrail: [number, number][]
   backfillKm: number
+  /**
+   * The road ahead: today and the fortnight after it, from the route as it now
+   * stands rather than the plan he set out with.
+   *
+   * Carried here rather than in the live feed because it changes when he
+   * reroutes, not when a fix arrives — and a fortnight of geometry on every
+   * thirty-second poll is exactly the traffic this split exists to avoid. The
+   * version token moves when he edits, so an open map picks it up.
+   */
+  upcoming: UpcomingDay[]
   mode: 'production' | 'test'
 }
 
@@ -74,6 +86,7 @@ export default async function handler(req: Request): Promise<Response> {
         trail: [],
         backfillTrail: [],
         backfillKm: 0,
+        upcoming: [],
         mode,
       } satisfies HistoryPayload)
     }
@@ -133,6 +146,10 @@ export default async function handler(req: Request): Promise<Response> {
       trail: history.trail,
       backfillTrail: backfillCache.trail,
       backfillKm: backfillCache.km,
+      // Read here rather than in the feed: it moves when he reroutes, and the
+      // version token moves with it, so an open map refetches on an edit and
+      // on nothing else.
+      upcoming: await upcomingRoute(today),
       mode,
     }
 

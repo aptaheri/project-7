@@ -268,6 +268,125 @@ export async function saveDay(input: SaveDay, editor: string): Promise<RouteDay>
   return days.find((d) => d.date === input.date) as RouteDay
 }
 
+/** How far ahead the map shows. Two weeks is what people ask about. */
+export const AHEAD_DAYS = 14
+
+export interface UpcomingDay {
+  date: string
+  kind: DayKind
+  from: string | null
+  to: string
+  miles: number | null
+  /** Where the day starts. Null on a rest day, which starts nowhere. */
+  origin: [number, number] | null
+  destination: [number, number]
+  /**
+   * The cycling road, where it is known. Null means nobody has fetched it yet
+   * and the map draws a straight hop instead — which is honest about being a
+   * guess rather than pretending to be a route.
+   */
+  line: [number, number][] | null
+}
+
+/**
+ * The road ahead, as it now stands.
+ *
+ * Reads the merge, so a reroute he entered last night is what people see this
+ * morning rather than the plan he left with. Rest days carry a destination but
+ * no line, because there is no riding to draw.
+ *
+ * The line comes from whichever source actually has it: a day he edited was
+ * routed by saveDay at the time, and the rest are looked up in the geometry
+ * cache. Neither is fetched here — this is read on a page load and a Mapbox
+ * round trip per day would be fourteen of them.
+ */
+export async function upcomingRoute(today: string, days = AHEAD_DAYS): Promise<UpcomingDay[]> {
+  const last = new Date(Date.parse(`${today}T00:00:00Z`) + days * 86_400_000)
+    .toISOString()
+    .slice(0, 10)
+
+  const route = await loadRoute()
+  const ahead = route.filter((d) => d.date >= today && d.date <= last && d.to && d.toCoords)
+  if (ahead.length === 0) return []
+
+  let cached = new Map<string, [number, number][]>()
+  try {
+    await ensureSchema()
+    const rows = (await db()`
+      select to_char(date, 'YYYY-MM-DD') as date, coords, from_lon, from_lat, to_lon, to_lat
+      from route_geometry
+      where date >= ${today}::date and date <= ${last}::date
+    `) as unknown as {
+      date: string
+      coords: [number, number][]
+      from_lon: number
+      from_lat: number
+      to_lon: number
+      to_lat: number
+    }[]
+    for (const row of rows) {
+      const day = ahead.find((d) => d.date === row.date)
+      // A cached line is only the right one while the towns either end of it
+      // are still the towns he is riding between.
+      if (!day?.fromCoords || !day.toCoords) continue
+      const same =
+        Math.abs(day.fromCoords[0] - row.from_lon) < 1e-6 &&
+        Math.abs(day.fromCoords[1] - row.from_lat) < 1e-6 &&
+        Math.abs(day.toCoords[0] - row.to_lon) < 1e-6 &&
+        Math.abs(day.toCoords[1] - row.to_lat) < 1e-6
+      if (same) cached.set(row.date, row.coords)
+    }
+  } catch (error) {
+    // No cache is a map of straight hops, which is worse but not broken.
+    console.error('route geometry lookup failed', error)
+    cached = new Map()
+  }
+
+  return ahead.map((day) => {
+    const own = day.kind === 'rest' ? null : (day.routeCoords ?? cached.get(day.date) ?? null)
+    return {
+      date: day.date,
+      kind: day.kind,
+      from: day.from,
+      to: day.to as string,
+      miles: day.miles,
+      origin: day.fromCoords,
+      destination: day.toCoords as [number, number],
+      line: own?.length ? lineForMap(own) : null,
+    }
+  })
+}
+
+/**
+ * Fetches and stores the road for one day that has none.
+ *
+ * Called from the warming schedule rather than from anything a person is
+ * waiting on: this is a Mapbox round trip, and fourteen of them on a page load
+ * is a page that does not load.
+ */
+export async function warmGeometry(day: RouteDay): Promise<boolean> {
+  if (day.kind === 'rest' || !day.fromCoords || !day.toCoords) return false
+
+  const road = await cyclingRoute(day.fromCoords, day.toCoords)
+  if (!road) return false
+
+  await ensureSchema()
+  await db()`
+    insert into route_geometry (date, from_lon, from_lat, to_lon, to_lat, coords, computed_at)
+    values (
+      ${day.date}::date,
+      ${day.fromCoords[0]}, ${day.fromCoords[1]},
+      ${day.toCoords[0]}, ${day.toCoords[1]},
+      ${JSON.stringify(road.coords)}::jsonb, now()
+    )
+    on conflict (date) do update set
+      from_lon = excluded.from_lon, from_lat = excluded.from_lat,
+      to_lon = excluded.to_lon, to_lat = excluded.to_lat,
+      coords = excluded.coords, computed_at = now()
+  `
+  return true
+}
+
 /**
  * Slides a run of days one day later, because he has lost a day.
  *

@@ -1,5 +1,6 @@
+import { db, ensureSchema } from '../lib/db.mts'
 import { ensureFact } from '../lib/fact.mts'
-import { loadRoute } from '../lib/route.mts'
+import { AHEAD_DAYS, loadRoute, warmGeometry } from '../lib/route.mts'
 import type { Warmed } from '../lib/fact.mts'
 
 /**
@@ -36,6 +37,16 @@ const LOOKAHEAD_DAYS = 4
  * against eight runs, that is ample.
  */
 const ATTEMPTS_PER_RUN = 1
+
+/**
+ * Roads fetched per run, on top of the one model call.
+ *
+ * Directions are quick and cheap next to a model that searches the web, so
+ * this can be several rather than one — but a fortnight of them in a function
+ * with thirty seconds would still be pushing it, and there is no hurry: the
+ * far end of the window is a week away from mattering.
+ */
+const GEOMETRY_PER_RUN = 4
 
 /**
  * Destinations for today and the next few days, with the distance he rides to
@@ -128,7 +139,38 @@ export default async function handler(): Promise<Response> {
       }
     }
 
-    console.log(`fact-warm: ${JSON.stringify(counts)} in ${Math.round((Date.now() - started) / 1000)}s`)
+    // The road ahead, for the days he has not edited. A day he edited was
+    // routed when he saved it; the rest are two coordinates and no road
+    // between them, and a straight hop over the Alps is not what riding there
+    // looks like. Bounded per run for the same reason the facts are: this
+    // function has thirty seconds and a Mapbox round trip is a second of it.
+    let roads = 0
+    try {
+      const last = new Date(Date.parse(`${today}T00:00:00Z`) + AHEAD_DAYS * 86_400_000)
+        .toISOString()
+        .slice(0, 10)
+      await ensureSchema()
+      const known = new Set(
+        ((await db()`
+          select to_char(date, 'YYYY-MM-DD') as date from route_geometry
+          where date >= ${today}::date and date <= ${last}::date
+        `) as unknown as { date: string }[]).map((r) => r.date),
+      )
+      const needing = (await loadRoute()).filter(
+        (d) =>
+          d.date >= today && d.date <= last &&
+          d.kind !== 'rest' && d.fromCoords && d.toCoords &&
+          !d.routeCoords && !known.has(d.date),
+      )
+      for (const day of needing.slice(0, GEOMETRY_PER_RUN)) {
+        if (await warmGeometry(day)) roads += 1
+      }
+    } catch (error) {
+      // A missing road is a straight line on the map, not a broken page.
+      console.error('route geometry warming failed', error)
+    }
+
+    console.log(`fact-warm: ${JSON.stringify(counts)}, ${roads} road(s) in ${Math.round((Date.now() - started) / 1000)}s`)
     return new Response(null, { status: 204 })
   } catch (error) {
     console.error('fact-warm failed:', error)

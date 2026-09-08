@@ -162,6 +162,23 @@ they are the things a reasonable change would otherwise undo.
     who authenticates them. All three buttons are offered; `viewers.last_provider`
     records what worked so it can be offered first next time.
 
+14. **The road ahead rides on the history, not the live feed.** `/api/track/history`
+    carries today plus `AHEAD_DAYS` from the merged route — a reroute he entered
+    last night, not the plan he left with. It is there rather than in the poll
+    because a fortnight of geometry every thirty seconds is exactly the traffic
+    the split exists to avoid, and because it changes when he *edits*, not when
+    a fix arrives. So `version()` folds in `max(updated_at)` from `route_days`:
+    without it an edit sits unseen on every open map until the next midnight.
+    That lookup is wrapped — a coarser token costs a stale road, a throw costs
+    the whole live feed.
+
+15. **Cached cycling geometry never goes in `route_days`.** A row there means
+    "he changed this", and both the editor and `daysFromPlan` read it that way,
+    so caching a line in one would relabel the plan as edited. `route_geometry`
+    is keyed by date and stores the endpoints beside the line, so a reroute
+    invalidates it. `fact-warm` tops up a few per run; a day with no line drawn
+    yet is a dashed straight hop, which is honest about being a guess.
+
 ## Testing
 
 Every change to SQL or to a rule gets an assertion in `scripts/check-*.mjs`.

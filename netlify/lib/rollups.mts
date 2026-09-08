@@ -637,7 +637,26 @@ async function version(ctx: RollupContext): Promise<string> {
   const rows = (await ctx.sql`
     select computed_at::text as computed_at from trail_cache where mode = ${ctx.mode}
   `) as unknown as { computed_at: string }[]
-  return rows[0]?.computed_at ?? 'empty'
+
+  // The road ahead is part of what the history carries, and it changes when
+  // John reroutes rather than when a day ends. Without this an edit made from
+  // the road would sit unseen on every open map until the next midnight, which
+  // is precisely the wait the route editor exists to remove.
+  //
+  // Defensive, because this is on the live feed's path: a token that is merely
+  // less precise costs a stale road ahead until the next rollup, while a throw
+  // here costs the whole feed — the marker, the trail, the distance, all of it.
+  let edited = 'plan'
+  try {
+    const rows2 = (await ctx.sql`
+      select max(updated_at)::text as at from route_days
+    `) as unknown as { at: string | null }[]
+    edited = rows2[0]?.at ?? 'plan'
+  } catch (error) {
+    console.error('route version lookup failed', error)
+  }
+
+  return `${rows[0]?.computed_at ?? 'empty'}|${edited}`
 }
 
 /**

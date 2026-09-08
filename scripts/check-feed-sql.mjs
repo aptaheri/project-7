@@ -134,6 +134,22 @@ await pg.exec(`
     seen_received timestamptz not null,
     computed_at timestamptz not null default now()
   );
+  create table route_days (
+    date date primary key, kind text not null,
+    from_place text, to_place text, miles double precision, note text,
+    from_lon double precision, from_lat double precision,
+    to_lon double precision, to_lat double precision,
+    cycling_miles double precision, route_coords jsonb,
+    needs_review boolean not null default false,
+    updated_by text, updated_at timestamptz not null default now()
+  );
+  create table route_geometry (
+    date date primary key,
+    from_lon double precision not null, from_lat double precision not null,
+    to_lon double precision not null, to_lat double precision not null,
+    coords jsonb not null,
+    computed_at timestamptz not null default now()
+  );
   create table sent_emails (
     local_date date not null, kind text not null default 'daily',
     sent_at timestamptz not null default now(),
@@ -332,6 +348,21 @@ check('and the stored summary is corrected', lateHistory.days[0].distanceKm > be
   `${before.toFixed(1)} -> ${lateHistory.days[0].distanceKm.toFixed(1)} km`)
 check('and the version changes so a client refetches',
   lateHistory.version !== firstHistory.version)
+
+// ── A reroute reaches a map that is already open ───────────────────────────
+// The token used to move only when a day ended, so an edit made from the road
+// sat unseen until the next midnight — which is exactly the wait the route
+// editor exists to remove. The client refetches when this changes and at no
+// other time, so if it does not move here, nothing downstream works.
+const beforeEdit = lateHistory.version
+await pg.query(
+  `insert into route_days (date, kind, from_place, to_place, to_lon, to_lat, updated_at)
+   values (current_date + 2, 'ride', 'Somewhere', 'Somewhere Else', 9.1, 46.2, now())
+   on conflict (date) do update set to_place = 'Somewhere Else', updated_at = now()`,
+)
+const afterEdit = await historyOf(await freshHistoryHandler())
+check('editing the route moves the history version', afterEdit.version !== beforeEdit,
+  `${beforeEdit} -> ${afterEdit.version}`)
 
 // ── The totals still agree with reading every fix the simple way ───────────
 const independent = await pg.query(`

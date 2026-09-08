@@ -90,6 +90,32 @@ export function ensureSchema(): Promise<void> {
       await sql`alter table viewers add column if not exists first_name text`
       await sql`alter table viewers add column if not exists last_name text`
 
+      // Cycling geometry for days he has not edited.
+      //
+      // A day he has edited already carries its line, written by saveDay when
+      // he saved it. The rest are still the plan, which has two coordinates and
+      // no road between them — and the road is the point, because a straight
+      // hop over the Alps is not what riding there looks like.
+      //
+      // Kept apart from route_days deliberately. A row there means "he changed
+      // this", and the editor and the drift figure both read it that way, so
+      // filling one in to cache a line would quietly relabel the whole plan as
+      // edited.
+      //
+      // The endpoints are stored beside the line so a reroute invalidates it:
+      // same date, different towns, recompute.
+      await sql`
+        create table if not exists route_geometry (
+          date       date primary key,
+          from_lon   double precision not null,
+          from_lat   double precision not null,
+          to_lon     double precision not null,
+          to_lat     double precision not null,
+          coords     jsonb not null,
+          computed_at timestamptz not null default now()
+        )
+      `
+
       // How somebody proved they are who they say, per provider.
       //
       // Access is granted to an *identity*, not to a string. An email address
