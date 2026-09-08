@@ -206,8 +206,10 @@ correct numbers.
 
 `ensureSchema` in `lib/db.mts` creates every table and index and applies every
 `add column if not exists` at cold start. The files in
-`netlify/database/migrations/` mirror it for the record but are not applied
-automatically. Put new schema in **both**: nobody has the connection string to
+`netlify/database/migrations/` **are applied on deploy, and are checksummed** —
+editing one that has already run fails the build with *"migration has been
+modified after being applied"*, and the deploy stops. Corrections go in a new
+numbered file, never as an edit to an old one. Put new schema in **both**: nobody has the connection string to
 hand — it is injected by Netlify at runtime only — so a deploy has to heal its
 own schema before the code that needs a column can ship.
 

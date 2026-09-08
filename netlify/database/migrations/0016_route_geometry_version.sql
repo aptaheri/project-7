@@ -1,0 +1,12 @@
+-- Roads carry the routing rules they were fetched under.
+--
+-- Version 1 let Mapbox's cycling profile take ferries, which is how the map
+-- came to show him riding from Zadar to Ancona and back across the Adriatic.
+-- Bumping GEOMETRY_VERSION in netlify/lib/route.mts stops those being served
+-- and has route-warm fetch them again, rather than leaving them to be quietly
+-- wrong until something happens to overwrite them.
+--
+-- A new file rather than an edit to 0015: these are applied on deploy and
+-- checksummed, so changing one that has already run fails the build with
+-- "migration has been modified after being applied".
+alter table route_geometry add column if not exists version int not null default 1;

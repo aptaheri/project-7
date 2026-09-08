@@ -167,27 +167,48 @@ await pg.query(`insert into viewers (email, role) values ('owner@example.com', '
 const LON = -2.45
 const LAT = 42.46
 
-// Minutes rather than hours: make_interval's arguments are integers, and a
-// fractional hour arrives as text and fails to parse.
-async function fix(minutesAgo, i, alt) {
+// Seconds rather than minutes: make_interval's arguments are integers, and
+// today's window can be short enough that whole minutes would put two fixes on
+// the same timestamp and collide on (device, tst).
+async function fix(secondsAgo, i, alt) {
   await pg.query(
     `insert into locations (device, tst, lat, lon, alt, acc, vel, batt, source, raw)
-     values ('phone', now() - make_interval(mins => $1), $2, $3, $4, 10, 5, 80, 'device', '{}'::jsonb)`,
-    [Math.round(minutesAgo), LAT + i * 0.002, LON + i * 0.002, alt],
+     values ('phone', now() - make_interval(secs => $1), $2, $3, $4, 10, 5, 80, 'device', '{}'::jsonb)`,
+    [Math.round(secondsAgo), LAT + i * 0.002, LON + i * 0.002, alt],
   )
 }
+
+/**
+ * How long today has been going where the fixture rides.
+ *
+ * Today's fixes used to be laid five hours back, which is only today if the
+ * test runs more than five hours after local midnight. Run it at one in the
+ * morning in Logroño and most of "today" landed on yesterday: the climb came
+ * out at 30 m instead of 300, and a suite that is green in the afternoon and
+ * red at night is not a suite anybody trusts. So the window is measured rather
+ * than assumed.
+ */
+const FIXTURE_ZONE = 'Europe/Madrid'
+const [nowH, nowM] = new Intl.DateTimeFormat('en-GB', {
+  timeZone: FIXTURE_ZONE, hour: '2-digit', minute: '2-digit', hour12: false,
+}).format(new Date()).split(':').map(Number)
+// A minute of margin either end, and never more than the five hours the
+// fixture was written around. Floored so that even a run a minute after
+// midnight still has somewhere to put thirty fixes.
+const TODAY_WINDOW_S = Math.max(60, Math.min(5 * 3600, (nowH * 60 + nowM) * 60 - 60))
 
 // Yesterday: 40 fixes, up 600 m and back down. Placed a day and a half back so
 // they land outside today's local date in any timezone this fixture can pick.
 for (let i = 0; i < 40; i++) {
   const alt = 400 + (i < 20 ? i * 30 : (39 - i) * 30)
-  await fix(36 * 60 - i * 12, i, alt)
+  await fix((36 * 60 - i * 12) * 60, i, alt)
 }
 // Today: a real climb of about 300 m, over enough fixes that the smoothing and
 // the hysteresis have something to work with. Without a climb today the "gain"
 // assertion below passes on zero and proves nothing.
 for (let i = 0; i < 30; i++) {
-  await fix(300 - i * 9, 40 + i, 400 + i * 10)
+  // Spread across whatever there is of today, newest last.
+  await fix(TODAY_WINDOW_S - (i * TODAY_WINDOW_S) / 30, 40 + i, 400 + i * 10)
 }
 
 globalThis.__pg = tagged
