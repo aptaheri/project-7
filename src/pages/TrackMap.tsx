@@ -156,6 +156,30 @@ interface DaySummary {
 
 const EMPTY_POINTS: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] }
 
+/**
+ * What a night ahead says when you click it.
+ *
+ * Shared by the marker and the line, because people reach for whichever is
+ * under the cursor — and a two-pixel dashed line is a hard thing to hit on
+ * purpose, so the line has a fat invisible twin to catch the attempt.
+ */
+function aheadPopup(map: mapboxgl.Map, at: [number, number], p: Record<string, unknown>) {
+  const when = new Date(`${String(p.date)}T12:00:00Z`).toLocaleDateString('en-GB', {
+    weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC',
+  })
+  const detail = p.kind === 'rest'
+    ? 'Rest day'
+    : [p.from ? `from ${String(p.from)}` : null, p.miles ? `${String(p.miles)} mi` : null]
+        .filter(Boolean).join(' · ')
+  new mapboxgl.Popup({ closeButton: false, offset: 12 })
+    .setLngLat(at)
+    .setHTML(
+      `<div class="ahead-pop"><strong>${String(p.to)}</strong>` +
+      `<span>${when}${detail ? ` · ${detail}` : ''}</span></div>`,
+    )
+    .addTo(map)
+}
+
 /** "2026-08-10" rendered as "Mon 10 Aug", without shifting into another day. */
 function formatDay(date: string): string {
   const d = new Date(`${date}T12:00:00Z`)
@@ -428,6 +452,24 @@ export default function TrackMap({ emailPref }: Props) {
           'line-dasharray': [1, 2.5],
         },
       })
+      // Invisible and wide, purely so the thin lines above can be clicked at
+      // all. Drawn from the same source, so it is always exactly under them.
+      map.addLayer({
+        id: 'ahead-hit',
+        type: 'line',
+        source: 'ahead',
+        paint: { 'line-color': AHEAD_RED, 'line-width': 18, 'line-opacity': 0 },
+      })
+      map.on('click', 'ahead-hit', (e) => {
+        const f = e.features?.[0]
+        if (f) aheadPopup(map, [e.lngLat.lng, e.lngLat.lat], f.properties ?? {})
+      })
+      map.on('mouseenter', 'ahead-hit', () => {
+        map.getCanvas().style.cursor = 'pointer'
+      })
+      map.on('mouseleave', 'ahead-hit', () => {
+        map.getCanvas().style.cursor = ''
+      })
 
       map.addSource('planned', { type: 'geojson', data: EMPTY_LINE })
       map.addLayer({
@@ -490,9 +532,9 @@ export default function TrackMap({ emailPref }: Props) {
         type: 'circle',
         source: 'ahead-stops',
         paint: {
-          'circle-radius': 5,
+          'circle-radius': 6,
           'circle-color': 'rgba(10,10,15,0.85)',
-          'circle-stroke-width': 2,
+          'circle-stroke-width': 2.5,
           'circle-stroke-color': AHEAD_RED,
         },
       })
@@ -522,21 +564,7 @@ export default function TrackMap({ emailPref }: Props) {
       map.on('click', 'ahead-stop-markers', (e) => {
         const f = e.features?.[0]
         if (!f) return
-        const p = f.properties ?? {}
-        const when = new Date(`${String(p.date)}T12:00:00Z`).toLocaleDateString('en-GB', {
-          weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC',
-        })
-        const detail = p.kind === 'rest'
-          ? 'Rest day'
-          : [p.from ? `from ${String(p.from)}` : null, p.miles ? `${String(p.miles)} mi` : null]
-              .filter(Boolean).join(' · ')
-        new mapboxgl.Popup({ closeButton: false, offset: 12 })
-          .setLngLat((f.geometry as GeoJSON.Point).coordinates as [number, number])
-          .setHTML(
-            `<div class="ahead-pop"><strong>${String(p.to)}</strong>` +
-            `<span>${when}${detail ? ` · ${detail}` : ''}</span></div>`,
-          )
-          .addTo(map)
+        aheadPopup(map, (f.geometry as GeoJSON.Point).coordinates as [number, number], f.properties ?? {})
       })
       map.on('mouseenter', 'ahead-stop-markers', () => {
         map.getCanvas().style.cursor = 'pointer'
@@ -604,7 +632,7 @@ export default function TrackMap({ emailPref }: Props) {
         if (!geometry || geometry.length < 2) return []
         return [{
           type: 'Feature' as const,
-          properties: { routed: d.line !== null, date: d.date },
+          properties: { routed: d.line !== null, date: d.date, to: d.to, from: d.from, miles: d.miles, kind: d.kind },
           geometry: { type: 'LineString' as const, coordinates: geometry },
         }]
       }),
