@@ -124,6 +124,22 @@ const EMAIL_LINE_POINTS = 60
 /** How far the drawn line may stray from the ridden one, in metres. */
 const LINE_TOLERANCE_M = 60
 
+/** How much longer than the straight line a road may plausibly be. */
+const IMPLAUSIBLE_DETOUR = 3
+
+const EARTH_KM = 6371
+
+/** Straight-line distance, for judging whether a road is a road. */
+function haversineKm(a: [number, number], b: [number, number]): number {
+  const rad = (d: number) => (d * Math.PI) / 180
+  const dLat = rad(b[1] - a[1])
+  const dLon = rad(b[0] - a[0])
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(rad(a[1])) * Math.cos(rad(b[1])) * Math.sin(dLon / 2) ** 2
+  return 2 * EARTH_KM * Math.asin(Math.min(1, Math.sqrt(h)))
+}
+
 export interface CyclingRoute {
   miles: number
   coords: [number, number][]
@@ -149,9 +165,15 @@ export async function cyclingRoute(
   }
 
   const coords = `${from[0]},${from[1]};${to[0]},${to[1]}`
+  // No ferries. The cycling profile takes them by default and will happily
+  // put a bicycle on one: Cesarica to Split came back as 697 km via Ancona and
+  // back across the Adriatic, against 140 km as the crow flies and 218 km by
+  // road. The same thing drew lines out into the Aegean between Thessaloniki
+  // and Tekirdağ. He is riding to the seven continents, not sailing between
+  // them, and a leg that genuinely needs a boat is better drawn as nothing.
   const url =
     `https://api.mapbox.com/directions/v5/mapbox/cycling/${coords}` +
-    `?geometries=geojson&overview=full&access_token=${token}`
+    `?geometries=geojson&overview=full&exclude=ferry&access_token=${token}`
 
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(8000) })
@@ -168,6 +190,24 @@ export async function cyclingRoute(
     if (body.code !== 'Ok' || !body.routes?.[0]) return null
 
     const route = body.routes[0]
+
+    // A road is longer than the line it follows, but not by much: a valley
+    // climb into the Pyrenees is half as long again, a mountain day with
+    // switchbacks perhaps double. Anything past three times is not a detour,
+    // it is the router solving a different problem — going round a sea, or
+    // taking a boat we have just told it not to take and finding another.
+    // Belt and braces behind exclude=ferry, because the next bad answer will
+    // not look like the last one.
+    const straight = haversineKm(from, to)
+    const road = route.distance / 1000
+    if (straight > 1 && road > straight * IMPLAUSIBLE_DETOUR) {
+      console.warn(
+        `route: discarding an implausible ${Math.round(road)} km road for a ` +
+          `${Math.round(straight)} km leg`,
+      )
+      return null
+    }
+
     return { miles: route.distance / 1609.344, coords: route.geometry.coordinates }
   } catch (error) {
     console.warn('route: directions failed', error)
@@ -287,6 +327,15 @@ export const AHEAD_DAYS = 14
  */
 export const DRAWN_DAYS = 500
 
+/**
+ * Bumped when the routing rules change, so roads fetched under the old ones are
+ * replaced rather than sitting there being wrong.
+ *
+ * Version 1 let the cycling profile take ferries, which is how the map came to
+ * show him riding from Zadar to Ancona and back.
+ */
+export const GEOMETRY_VERSION = 2
+
 export interface UpcomingDay {
   date: string
   kind: DayKind
@@ -332,6 +381,7 @@ export async function upcomingRoute(today: string, days = AHEAD_DAYS): Promise<U
       select to_char(date, 'YYYY-MM-DD') as date, coords, from_lon, from_lat, to_lon, to_lat
       from route_geometry
       where date >= ${today}::date and date <= ${last}::date
+        and version = ${GEOMETRY_VERSION}
     `) as unknown as {
       date: string
       coords: [number, number][]
@@ -388,17 +438,18 @@ export async function warmGeometry(day: RouteDay): Promise<boolean> {
 
   await ensureSchema()
   await db()`
-    insert into route_geometry (date, from_lon, from_lat, to_lon, to_lat, coords, computed_at)
+    insert into route_geometry
+      (date, from_lon, from_lat, to_lon, to_lat, coords, version, computed_at)
     values (
       ${day.date}::date,
       ${day.fromCoords[0]}, ${day.fromCoords[1]},
       ${day.toCoords[0]}, ${day.toCoords[1]},
-      ${JSON.stringify(road.coords)}::jsonb, now()
+      ${JSON.stringify(road.coords)}::jsonb, ${GEOMETRY_VERSION}, now()
     )
     on conflict (date) do update set
       from_lon = excluded.from_lon, from_lat = excluded.from_lat,
       to_lon = excluded.to_lon, to_lat = excluded.to_lat,
-      coords = excluded.coords, computed_at = now()
+      coords = excluded.coords, version = excluded.version, computed_at = now()
   `
   return true
 }

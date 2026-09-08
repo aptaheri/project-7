@@ -181,7 +181,12 @@ they are the things a reasonable change would otherwise undo.
     sixty miles of Adriatic. `route-warm` fills them on its own schedule, and
     that is not tidiness: `fact-warm` spends up to 25s on one model call
     against a 30s limit, so a second's directions on the end of it is how a run
-    gets killed having already paid for the fact.
+    gets killed having already paid for the fact. Directions are fetched with
+    **`exclude=ferry`**: the cycling profile takes them by default and will put
+    a bicycle on one — Cesarica to Split came back as 697 km via Ancona for a
+    140 km leg. A road more than three times the straight line is discarded
+    behind that, and `GEOMETRY_VERSION` replaces roads fetched under older
+    rules rather than leaving them to be quietly wrong.
 
 ## Testing
 

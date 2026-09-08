@@ -16,3 +16,8 @@ create table if not exists route_geometry (
   coords      jsonb not null,
   computed_at timestamptz not null default now()
 );
+
+-- Roads carry the routing rules they were fetched under, so a change to those
+-- rules replaces them rather than leaving them to be wrong quietly. Version 1
+-- let the cycling profile take ferries, which drew him riding Zadar to Ancona.
+alter table route_geometry add column if not exists version int not null default 1;

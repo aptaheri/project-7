@@ -44,6 +44,7 @@ await pg.exec(`
     from_lon double precision not null, from_lat double precision not null,
     to_lon double precision not null, to_lat double precision not null,
     coords jsonb not null,
+    version int not null default 1,
     computed_at timestamptz not null default now()
   );
 `)
@@ -52,9 +53,15 @@ globalThis.__pg = tagged
 // Mapbox directions, stubbed. Real ones cost a call and a second and would make
 // this test depend on the weather in Ardèche.
 let directionsCalls = 0
+// The last URL asked for, so the parameters can be checked and not just the
+// answer — "no ferries" is a thing said in the request, not seen in the reply.
+let lastDirectionsUrl = ''
+// Overridable, so an implausible road can be handed back on purpose.
+let directionsKm = null
 globalThis.fetch = async (url) => {
   if (!String(url).includes('api.mapbox.com/directions')) throw new Error(`unexpected fetch: ${url}`)
   directionsCalls++
+  lastDirectionsUrl = String(url)
   // A road that bends, not a ruler: a straight line simplifies to two points
   // and would let a broken thinner pass.
   const coords = Array.from({ length: 500 }, (_, i) => [
@@ -62,7 +69,10 @@ globalThis.fetch = async (url) => {
     44.4 + i * 0.0004 + Math.sin(i / 7) * 0.01,
   ])
   return new Response(
-    JSON.stringify({ code: 'Ok', routes: [{ distance: 114_000, geometry: { coordinates: coords } }] }),
+    JSON.stringify({
+      code: 'Ok',
+      routes: [{ distance: (directionsKm ?? 114) * 1000, geometry: { coordinates: coords } }],
+    }),
     { status: 200, headers: { 'content-type': 'application/json' } },
   )
 }
@@ -75,7 +85,7 @@ const bundle = await esbuild.build({
 })
 const outPath = join(dir, 'route.mjs')
 writeFileSync(outPath, bundle.outputFiles[0].text)
-const { loadRoute, saveDay, rechainNextDay, shiftFrom, upcomingRoute, warmGeometry, lineForEmail, lineForMap, PLAN } =
+const { loadRoute, saveDay, rechainNextDay, shiftFrom, upcomingRoute, warmGeometry, cyclingRoute, lineForEmail, lineForMap, PLAN } =
   await import(pathToFileURL(resolve(outPath)).href)
 
 let failures = 0
@@ -306,6 +316,35 @@ if (resting) check('a rest day has a destination but no line', resting.line === 
 
 await pg.query('delete from route_days')
 await pg.query('delete from route_geometry')
+
+// ── A road is a road, not a boat ───────────────────────────────────────────
+// The cycling profile takes ferries by default, and did: Cesarica to Split came
+// back as 697 km via Ancona and back across the Adriatic, for a leg that is 140
+// km as the crow flies. It drew him riding out into the Aegean too.
+check('directions ask for no ferries', lastDirectionsUrl.includes('exclude=ferry'),
+  lastDirectionsUrl.slice(lastDirectionsUrl.indexOf('?')))
+
+// And behind that, a length no detour explains is not a detour. The next bad
+// answer will not look like the last one.
+directionsKm = 700
+const absurd = await cyclingRoute([15.0213211, 44.5648438], [16.4435148, 43.5147118])
+check('a road three times the straight line is discarded', absurd === null, JSON.stringify(absurd))
+directionsKm = 218
+const sane = await cyclingRoute([15.0213211, 44.5648438], [16.4435148, 43.5147118])
+check('and a plausible one is kept', sane !== null && Math.round(sane.miles) === 135,
+  `${sane && Math.round(sane.miles)} mi`)
+directionsKm = null
+
+// Roads fetched under the old rules are not served, so the ferry ones vanish
+// rather than lingering until something happens to overwrite them.
+await pg.query(
+  `insert into route_geometry (date, from_lon, from_lat, to_lon, to_lat, coords, version)
+   values (current_date + 1, 1, 1, 2, 2, '[[1,1],[2,2]]'::jsonb, 1)
+   on conflict (date) do update set version = 1`,
+)
+const stale = await upcomingRoute(new Date().toISOString().slice(0, 10), 3)
+check('a road from an older rulebook is ignored',
+  stale.every((d) => d.line === null || d.line.length > 2))
 
 // ── An unreachable database is the plan, not an empty map ──────────────────
 globalThis.__pg = () => { throw new Error('no database') }

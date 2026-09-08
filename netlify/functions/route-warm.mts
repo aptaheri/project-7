@@ -1,5 +1,5 @@
 import { db, ensureSchema } from '../lib/db.mts'
-import { DRAWN_DAYS, loadRoute, warmGeometry } from '../lib/route.mts'
+import { DRAWN_DAYS, GEOMETRY_VERSION, loadRoute, warmGeometry } from '../lib/route.mts'
 
 /**
  * Fetches the roads the live map draws ahead of him.
@@ -40,6 +40,7 @@ export default async function handler(): Promise<Response> {
     const cached = ((await db()`
       select to_char(date, 'YYYY-MM-DD') as date from route_geometry
       where date >= ${today}::date and date <= ${last}::date
+        and version = ${GEOMETRY_VERSION}
     `) as unknown as { date: string }[]).map((r) => r.date)
     const known = new Set(cached)
 

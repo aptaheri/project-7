@@ -112,9 +112,12 @@ export function ensureSchema(): Promise<void> {
           to_lon     double precision not null,
           to_lat     double precision not null,
           coords     jsonb not null,
+          version    int not null default 1,
           computed_at timestamptz not null default now()
         )
       `
+      // Roads cached before the routing rules changed. See GEOMETRY_VERSION.
+      await sql`alter table route_geometry add column if not exists version int not null default 1`
 
       // How somebody proved they are who they say, per provider.
       //
