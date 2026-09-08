@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import ElevationChart from '../components/ElevationChart'
-import { AHEAD_RED, BACKFILL_BLUE, LIVE_BLUE, ROUTE_RED } from '../lib/mapColors'
+import { AHEAD_RED, BACKFILL_BLUE, LIVE_BLUE } from '../lib/mapColors'
 import {
   compass, dateIn, daylight, fahrenheit, mph, restingLabel, timeIn, weatherDescription,
 } from '../lib/conditions'
@@ -25,16 +25,6 @@ const CLOCK_MS = 15_000
 const STALE_MS = 30 * 60 * 1000
 const VERY_STALE_MS = 6 * 60 * 60 * 1000
 
-const STAGE_URLS = [
-  '/geojson/stage1-map.geojson',
-  '/geojson/stage1a-map.geojson',
-  '/geojson/stage2-map.geojson',
-  '/geojson/stage3-map.geojson',
-  '/geojson/stage4-map.geojson',
-  '/geojson/stage5-map.geojson',
-  '/geojson/stage6-map.geojson',
-  '/geojson/stage7-map.geojson',
-]
 
 interface LatestFix {
   tst: string
@@ -439,33 +429,10 @@ export default function TrackMap({ emailPref }: Props) {
         'star-intensity': 0.4,
       })
 
-      // Planned route, drawn muted so the travelled trail reads on top of it.
-      const stages = await Promise.all(
-        STAGE_URLS.map((url) =>
-          fetch(url)
-            .then((r) => r.json() as Promise<GeoJSON.FeatureCollection>)
-            // One unreachable stage file should not stop the live trail drawing.
-            .catch((): GeoJSON.FeatureCollection => ({ type: 'FeatureCollection', features: [] })),
-        ),
-      )
-      map.addSource('route', {
-        type: 'geojson',
-        data: { type: 'FeatureCollection', features: stages.flatMap((s) => s.features) },
-      })
-      map.addLayer({
-        id: 'route-line',
-        type: 'line',
-        source: 'route',
-        filter: ['==', '$type', 'LineString'],
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': ROUTE_RED, 'line-width': 2.5, 'line-opacity': 0.5 },
-      })
-
-      // Reconstructed riding from before the tracker existed. Dashed and
-      // dimmer so it never reads as a measured track.
-      // Where he is going today, drawn under everything else so his actual
-      // trail sits on top of it. A tracker answers "where is he" well enough
-      // already; the question people actually ask next is where he is headed.
+      // The route he set out with used to be drawn here, from the stage files
+      // shipped with the site. It is gone: those are the plan he left home
+      // with, and the red line below is the route as it now stands — his
+      // reroutes included — which is the one people are actually asking about.
       // The fortnight ahead, drawn first so everything real sits on top of it.
       // Two layers rather than one: a routed day is a road and says so with a
       // solid line, an unrouted day is two towns and a guess, and drawing them
@@ -476,21 +443,7 @@ export default function TrackMap({ emailPref }: Props) {
         type: 'line',
         source: 'ahead',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        filter: ['==', ['get', 'routed'], true],
         paint: { 'line-color': AHEAD_RED, 'line-width': 4.5, 'line-opacity': 0.7 },
-      })
-      map.addLayer({
-        id: 'ahead-guess',
-        type: 'line',
-        source: 'ahead',
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        filter: ['==', ['get', 'routed'], false],
-        paint: {
-          'line-color': AHEAD_RED,
-          'line-width': 3,
-          'line-opacity': 0.45,
-          'line-dasharray': [1.5, 2],
-        },
       })
       // Invisible and wide, purely so the thin lines above can be clicked at
       // all. Drawn from the same source, so it is always exactly under them.
@@ -501,6 +454,11 @@ export default function TrackMap({ emailPref }: Props) {
         paint: { 'line-color': AHEAD_RED, 'line-width': 22, 'line-opacity': 0 },
       })
       map.on('click', 'ahead-hit', (e) => {
+        // The road runs under its own destination, so a click on the circle
+        // lands on both and opened two cards saying nearly the same thing. The
+        // marker is the more specific answer, so it wins and this stands down.
+        const onMarker = map.queryRenderedFeatures(e.point, { layers: ['ahead-stop-markers'] })
+        if (onMarker.length > 0) return
         const f = e.features?.[0]
         if (f) aheadPopup(map, [e.lngLat.lng, e.lngLat.lat], f.properties ?? {})
       })
@@ -664,19 +622,17 @@ export default function TrackMap({ emailPref }: Props) {
     ahead?.setData({
       type: 'FeatureCollection',
       features: aheadDays.flatMap((d) => {
-        // A rest day has no riding to draw.
-        if (d.kind === 'rest') return []
-        // The road if somebody has looked it up, otherwise the straight line
-        // between the two towns — which is drawn dashed, because it is not one.
-        const geometry = d.line ?? (d.origin ? [d.origin, d.destination] : null)
-        if (!geometry || geometry.length < 2) return []
+        // Only roads. Joining two towns with a straight line drew Trieste to
+        // Dalmatia through sixty miles of Adriatic, which is worse than
+        // drawing nothing — a day with no road yet simply has no line until
+        // route-warm fetches one.
+        if (d.kind === 'rest' || !d.line || d.line.length < 2) return []
         return [{
           type: 'Feature' as const,
           properties: {
-            routed: d.line !== null, date: d.date, to: d.to,
-            from: d.from, miles: d.miles, kind: d.kind,
+            date: d.date, to: d.to, from: d.from, miles: d.miles, kind: d.kind,
           },
-          geometry: { type: 'LineString' as const, coordinates: geometry },
+          geometry: { type: 'LineString' as const, coordinates: d.line },
         }]
       }),
     })

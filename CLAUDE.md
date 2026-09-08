@@ -176,8 +176,12 @@ they are the things a reasonable change would otherwise undo.
     "he changed this", and both the editor and `daysFromPlan` read it that way,
     so caching a line in one would relabel the plan as edited. `route_geometry`
     is keyed by date and stores the endpoints beside the line, so a reroute
-    invalidates it. `fact-warm` tops up a few per run; a day with no line drawn
-    yet is a dashed straight hop, which is honest about being a guess.
+    invalidates it. **A day with no road yet is drawn as nothing at all** — a
+    straight line between towns took the route from Trieste to Dalmatia through
+    sixty miles of Adriatic. `route-warm` fills them on its own schedule, and
+    that is not tidiness: `fact-warm` spends up to 25s on one model call
+    against a 30s limit, so a second's directions on the end of it is how a run
+    gets killed having already paid for the fact.
 
 ## Testing
 
