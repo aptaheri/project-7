@@ -163,19 +163,59 @@ const EMPTY_POINTS: GeoJSON.FeatureCollection = { type: 'FeatureCollection', fea
  * under the cursor — and a two-pixel dashed line is a hard thing to hit on
  * purpose, so the line has a fat invisible twin to catch the attempt.
  */
+/**
+ * How long he stops here, and what he rode to arrive.
+ *
+ * A run of rest days in the same town is one stay, so all of them say "resting
+ * three days" rather than each claiming a day of its own. Where he came from is
+ * the last riding day before the run — the rest day itself has no origin,
+ * because a day spent still does not start anywhere.
+ */
+function restDetail(days: UpcomingDay[], i: number): { nights?: number; arrivedFrom?: string } {
+  const day = days[i]
+  if (day.kind !== 'rest') return {}
+
+  let first = i
+  while (first > 0 && days[first - 1].kind === 'rest' && days[first - 1].to === day.to) first -= 1
+  let last = i
+  while (last < days.length - 1 && days[last + 1].kind === 'rest' && days[last + 1].to === day.to) last += 1
+
+  let arrivedFrom: string | undefined
+  for (let j = first - 1; j >= 0; j -= 1) {
+    if (days[j].kind === 'ride' && days[j].from) {
+      arrivedFrom = days[j].from as string
+      break
+    }
+  }
+  return { nights: last - first + 1, ...(arrivedFrom ? { arrivedFrom } : {}) }
+}
+
 function aheadPopup(map: mapboxgl.Map, at: [number, number], p: Record<string, unknown>) {
   const when = new Date(`${String(p.date)}T12:00:00Z`).toLocaleDateString('en-GB', {
     weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC',
   })
-  const detail = p.kind === 'rest'
-    ? 'Rest day'
-    : [p.from ? `from ${String(p.from)}` : null, p.miles ? `${String(p.miles)} mi` : null]
-        .filter(Boolean).join(' · ')
-  new mapboxgl.Popup({ closeButton: false, offset: 12 })
+
+  // A rest day is a sentence about stopping, not a leg with its distance
+  // missing. Where he came from and how long he stays are the two things
+  // somebody actually wants from it.
+  let detail: string
+  if (p.kind === 'rest') {
+    const nights = Number(p.nights) || 1
+    const stay = nights === 1 ? 'Resting a day' : `Resting ${nights} days`
+    detail = p.arrivedFrom ? `${stay}, after riding from ${String(p.arrivedFrom)}` : stay
+  } else {
+    detail = [p.from ? `from ${String(p.from)}` : null, p.miles ? `${String(p.miles)} mi` : null]
+      .filter(Boolean)
+      .join(' · ')
+  }
+
+  new mapboxgl.Popup({ closeButton: false, offset: 14 })
     .setLngLat(at)
     .setHTML(
       `<div class="ahead-pop"><strong>${String(p.to)}</strong>` +
-      `<span>${when}${detail ? ` · ${detail}` : ''}</span></div>`,
+      `<span class="ahead-when">${when}</span>` +
+      (detail ? `<span class="ahead-detail">${detail}</span>` : '') +
+      `</div>`,
     )
     .addTo(map)
 }
@@ -437,7 +477,7 @@ export default function TrackMap({ emailPref }: Props) {
         source: 'ahead',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         filter: ['==', ['get', 'routed'], true],
-        paint: { 'line-color': AHEAD_RED, 'line-width': 3, 'line-opacity': 0.55 },
+        paint: { 'line-color': AHEAD_RED, 'line-width': 4.5, 'line-opacity': 0.7 },
       })
       map.addLayer({
         id: 'ahead-guess',
@@ -447,9 +487,9 @@ export default function TrackMap({ emailPref }: Props) {
         filter: ['==', ['get', 'routed'], false],
         paint: {
           'line-color': AHEAD_RED,
-          'line-width': 2,
-          'line-opacity': 0.3,
-          'line-dasharray': [1, 2.5],
+          'line-width': 3,
+          'line-opacity': 0.45,
+          'line-dasharray': [1.5, 2],
         },
       })
       // Invisible and wide, purely so the thin lines above can be clicked at
@@ -458,7 +498,7 @@ export default function TrackMap({ emailPref }: Props) {
         id: 'ahead-hit',
         type: 'line',
         source: 'ahead',
-        paint: { 'line-color': AHEAD_RED, 'line-width': 18, 'line-opacity': 0 },
+        paint: { 'line-color': AHEAD_RED, 'line-width': 22, 'line-opacity': 0 },
       })
       map.on('click', 'ahead-hit', (e) => {
         const f = e.features?.[0]
@@ -632,7 +672,10 @@ export default function TrackMap({ emailPref }: Props) {
         if (!geometry || geometry.length < 2) return []
         return [{
           type: 'Feature' as const,
-          properties: { routed: d.line !== null, date: d.date, to: d.to, from: d.from, miles: d.miles, kind: d.kind },
+          properties: {
+            routed: d.line !== null, date: d.date, to: d.to,
+            from: d.from, miles: d.miles, kind: d.kind,
+          },
           geometry: { type: 'LineString' as const, coordinates: geometry },
         }]
       }),
@@ -641,10 +684,11 @@ export default function TrackMap({ emailPref }: Props) {
     const aheadStops = map.getSource('ahead-stops') as mapboxgl.GeoJSONSource | undefined
     aheadStops?.setData({
       type: 'FeatureCollection',
-      features: aheadDays.map((d) => ({
+      features: aheadDays.map((d, i) => ({
         type: 'Feature' as const,
         properties: {
           date: d.date, to: d.to, from: d.from, miles: d.miles, kind: d.kind,
+          ...restDetail(aheadDays, i),
         },
         geometry: { type: 'Point' as const, coordinates: d.destination },
       })),

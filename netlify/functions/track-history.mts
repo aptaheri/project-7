@@ -4,7 +4,7 @@ import { requireTrackViewer } from '../lib/gate.mts'
 import { testDevices } from '../lib/devices.mts'
 import { localDayRange } from '../lib/day.mts'
 import { loadHistory } from '../lib/rollups.mts'
-import { upcomingRoute } from '../lib/route.mts'
+import { DRAWN_DAYS, upcomingRoute } from '../lib/route.mts'
 import type { UpcomingDay } from '../lib/route.mts'
 import type { DaySummary } from '../lib/rollups.mts'
 import tzLookup from 'tz-lookup'
@@ -149,7 +149,7 @@ export default async function handler(req: Request): Promise<Response> {
       // Read here rather than in the feed: it moves when he reroutes, and the
       // version token moves with it, so an open map refetches on an edit and
       // on nothing else.
-      upcoming: await upcomingRoute(today),
+      upcoming: await upcomingRoute(today, DRAWN_DAYS),
       mode,
     }
 

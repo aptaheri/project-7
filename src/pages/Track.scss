@@ -593,13 +593,53 @@
 
 .signin-sent { line-height: 1.6; }
 
-// The name of a place he has not reached yet.
+// A place he has not reached yet.
+//
+// Mapbox's popup is white and this site is not, so text inherited a light
+// colour onto a light card and arrived almost invisible. The card is dark now,
+// like everything else here, and every colour in it is stated rather than
+// inherited.
+.mapboxgl-popup-content:has(.ahead-pop) {
+  background: #14141c;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  padding: 12px 15px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+}
+
+// The tip is a triangle drawn in borders; only the side facing the marker is
+// visible, so all four are set rather than guessing which anchor is in use.
+.mapboxgl-popup:has(.ahead-pop) .mapboxgl-popup-tip {
+  border-top-color: #14141c;
+  border-bottom-color: #14141c;
+  border-left-color: #14141c;
+  border-right-color: #14141c;
+}
+
 .ahead-pop {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  font: 400 13px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  gap: 3px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
 
-  strong { font-weight: 600; font-size: 14px; }
-  span { color: rgba(0, 0, 0, 0.6); }
+  strong {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.25;
+    color: #fff;
+  }
+
+  .ahead-when {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #E31A28;
+  }
+
+  .ahead-detail {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.8);
+  }
 }

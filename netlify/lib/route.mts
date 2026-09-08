@@ -268,8 +268,24 @@ export async function saveDay(input: SaveDay, editor: string): Promise<RouteDay>
   return days.find((d) => d.date === input.date) as RouteDay
 }
 
-/** How far ahead the map shows. Two weeks is what people ask about. */
+/**
+ * How far ahead roads are fetched. A fortnight is as far as anybody plans.
+ *
+ * The map shows further than this — every night left in the trip — but the
+ * days beyond are drawn as straight hops between towns, which cost two
+ * coordinates each and no API call at all.
+ */
 export const AHEAD_DAYS = 14
+
+/**
+ * How far ahead the map draws. Everything left, in practice.
+ *
+ * The whole remaining route is cheap as long as most of it is hops: a day with
+ * a fetched road carries about a hundred points, a day without carries two. So
+ * the near fortnight is heavy and detailed, the rest is a thin thread of towns,
+ * and the payload stays a fraction of what the trail behind him already is.
+ */
+export const DRAWN_DAYS = 500
 
 export interface UpcomingDay {
   date: string

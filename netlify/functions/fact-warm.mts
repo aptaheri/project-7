@@ -1,6 +1,6 @@
 import { db, ensureSchema } from '../lib/db.mts'
 import { ensureFact } from '../lib/fact.mts'
-import { AHEAD_DAYS, loadRoute, warmGeometry } from '../lib/route.mts'
+import { DRAWN_DAYS, loadRoute, warmGeometry } from '../lib/route.mts'
 import type { Warmed } from '../lib/fact.mts'
 
 /**
@@ -41,12 +41,14 @@ const ATTEMPTS_PER_RUN = 1
 /**
  * Roads fetched per run, on top of the one model call.
  *
- * Directions are quick and cheap next to a model that searches the web, so
- * this can be several rather than one — but a fortnight of them in a function
- * with thirty seconds would still be pushing it, and there is no hurry: the
- * far end of the window is a week away from mattering.
+ * The map draws every night left in the trip, and a day with no road is a
+ * straight line over whatever is in the way — so the whole route wants
+ * filling, not just the part he rides this week. Eight a run against eight
+ * runs a day clears a few hundred days inside a week, and each one is a
+ * second, which this function can afford next to a model that searches the
+ * web for twenty-five.
  */
-const GEOMETRY_PER_RUN = 4
+const GEOMETRY_PER_RUN = 8
 
 /**
  * Destinations for today and the next few days, with the distance he rides to
@@ -146,7 +148,7 @@ export default async function handler(): Promise<Response> {
     // function has thirty seconds and a Mapbox round trip is a second of it.
     let roads = 0
     try {
-      const last = new Date(Date.parse(`${today}T00:00:00Z`) + AHEAD_DAYS * 86_400_000)
+      const last = new Date(Date.parse(`${today}T00:00:00Z`) + DRAWN_DAYS * 86_400_000)
         .toISOString()
         .slice(0, 10)
       await ensureSchema()
