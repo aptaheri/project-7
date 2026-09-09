@@ -296,8 +296,32 @@ check('an edited day shows where he is now going',
   afterEdit[0].to === 'Rerouted Tonight', afterEdit[0].to)
 check('and draws the road he was given', Array.isArray(afterEdit[0].line) && afterEdit[0].line.length > 1,
   `${afterEdit[0].line?.length} points`)
-check('thinned to the wire budget', (afterEdit[0].line?.length ?? 0) <= 120,
+// The next few rides get the detail, because they are what people look at and
+// there are only ever two or three of them. A hundred and twenty points over a
+// mountain pass is a point every kilometre, which cuts the corners off exactly
+// the roads worth seeing.
+check('a near day keeps its detail', (afterEdit[0].line?.length ?? 0) > 120,
   `${afterEdit[0].line?.length} points`)
+check('and still fits a sane ceiling', (afterEdit[0].line?.length ?? 0) <= 700,
+  `${afterEdit[0].line?.length} points`)
+
+// A ride well beyond the near window is still thinned to the wire budget: it
+// is a thread on a continent, not a road anybody is about to ride.
+const laterRide = PLAN.filter((d, i) => d.kind === 'ride' && d.to && d.fromCoords && d.toCoords && i > 0)
+  .find((d) => d.date > from0.date)
+if (laterRide) {
+  await saveDay(
+    { date: laterRide.date, kind: 'ride', from: laterRide.from, fromCoords: laterRide.fromCoords,
+      to: laterRide.to, toCoords: laterRide.toCoords, miles: null, note: '', needsReview: false },
+    'john@example.com',
+  )
+  const far = (await upcomingRoute(from0.date, 14)).filter((d) => d.kind === 'ride')
+  const beyond = far[4]
+  if (beyond?.line) {
+    check('a day past the near window is thinned hard', beyond.line.length <= 120,
+      `${beyond.line.length} points`)
+  }
+}
 
 // A rest day is somewhere to be, not something to draw.
 const resting = afterEdit.find((d) => d.kind === 'rest')

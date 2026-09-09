@@ -479,6 +479,24 @@ const livePayload = JSON.stringify(late.body)
 const historyPayload = JSON.stringify(lateHistory)
 const kb = (t) => (t.length / 1024).toFixed(1)
 console.log(`\n      live poll: ${kb(livePayload)} KB   history (once a session): ${kb(historyPayload)} KB`)
+// ── Today's detail does not decay as the journey lengthens ────────────────
+// The spacing used to be the whole trip's distance over a fixed budget, and
+// the whole trip only grows: by Austria it was a point every 1.8 km, so an
+// 86 km day came out as 49 of them and the switchbacks above Rio di Pusteria
+// lost every corner. Today is measured against today now.
+const detailBefore = (await poll(await freshHandler())).body.trail.length
+await pg.query(
+  `insert into day_rollups (mode, local_date, zone, distance_m, elapsed_s, fixes,
+                            start_lon, start_lat, end_lon, end_lat, gain_m, net_m,
+                            high_m, low_m, reconstructed)
+   values ('production', date '2025-01-01', 'Europe/Madrid', 3500000, 3600, 10,
+           0, 0, 1, 1, 0, 0, 0, 0, false)
+   on conflict (local_date, mode) do nothing`,
+)
+const detailAfter = (await poll(await freshHandler())).body.trail.length
+check("today's detail survives three thousand km of history",
+  detailAfter === detailBefore, `${detailBefore} points -> ${detailAfter}`)
+
 check('the live poll carries no route history',
   late.body.days.length === 0 && late.body.backfillTrail.length === 0 &&
   livePayload.length < 20_000, `${kb(livePayload)} KB`)

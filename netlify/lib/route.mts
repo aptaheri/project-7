@@ -248,6 +248,19 @@ export function lineForMap(coords: [number, number][]): [number, number][] {
   return thinLine(coords, MAP_LINE_POINTS)
 }
 
+/**
+ * Points allowed to the next couple of days he has re-routed.
+ *
+ * A hundred and twenty is plenty for a leg three weeks out, and far too few for
+ * tomorrow: over a pass it is one point every kilometre, which cuts the corners
+ * off the road in exactly the places the road is interesting. The near days are
+ * what people look at, and there are only ever two or three of them.
+ */
+const NEAR_LINE_POINTS = 700
+
+/** How many riding days count as near enough to deserve the detail. */
+const NEAR_DAYS = 3
+
 export interface SaveDay {
   date: string
   kind: DayKind
@@ -356,12 +369,16 @@ export async function upcomingRoute(today: string, days = DRAWN_DAYS): Promise<U
   const ahead = route.filter((d) => d.date >= today && d.date <= last && d.to && d.toCoords)
   if (ahead.length === 0) return []
 
+  let ridesSoFar = 0
   return ahead.map((day) => {
     // Only a day he has edited carries a line here. Everything else is drawn
     // from the stage files, which have the whole world route already routed
     // and were being ignored while I fetched it back from Mapbox a day at a
     // time — and left holes wherever a coordinate was missing.
     const own = day.kind === 'rest' ? null : (day.routeCoords ?? null)
+    // The next few rides get the detail; everything after keeps the wire budget.
+    const near = ridesSoFar < NEAR_DAYS
+    if (day.kind === 'ride') ridesSoFar += 1
     return {
       date: day.date,
       kind: day.kind,
@@ -370,7 +387,7 @@ export async function upcomingRoute(today: string, days = DRAWN_DAYS): Promise<U
       miles: day.miles,
       origin: day.fromCoords,
       destination: day.toCoords as [number, number],
-      line: own?.length ? lineForMap(own) : null,
+      line: own?.length ? thinLine(own, near ? NEAR_LINE_POINTS : MAP_LINE_POINTS) : null,
     }
   })
 }

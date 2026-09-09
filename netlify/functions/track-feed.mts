@@ -13,6 +13,7 @@ import {
   TRAIL_SMOOTHING,
   hysteresisGain,
   loadTotals,
+  simplify,
 } from '../lib/rollups.mts'
 import type { DaySummary } from '../lib/rollups.mts'
 import { localConditions } from '../lib/local.mts'
@@ -27,8 +28,27 @@ import type { CurrentLeg } from '../lib/itinerary.mts'
  * revoking someone takes effect on their next poll.
  */
 
-/** Roughly how many points the drawn trail should contain, at any route length. */
-const TARGET_TRAIL_POINTS = 2000
+/**
+ * Points today's line may spend, and how finely it is read out of the database.
+ *
+ * Today used to be drawn at whatever spacing suited the whole journey, so that
+ * the join with the stored history showed no change in detail. The trouble is
+ * that the spacing is the total distance over a fixed budget, and the total
+ * only grows: by Austria it was one point every 1.8 km, and an 86 km day came
+ * out as 49 of them. On the switchbacks above Rio di Pusteria that cut every
+ * corner off the road he was actually riding.
+ *
+ * So today gets its own budget, and spends it by shape rather than evenly.
+ * Dropping points at a constant spacing straightens exactly the hairpins worth
+ * seeing; Douglas-Peucker keeps the corners and spends nothing on the
+ * straights. The database is read finely and the thinning happens here, where
+ * it can see the shape.
+ */
+const TODAY_TRAIL_POINTS = 800
+const TODAY_READ_POINTS = 3200
+
+/** Where today's detail starts, before the budget forces it coarser. */
+const TODAY_TOLERANCE_M = 8
 
 /** Never thin below this, so short rides keep their shape. */
 const MIN_SPACING_M = 25
@@ -135,6 +155,23 @@ interface Payload {
 
 // Keyed by mode so the two views cannot serve each other's cached payload.
 const cache = new Map<string, { at: number; watermark: string | null; payload: Payload }>()
+
+/**
+ * Thins a line to a point budget while keeping its shape.
+ *
+ * Starts fine and coarsens only as far as it has to, so a short morning keeps
+ * every bend and a long day in the mountains still fits in a poll.
+ */
+function toBudget(points: [number, number][], budget: number): [number, number][] {
+  if (points.length <= budget) return points
+  let toleranceM = TODAY_TOLERANCE_M
+  let line = simplify(points, toleranceM)
+  while (line.length > budget && toleranceM < 500) {
+    toleranceM *= 1.6
+    line = simplify(points, toleranceM)
+  }
+  return line
+}
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method !== 'GET') {
@@ -319,9 +356,9 @@ export default async function handler(req: Request): Promise<Response> {
       points_today: todayStats.points_today,
     }
 
-    // Today's line, at the same spacing the whole route is drawn at, so the
-    // join between the stored history and today is invisible.
-    const spacing = Math.max(MIN_SPACING_M, stats.distance_m / TARGET_TRAIL_POINTS)
+    // Today is read at its own spacing, from its own distance — not the whole
+    // journey's, which only grows and drags today's detail down with it.
+    const spacing = Math.max(MIN_SPACING_M, todayStats.today_m / TODAY_READ_POINTS)
 
     const trailRows = (await sql`
       with ordered as (
@@ -522,7 +559,14 @@ export default async function handler(req: Request): Promise<Response> {
     // Today's line only. The client already holds the history and draws the two
     // together, so the ~1 MB of route behind him is not re-sent every thirty
     // seconds to move a marker a few hundred metres.
-    const trail: [number, number][] = trailRows.map((r) => [r.lon, r.lat])
+    // Thinned by shape, not by spacing. Six decimals is about a tenth of a
+    // metre and this is a bicycle, so five is plenty and costs a byte a
+    // coordinate on a payload that goes out every thirty seconds.
+    const round = (v: number) => Math.round(v * 1e5) / 1e5
+    const trail: [number, number][] = toBudget(
+      trailRows.map((r) => [r.lon, r.lat] as [number, number]),
+      TODAY_TRAIL_POINTS,
+    ).map(([lon, lat]) => [round(lon), round(lat)])
 
     // Matched against the route as it now stands rather than the plan, so a
     // reroute he entered last night shows up here. Drift is still measured
