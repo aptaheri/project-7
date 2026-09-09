@@ -162,24 +162,23 @@ they are the things a reasonable change would otherwise undo.
     who authenticates them. All three buttons are offered; `viewers.last_provider`
     records what worked so it can be offered first next time.
 
-14. **The road ahead is the stage files, not a fetch.** `public/geojson/stage*-map.geojson`
-    is the whole world route already drawn by Mapbox as cycling — one LineString
-    per stage, in the order he rides them. `TrackMap` matches his position to the
-    nearest point on it and draws everything past that. I spent a day fetching
-    that same road back from Mapbox one day at a time instead, which was slower,
-    cost a scheduled function, and left a hole wherever the itinerary was missing
-    a coordinate. Stages are kept apart rather than joined: there are flights
-    between them, and a joined line runs from Sydney to Ecuador across the
-    Pacific.
+14. **The road ahead is one line, cut into a segment per night.** The geometry
+    comes from `public/geojson/stage*-map.geojson` — the whole world route,
+    already drawn by Mapbox as cycling, one LineString per stage. `TrackMap`
+    finds his position on it and walks forward, cutting a slice between each
+    day's town and the next. That is what gives a segment its date, and
+    therefore what it says when clicked. Nothing before his position is drawn:
+    he is not going to Venice any more and the plan's road through it should
+    not still be there.
 
-15. **Only a day John has edited gets its own road.** `saveDay` routes an edit
-    when he saves it and stores the line on the day; `upcomingRoute` carries
-    that and nothing else, and the map draws it over the plan's road. So the
-    red line is the plan except where he has changed his mind, which is the
-    question people are actually asking. `/api/track/history` carries it, not
-    the live feed, because it changes when he *edits* — which is why `version()`
-    folds in `max(updated_at)` from `route_days`, wrapped, since a coarser token
-    costs a stale road and a throw costs the whole feed.
+15. **A day John has edited replaces its slice.** `saveDay` routes an edit when
+    he saves it and stores the line on the day; `upcomingRoute` carries that,
+    and it wins over the plan's road for that night. So the red line reads as
+    the plan except where he has changed his mind. It rides on
+    `/api/track/history`, not the live feed, because it changes when he *edits*
+    — which is why `version()` folds in `max(updated_at)` from `route_days`,
+    wrapped, since a coarser token costs a stale road and a throw costs the
+    whole feed.
 
 ## Testing
 

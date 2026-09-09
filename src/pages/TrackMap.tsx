@@ -175,28 +175,99 @@ function kmBetween(a: [number, number], b: [number, number]): number {
 }
 
 /**
- * The part of the route he has not ridden yet.
+ * The road ahead as one line, cut into a segment per night.
  *
- * Where he is now is matched to the nearest point on the whole line, and
- * everything past it is what is left: the remainder of the stage he is on,
- * then every stage after it whole. Stages are separate continents with flights
- * between them, so they are kept apart rather than joined — a line from Sydney
- * to Ecuador would be drawn straight across the Pacific.
+ * Two sources, and the order matters. A day John has edited carries the road
+ * he was given when he saved it, and that wins. Every other day is a slice of
+ * the plan's own line from the stage files, cut between the town it starts in
+ * and the town it ends in — which is how the segment learns which day it is,
+ * and therefore what to say when somebody clicks it.
+ *
+ * Cutting is a single forward walk rather than a search per day: the days are
+ * in order and so is the line, so the cursor only ever moves on. Nine million
+ * distance checks become thirty thousand.
+ *
+ * Anything before his current position is dropped. He is not going to Venice
+ * any more, and the plan's road through it should not still be on the map.
  */
-function roadAhead(stages: [number, number][][], at: [number, number] | null): [number, number][][] {
-  if (!at) return stages
-  let best = { stage: 0, index: 0, km: Infinity }
-  stages.forEach((line, stage) => {
-    line.forEach((point, index) => {
-      const km = kmBetween(at, point)
-      if (km < best.km) best = { stage, index, km }
+function aheadSegments(
+  stages: [number, number][][],
+  at: [number, number] | null,
+  days: UpcomingDay[],
+): GeoJSON.Feature[] {
+  if (stages.length === 0) return []
+
+  // Where he is on the line now. Everything before this is behind him.
+  let stage = 0
+  let index = 0
+  if (at) {
+    let best = Infinity
+    stages.forEach((line, si) => {
+      line.forEach((point, pi) => {
+        const km = kmBetween(at, point)
+        if (km < best) { best = km; stage = si; index = pi }
+      })
     })
-  })
-  // Far from every stage — between continents, or the tracker is confused.
-  // Drawing the lot beats guessing which half is behind him.
-  if (best.km > 400) return stages
-  const rest = stages[best.stage].slice(best.index)
-  return [rest, ...stages.slice(best.stage + 1)].filter((l) => l.length > 1)
+    // Nowhere near the drawn route — between continents, or a bad fix. Start at
+    // the beginning rather than silently hiding the whole road.
+    if (best > 400) { stage = 0; index = 0 }
+  }
+
+  /** The next point on or after the cursor closest to this town. */
+  function advanceTo(target: [number, number]): { stage: number; index: number } | null {
+    let best = { stage: -1, index: -1, km: Infinity }
+    for (let si = stage; si < stages.length; si += 1) {
+      const line = stages[si]
+      for (let pi = si === stage ? index : 0; pi < line.length; pi += 1) {
+        const km = kmBetween(target, line[pi])
+        if (km < best.km) best = { stage: si, index: pi, km }
+      }
+      // A town is never more than a stage away; stop once we have something
+      // convincing rather than scanning to Antarctica for every day.
+      if (best.km < 25) break
+    }
+    return best.km <= 60 ? { stage: best.stage, index: best.index } : null
+  }
+
+  const features: GeoJSON.Feature[] = []
+  for (const day of days) {
+    const properties = {
+      date: day.date, to: day.to, from: day.from, miles: day.miles, kind: day.kind,
+      nights: undefined as number | undefined,
+    }
+
+    // His own road wins outright.
+    if (day.line && day.line.length > 1) {
+      const found = advanceTo(day.destination)
+      if (found) { stage = found.stage; index = found.index }
+      features.push({
+        type: 'Feature',
+        properties,
+        geometry: { type: 'LineString', coordinates: day.line },
+      })
+      continue
+    }
+
+    // A rest day is a night, not a ride — it moves nothing along the line.
+    if (day.kind === 'rest') continue
+
+    const found = advanceTo(day.destination)
+    if (!found) continue
+    const sameStage = found.stage === stage
+    const slice = sameStage
+      ? stages[stage].slice(index, found.index + 1)
+      : stages[found.stage].slice(0, found.index + 1)
+    stage = found.stage
+    index = found.index
+    if (slice.length > 1) {
+      features.push({
+        type: 'Feature',
+        properties,
+        geometry: { type: 'LineString', coordinates: slice },
+      })
+    }
+  }
+  return features
 }
 
 /**
@@ -508,17 +579,6 @@ export default function TrackMap({ emailPref }: Props) {
       // Two layers rather than one: a routed day is a road and says so with a
       // solid line, an unrouted day is two towns and a guess, and drawing them
       // alike would claim to know a road nobody has looked up.
-      // The plan's own road, from the stage files. Under everything, because a
-      // day he has changed should read over the top of the day he planned.
-      map.addSource('ahead-plan', { type: 'geojson', data: EMPTY_LINE })
-      map.addLayer({
-        id: 'ahead-plan-line',
-        type: 'line',
-        source: 'ahead-plan',
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': AHEAD_RED, 'line-width': 3.5, 'line-opacity': 0.5 },
-      })
-
       map.addSource('ahead', { type: 'geojson', data: EMPTY_LINE })
       map.addLayer({
         id: 'ahead-line',
@@ -696,38 +756,19 @@ export default function TrackMap({ emailPref }: Props) {
       },
     })
 
-    // The plan's road from here on, cut at his current position.
-    const planAhead = map.getSource('ahead-plan') as mapboxgl.GeoJSONSource | undefined
-    planAhead?.setData({
-      type: 'FeatureCollection',
-      features: roadAhead(stages, feed.latest ? [feed.latest.lon, feed.latest.lat] : null).map(
-        (line) => ({
-          type: 'Feature' as const,
-          properties: {},
-          geometry: { type: 'LineString' as const, coordinates: line },
-        }),
-      ),
-    })
-
-    // On top of it, the days he has actually changed — those carry a road of
-    // their own, fetched when he saved them.
+    // One line for the road ahead, a segment per night: his own road where he
+    // has changed a day, the plan's road cut between towns everywhere else.
+    // Nothing behind him — he is not going to Venice any more, and the plan's
+    // road through it has no business still being drawn.
     const ahead = map.getSource('ahead') as mapboxgl.GeoJSONSource | undefined
     const aheadDays = history?.upcoming ?? []
     ahead?.setData({
       type: 'FeatureCollection',
-      features: aheadDays.flatMap((d) => {
-        // Only days he has changed. The plan's own road is drawn underneath
-        // from the stage files, so this layer is the difference between what
-        // he meant to do and what he now means to do.
-        if (d.kind === 'rest' || !d.line || d.line.length < 2) return []
-        return [{
-          type: 'Feature' as const,
-          properties: {
-            date: d.date, to: d.to, from: d.from, miles: d.miles, kind: d.kind,
-          },
-          geometry: { type: 'LineString' as const, coordinates: d.line },
-        }]
-      }),
+      features: aheadSegments(
+        stages,
+        feed.latest ? [feed.latest.lon, feed.latest.lat] : null,
+        aheadDays,
+      ),
     })
 
     const aheadStops = map.getSource('ahead-stops') as mapboxgl.GeoJSONSource | undefined
