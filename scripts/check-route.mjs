@@ -85,7 +85,7 @@ const bundle = await esbuild.build({
 })
 const outPath = join(dir, 'route.mjs')
 writeFileSync(outPath, bundle.outputFiles[0].text)
-const { loadRoute, saveDay, rechainNextDay, shiftFrom, upcomingRoute, warmGeometry, cyclingRoute, lineForEmail, lineForMap, PLAN } =
+const { loadRoute, saveDay, rechainNextDay, shiftFrom, upcomingRoute, cyclingRoute, lineForEmail, lineForMap, PLAN } =
   await import(pathToFileURL(resolve(outPath)).href)
 
 let failures = 0
@@ -280,7 +280,7 @@ const ahead = await upcomingRoute(from0.date, 14)
 check('the road ahead covers a fortnight', ahead.length >= 14 && ahead.length <= 15, `${ahead.length} days`)
 check('starting today', ahead[0].date === from0.date, ahead[0].date)
 check('and every day carries somewhere to be', ahead.every((d) => d.to && d.destination))
-check('with no road looked up yet', ahead.every((d) => d.line === null))
+check('and no line until he edits one', ahead.every((d) => d.line === null))
 check('but a start to draw a straight hop from',
   ahead.filter((d) => d.kind === 'ride').every((d) => d.origin !== null))
 
@@ -299,31 +299,8 @@ check('and draws the road he was given', Array.isArray(afterEdit[0].line) && aft
 check('thinned to the wire budget', (afterEdit[0].line?.length ?? 0) <= 120,
   `${afterEdit[0].line?.length} points`)
 
-// An unedited day gets its road from the cache, once something has warmed it.
-const plain = afterEdit.find((d) => d.kind === 'ride' && d.line === null && d.origin)
-const callsBefore = directionsCalls
-const warmed = await warmGeometry((await loadRoute()).find((d) => d.date === plain.date))
-check('an unrouted day can be warmed', warmed === true)
-check('which costs one directions call', directionsCalls === callsBefore + 1)
-const afterWarm = await upcomingRoute(from0.date, 14)
-check('and it then has a road', (afterWarm.find((d) => d.date === plain.date)?.line?.length ?? 0) > 1)
-
-// The cache is only right while the towns either end of it are unchanged.
-await pg.query(
-  `update route_geometry set to_lon = to_lon + 1, to_lat = to_lat + 1 where date = $1`,
-  [plain.date],
-)
-const afterMove = await upcomingRoute(from0.date, 14)
-check('a cached road for different towns is discarded',
-  afterMove.find((d) => d.date === plain.date)?.line === null)
-
-// Caching a road must never make the plan look edited — the drift figure and
-// the editor both read that flag.
-const stillPlan = (await loadRoute()).find((d) => d.date === plain.date)
-check('and warming a day does not mark it as edited', stillPlan.edited !== true)
-
 // A rest day is somewhere to be, not something to draw.
-const resting = afterWarm.find((d) => d.kind === 'rest')
+const resting = afterEdit.find((d) => d.kind === 'rest')
 if (resting) check('a rest day has a destination but no line', resting.line === null && Boolean(resting.to))
 
 await pg.query('delete from route_days')
@@ -346,17 +323,6 @@ const sane = await cyclingRoute([15.0213211, 44.5648438], [16.4435148, 43.514711
 check('and a plausible one is kept', sane !== null && Math.round(sane.miles) === 135,
   `${sane && Math.round(sane.miles)} mi`)
 directionsKm = null
-
-// Roads fetched under the old rules are not served, so the ferry ones vanish
-// rather than lingering until something happens to overwrite them.
-await pg.query(
-  `insert into route_geometry (date, from_lon, from_lat, to_lon, to_lat, coords, version)
-   values (current_date + 1, 1, 1, 2, 2, '[[1,1],[2,2]]'::jsonb, 1)
-   on conflict (date) do update set version = 1`,
-)
-const stale = await upcomingRoute(new Date().toISOString().slice(0, 10), 3)
-check('a road from an older rulebook is ignored',
-  stale.every((d) => d.line === null || d.line.length > 2))
 
 // ── An unreachable database is the plan, not an empty map ──────────────────
 globalThis.__pg = () => { throw new Error('no database') }

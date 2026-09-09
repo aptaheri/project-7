@@ -116,7 +116,9 @@ export function ensureSchema(): Promise<void> {
           computed_at timestamptz not null default now()
         )
       `
-      // Roads cached before the routing rules changed. See GEOMETRY_VERSION.
+      // Left from when the road ahead was fetched a day at a time. The stage
+      // files carry the whole route already, so nothing reads this now; the
+      // table stays because dropping one is a migration and it costs nothing.
       await sql`alter table route_geometry add column if not exists version int not null default 1`
 
       // How somebody proved they are who they say, per provider.

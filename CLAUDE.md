@@ -162,31 +162,24 @@ they are the things a reasonable change would otherwise undo.
     who authenticates them. All three buttons are offered; `viewers.last_provider`
     records what worked so it can be offered first next time.
 
-14. **The road ahead rides on the history, not the live feed.** `/api/track/history`
-    carries today plus `AHEAD_DAYS` from the merged route — a reroute he entered
-    last night, not the plan he left with. It is there rather than in the poll
-    because a fortnight of geometry every thirty seconds is exactly the traffic
-    the split exists to avoid, and because it changes when he *edits*, not when
-    a fix arrives. So `version()` folds in `max(updated_at)` from `route_days`:
-    without it an edit sits unseen on every open map until the next midnight.
-    That lookup is wrapped — a coarser token costs a stale road, a throw costs
-    the whole live feed.
+14. **The road ahead is the stage files, not a fetch.** `public/geojson/stage*-map.geojson`
+    is the whole world route already drawn by Mapbox as cycling — one LineString
+    per stage, in the order he rides them. `TrackMap` matches his position to the
+    nearest point on it and draws everything past that. I spent a day fetching
+    that same road back from Mapbox one day at a time instead, which was slower,
+    cost a scheduled function, and left a hole wherever the itinerary was missing
+    a coordinate. Stages are kept apart rather than joined: there are flights
+    between them, and a joined line runs from Sydney to Ecuador across the
+    Pacific.
 
-15. **Cached cycling geometry never goes in `route_days`.** A row there means
-    "he changed this", and both the editor and `daysFromPlan` read it that way,
-    so caching a line in one would relabel the plan as edited. `route_geometry`
-    is keyed by date and stores the endpoints beside the line, so a reroute
-    invalidates it. **A day with no road yet is drawn as nothing at all** — a
-    straight line between towns took the route from Trieste to Dalmatia through
-    sixty miles of Adriatic. `route-warm` fills them on its own schedule, and
-    that is not tidiness: `fact-warm` spends up to 25s on one model call
-    against a 30s limit, so a second's directions on the end of it is how a run
-    gets killed having already paid for the fact. Directions are fetched with
-    **`exclude=ferry`**: the cycling profile takes them by default and will put
-    a bicycle on one — Cesarica to Split came back as 697 km via Ancona for a
-    140 km leg. A road more than three times the straight line is discarded
-    behind that, and `GEOMETRY_VERSION` replaces roads fetched under older
-    rules rather than leaving them to be quietly wrong.
+15. **Only a day John has edited gets its own road.** `saveDay` routes an edit
+    when he saves it and stores the line on the day; `upcomingRoute` carries
+    that and nothing else, and the map draws it over the plan's road. So the
+    red line is the plan except where he has changed his mind, which is the
+    question people are actually asking. `/api/track/history` carries it, not
+    the live feed, because it changes when he *edits* — which is why `version()`
+    folds in `max(updated_at)` from `route_days`, wrapped, since a coarser token
+    costs a stale road and a throw costs the whole feed.
 
 ## Testing
 

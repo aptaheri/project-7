@@ -147,6 +147,59 @@ interface DaySummary {
 const EMPTY_POINTS: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] }
 
 /**
+ * The world route, drawn once and shipped with the site.
+ *
+ * One cycling LineString per stage, in the order he rides them. This is the
+ * whole plan already routed — the thing I spent a day fetching back from
+ * Mapbox one day at a time, badly, leaving a hole wherever the itinerary was
+ * missing a coordinate. The road ahead is simply the far end of this.
+ */
+const STAGE_URLS = [
+  '/geojson/stage1-map.geojson',
+  '/geojson/stage1a-map.geojson',
+  '/geojson/stage2-map.geojson',
+  '/geojson/stage3-map.geojson',
+  '/geojson/stage4-map.geojson',
+  '/geojson/stage5-map.geojson',
+  '/geojson/stage6-map.geojson',
+  '/geojson/stage7-map.geojson',
+]
+
+function kmBetween(a: [number, number], b: [number, number]): number {
+  const rad = (d: number) => (d * Math.PI) / 180
+  const dLat = rad(b[1] - a[1])
+  const dLon = rad(b[0] - a[0])
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.cos(rad(a[1])) * Math.cos(rad(b[1])) * Math.sin(dLon / 2) ** 2
+  return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(h)))
+}
+
+/**
+ * The part of the route he has not ridden yet.
+ *
+ * Where he is now is matched to the nearest point on the whole line, and
+ * everything past it is what is left: the remainder of the stage he is on,
+ * then every stage after it whole. Stages are separate continents with flights
+ * between them, so they are kept apart rather than joined — a line from Sydney
+ * to Ecuador would be drawn straight across the Pacific.
+ */
+function roadAhead(stages: [number, number][][], at: [number, number] | null): [number, number][][] {
+  if (!at) return stages
+  let best = { stage: 0, index: 0, km: Infinity }
+  stages.forEach((line, stage) => {
+    line.forEach((point, index) => {
+      const km = kmBetween(at, point)
+      if (km < best.km) best = { stage, index, km }
+    })
+  })
+  // Far from every stage — between continents, or the tracker is confused.
+  // Drawing the lot beats guessing which half is behind him.
+  if (best.km > 400) return stages
+  const rest = stages[best.stage].slice(best.index)
+  return [rest, ...stages.slice(best.stage + 1)].filter((l) => l.length > 1)
+}
+
+/**
  * What a night ahead says when you click it.
  *
  * Shared by the marker and the line, because people reach for whichever is
@@ -272,6 +325,7 @@ export default function TrackMap({ emailPref }: Props) {
   const hasCenteredRef = useRef(false)
 
   const [mapReady, setMapReady] = useState(false)
+  const [stages, setStages] = useState<[number, number][][]>([])
   const [mapError, setMapError] = useState<string | null>(null)
   const [feed, setFeed] = useState<Feed | null>(null)
   // Held across polls and refetched only when the feed says it has changed.
@@ -429,14 +483,42 @@ export default function TrackMap({ emailPref }: Props) {
         'star-intensity': 0.4,
       })
 
-      // The route he set out with used to be drawn here, from the stage files
-      // shipped with the site. It is gone: those are the plan he left home
-      // with, and the red line below is the route as it now stands — his
-      // reroutes included — which is the one people are actually asking about.
+      // The road ahead, taken from the stage files rather than fetched a day at
+      // a time. Loaded here so one unreachable file cannot stop the live trail
+      // drawing, which is the half people came for.
+      void Promise.all(
+        STAGE_URLS.map((url) =>
+          fetch(url)
+            .then((r) => r.json() as Promise<GeoJSON.FeatureCollection>)
+            .catch((): GeoJSON.FeatureCollection => ({ type: 'FeatureCollection', features: [] })),
+        ),
+      ).then((files) => {
+        setStages(
+          files
+            .map((f) =>
+              (f.features ?? [])
+                .filter((ft) => ft.geometry?.type === 'LineString')
+                .flatMap((ft) => (ft.geometry as GeoJSON.LineString).coordinates as [number, number][]),
+            )
+            .filter((line) => line.length > 1),
+        )
+      })
+
       // The fortnight ahead, drawn first so everything real sits on top of it.
       // Two layers rather than one: a routed day is a road and says so with a
       // solid line, an unrouted day is two towns and a guess, and drawing them
       // alike would claim to know a road nobody has looked up.
+      // The plan's own road, from the stage files. Under everything, because a
+      // day he has changed should read over the top of the day he planned.
+      map.addSource('ahead-plan', { type: 'geojson', data: EMPTY_LINE })
+      map.addLayer({
+        id: 'ahead-plan-line',
+        type: 'line',
+        source: 'ahead-plan',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': AHEAD_RED, 'line-width': 3.5, 'line-opacity': 0.5 },
+      })
+
       map.addSource('ahead', { type: 'geojson', data: EMPTY_LINE })
       map.addLayer({
         id: 'ahead-line',
@@ -614,18 +696,29 @@ export default function TrackMap({ emailPref }: Props) {
       },
     })
 
-    // The road ahead. A routed day draws its actual cycling line; one nobody
-    // has looked up yet draws the straight hop between its two towns, dashed,
-    // so it does not claim to be a road.
+    // The plan's road from here on, cut at his current position.
+    const planAhead = map.getSource('ahead-plan') as mapboxgl.GeoJSONSource | undefined
+    planAhead?.setData({
+      type: 'FeatureCollection',
+      features: roadAhead(stages, feed.latest ? [feed.latest.lon, feed.latest.lat] : null).map(
+        (line) => ({
+          type: 'Feature' as const,
+          properties: {},
+          geometry: { type: 'LineString' as const, coordinates: line },
+        }),
+      ),
+    })
+
+    // On top of it, the days he has actually changed — those carry a road of
+    // their own, fetched when he saved them.
     const ahead = map.getSource('ahead') as mapboxgl.GeoJSONSource | undefined
     const aheadDays = history?.upcoming ?? []
     ahead?.setData({
       type: 'FeatureCollection',
       features: aheadDays.flatMap((d) => {
-        // Only roads. Joining two towns with a straight line drew Trieste to
-        // Dalmatia through sixty miles of Adriatic, which is worse than
-        // drawing nothing — a day with no road yet simply has no line until
-        // route-warm fetches one.
+        // Only days he has changed. The plan's own road is drawn underneath
+        // from the stage files, so this layer is the difference between what
+        // he meant to do and what he now means to do.
         if (d.kind === 'rest' || !d.line || d.line.length < 2) return []
         return [{
           type: 'Feature' as const,
@@ -695,7 +788,7 @@ export default function TrackMap({ emailPref }: Props) {
     // history is a dependency as much as feed is: it arrives a moment after the
     // first poll, and without it here the route behind him would stay invisible
     // until the next one thirty seconds later.
-  }, [feed, history, mapReady])
+  }, [feed, history, stages, mapReady])
 
   function recenter() {
     const map = mapRef.current

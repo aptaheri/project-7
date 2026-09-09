@@ -309,15 +309,6 @@ export async function saveDay(input: SaveDay, editor: string): Promise<RouteDay>
 }
 
 /**
- * How far ahead roads are fetched. A fortnight is as far as anybody plans.
- *
- * The map shows further than this — every night left in the trip — but the
- * days beyond are drawn as straight hops between towns, which cost two
- * coordinates each and no API call at all.
- */
-export const AHEAD_DAYS = 14
-
-/**
  * How far ahead the map draws. Everything left, in practice.
  *
  * The whole remaining route is cheap as long as most of it is hops: a day with
@@ -327,14 +318,6 @@ export const AHEAD_DAYS = 14
  */
 export const DRAWN_DAYS = 500
 
-/**
- * Bumped when the routing rules change, so roads fetched under the old ones are
- * replaced rather than sitting there being wrong.
- *
- * Version 1 let the cycling profile take ferries, which is how the map came to
- * show him riding from Zadar to Ancona and back.
- */
-export const GEOMETRY_VERSION = 2
 
 export interface UpcomingDay {
   date: string
@@ -360,12 +343,11 @@ export interface UpcomingDay {
  * morning rather than the plan he left with. Rest days carry a destination but
  * no line, because there is no riding to draw.
  *
- * The line comes from whichever source actually has it: a day he edited was
- * routed by saveDay at the time, and the rest are looked up in the geometry
- * cache. Neither is fetched here — this is read on a page load and a Mapbox
- * round trip per day would be fourteen of them.
+ * The line is only ever his own edit, routed by saveDay when he saved it. The
+ * road for every other day comes from the stage files the site already ships,
+ * which are the whole route drawn by Mapbox once, long before any of this.
  */
-export async function upcomingRoute(today: string, days = AHEAD_DAYS): Promise<UpcomingDay[]> {
+export async function upcomingRoute(today: string, days = DRAWN_DAYS): Promise<UpcomingDay[]> {
   const last = new Date(Date.parse(`${today}T00:00:00Z`) + days * 86_400_000)
     .toISOString()
     .slice(0, 10)
@@ -374,42 +356,12 @@ export async function upcomingRoute(today: string, days = AHEAD_DAYS): Promise<U
   const ahead = route.filter((d) => d.date >= today && d.date <= last && d.to && d.toCoords)
   if (ahead.length === 0) return []
 
-  let cached = new Map<string, [number, number][]>()
-  try {
-    await ensureSchema()
-    const rows = (await db()`
-      select to_char(date, 'YYYY-MM-DD') as date, coords, from_lon, from_lat, to_lon, to_lat
-      from route_geometry
-      where date >= ${today}::date and date <= ${last}::date
-        and version = ${GEOMETRY_VERSION}
-    `) as unknown as {
-      date: string
-      coords: [number, number][]
-      from_lon: number
-      from_lat: number
-      to_lon: number
-      to_lat: number
-    }[]
-    for (const row of rows) {
-      const day = ahead.find((d) => d.date === row.date)
-      // A cached line is only the right one while the towns either end of it
-      // are still the towns he is riding between.
-      if (!day?.fromCoords || !day.toCoords) continue
-      const same =
-        Math.abs(day.fromCoords[0] - row.from_lon) < 1e-6 &&
-        Math.abs(day.fromCoords[1] - row.from_lat) < 1e-6 &&
-        Math.abs(day.toCoords[0] - row.to_lon) < 1e-6 &&
-        Math.abs(day.toCoords[1] - row.to_lat) < 1e-6
-      if (same) cached.set(row.date, row.coords)
-    }
-  } catch (error) {
-    // No cache is a map of straight hops, which is worse but not broken.
-    console.error('route geometry lookup failed', error)
-    cached = new Map()
-  }
-
   return ahead.map((day) => {
-    const own = day.kind === 'rest' ? null : (day.routeCoords ?? cached.get(day.date) ?? null)
+    // Only a day he has edited carries a line here. Everything else is drawn
+    // from the stage files, which have the whole world route already routed
+    // and were being ignored while I fetched it back from Mapbox a day at a
+    // time — and left holes wherever a coordinate was missing.
+    const own = day.kind === 'rest' ? null : (day.routeCoords ?? null)
     return {
       date: day.date,
       kind: day.kind,
@@ -421,37 +373,6 @@ export async function upcomingRoute(today: string, days = AHEAD_DAYS): Promise<U
       line: own?.length ? lineForMap(own) : null,
     }
   })
-}
-
-/**
- * Fetches and stores the road for one day that has none.
- *
- * Called from the warming schedule rather than from anything a person is
- * waiting on: this is a Mapbox round trip, and fourteen of them on a page load
- * is a page that does not load.
- */
-export async function warmGeometry(day: RouteDay): Promise<boolean> {
-  if (day.kind === 'rest' || !day.fromCoords || !day.toCoords) return false
-
-  const road = await cyclingRoute(day.fromCoords, day.toCoords)
-  if (!road) return false
-
-  await ensureSchema()
-  await db()`
-    insert into route_geometry
-      (date, from_lon, from_lat, to_lon, to_lat, coords, version, computed_at)
-    values (
-      ${day.date}::date,
-      ${day.fromCoords[0]}, ${day.fromCoords[1]},
-      ${day.toCoords[0]}, ${day.toCoords[1]},
-      ${JSON.stringify(road.coords)}::jsonb, ${GEOMETRY_VERSION}, now()
-    )
-    on conflict (date) do update set
-      from_lon = excluded.from_lon, from_lat = excluded.from_lat,
-      to_lon = excluded.to_lon, to_lat = excluded.to_lat,
-      coords = excluded.coords, version = excluded.version, computed_at = now()
-  `
-  return true
 }
 
 /**
