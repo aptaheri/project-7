@@ -23,10 +23,8 @@ export const LIVE_BLUE = '#4285f4'
  */
 export const AHEAD_RED = ROUTE_RED
 
-/**
- * Reconstructed riding from before the tracker existed.
- *
- * A paler blue, and drawn dashed: related to the measured track because he did
- * ride it, but visibly not the same kind of evidence.
- */
-export const BACKFILL_BLUE = '#8ab4f8'
+// Reconstructed riding used to have a paler blue of its own, drawn dashed, to
+// mark it as a different kind of evidence. It looked like a fault rather than a
+// distinction — a broken line at the start of the journey — and the numbers
+// still say which is which under Total. He rode those miles; the map now says
+// so in the same blue as the rest.

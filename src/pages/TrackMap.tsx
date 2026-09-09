@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import ElevationChart from '../components/ElevationChart'
-import { AHEAD_RED, BACKFILL_BLUE, LIVE_BLUE } from '../lib/mapColors'
+import { AHEAD_RED, LIVE_BLUE } from '../lib/mapColors'
 import {
   compass, dateIn, daylight, fahrenheit, mph, restingLabel, timeIn, weatherDescription,
 } from '../lib/conditions'
@@ -645,22 +645,11 @@ export default function TrackMap({ emailPref }: Props) {
         },
       })
 
-      map.addSource('backfill', { type: 'geojson', data: EMPTY_LINE })
-      map.addLayer({
-        id: 'backfill-line',
-        type: 'line',
-        source: 'backfill',
-        layout: { 'line-cap': 'butt', 'line-join': 'round' },
-        paint: {
-          'line-color': BACKFILL_BLUE,
-          'line-width': 3.5,
-          'line-opacity': 0.9,
-          'line-dasharray': [2, 1.8],
-        },
-      })
-
-      // Where he has actually been.
-      map.addSource('trail', { type: 'geojson', data: EMPTY_LINE })
+      // Where he has actually been — both the tracked riding and the days
+      // reconstructed from before the tracker existed. One source rather than
+      // two, so the glow, the casing and the blue are described once and the
+      // whole of it looks like one journey, which is what it is.
+      map.addSource('trail', { type: 'geojson', data: EMPTY_POINTS })
       map.addLayer({
         id: 'trail-glow',
         type: 'line',
@@ -711,13 +700,9 @@ export default function TrackMap({ emailPref }: Props) {
         minzoom: MARKERS_FROM,
         paint: {
           'circle-radius': 6,
-          'circle-color': [
-            'case', ['get', 'reconstructed'], 'rgba(10,10,15,0.9)', '#ffffff',
-          ],
+          'circle-color': '#ffffff',
           'circle-stroke-width': 3,
-          'circle-stroke-color': [
-            'case', ['get', 'reconstructed'], BACKFILL_BLUE, LIVE_BLUE,
-          ],
+          'circle-stroke-color': LIVE_BLUE,
           'circle-opacity': markerFade,
           'circle-stroke-opacity': markerFade,
         },
@@ -773,13 +758,19 @@ export default function TrackMap({ emailPref }: Props) {
     if (!map || !mapReady || !feed) return
 
     const trail = map.getSource('trail') as mapboxgl.GeoJSONSource | undefined
+    const line = (coords: [number, number][]): GeoJSON.Feature[] =>
+      coords.length > 1
+        ? [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: coords } }]
+        : []
     trail?.setData({
-      ...EMPTY_LINE,
-      geometry: {
-        type: 'LineString',
-        // The journey so far and today, joined at the point he woke up at.
-        coordinates: [...(history?.trail ?? []), ...feed.trail],
-      },
+      type: 'FeatureCollection',
+      features: [
+        // Separate features rather than one array: the reconstructed days end
+        // where the tracker begins, and joining them would draw a straight line
+        // across whatever sits between.
+        ...line(history?.backfillTrail ?? []),
+        ...line([...(history?.trail ?? []), ...feed.trail]),
+      ],
     })
 
     // One line for the road ahead, a segment per night: his own road where he
@@ -814,12 +805,6 @@ export default function TrackMap({ emailPref }: Props) {
     planned?.setData({
       ...EMPTY_LINE,
       geometry: { type: 'LineString', coordinates: feed.plannedRoute ?? [] },
-    })
-
-    const backfill = map.getSource('backfill') as mapboxgl.GeoJSONSource | undefined
-    backfill?.setData({
-      ...EMPTY_LINE,
-      geometry: { type: 'LineString', coordinates: history?.backfillTrail ?? [] },
     })
 
     // Finished days from the history, today from the live feed.
