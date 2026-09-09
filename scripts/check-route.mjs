@@ -102,7 +102,19 @@ check('day for day', (await dayOn(planDay.date))?.to === planDay.to, planDay.to)
 check('and nothing is marked as edited', (await dayOn(planDay.date))?.edited !== true)
 
 // ── An edit wins for that day and no other ─────────────────────────────────
-const target = PLAN.find((d) => d.kind === 'ride' && d.to && d.fromCoords && d.toCoords)
+// A riding day whose next day is also a riding day, because the rechain
+// assertions below need one to rechain onto. Stated rather than assumed: this
+// used to take the first ride day with coordinates and got away with it only
+// because day one had none. The moment Lisbon was given a position the target
+// became day one, whose next day is a rest, and rechainNextDay correctly did
+// nothing — three checks failed for a reason that had nothing to do with them.
+const target = PLAN.find((d, i) => {
+  const next = PLAN[i + 1]
+  return (
+    d.kind === 'ride' && d.to && d.fromCoords && d.toCoords &&
+    next && next.kind === 'ride' && next.to
+  )
+})
 const before = { ...target }
 await saveDay({
   date: target.date, kind: 'ride',

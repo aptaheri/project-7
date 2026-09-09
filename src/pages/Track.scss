@@ -607,13 +607,26 @@
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
 }
 
-// The tip is a triangle drawn in borders; only the side facing the marker is
-// visible, so all four are set rather than guessing which anchor is in use.
-.mapboxgl-popup:has(.ahead-pop) .mapboxgl-popup-tip {
-  border-top-color: #14141c;
-  border-bottom-color: #14141c;
-  border-left-color: #14141c;
-  border-right-color: #14141c;
+// The tip is a triangle drawn out of borders on a zero-sized box: exactly one
+// side carries a colour and the other three stay transparent to leave the
+// point. Colouring all four fills the box in and draws a small rectangle
+// hanging off the card, which is what it was doing. Which side to paint
+// depends on where the popup sits, so each anchor names its own.
+.mapboxgl-popup:has(.ahead-pop) {
+  &.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip,
+  &.mapboxgl-popup-anchor-bottom-left .mapboxgl-popup-tip,
+  &.mapboxgl-popup-anchor-bottom-right .mapboxgl-popup-tip {
+    border-top-color: #14141c;
+  }
+
+  &.mapboxgl-popup-anchor-top .mapboxgl-popup-tip,
+  &.mapboxgl-popup-anchor-top-left .mapboxgl-popup-tip,
+  &.mapboxgl-popup-anchor-top-right .mapboxgl-popup-tip {
+    border-bottom-color: #14141c;
+  }
+
+  &.mapboxgl-popup-anchor-left .mapboxgl-popup-tip { border-right-color: #14141c; }
+  &.mapboxgl-popup-anchor-right .mapboxgl-popup-tip { border-left-color: #14141c; }
 }
 
 .ahead-pop {
