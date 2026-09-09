@@ -272,6 +272,37 @@ check('and is the more detailed of the two', mapLine.length >= emailLine.length)
 await pg.query('delete from route_days')
 await pg.query('delete from route_geometry')
 
+// ── Changing a day's kind moves the next day's start ──────────────────────
+// Taking a day off changes where he ends up, so the day after cannot still set
+// out from the town he was going to reach — and its road has to be fetched
+// again, because it now runs from somewhere else.
+{
+  const i = PLAN.findIndex((d, n) =>
+    d.kind === 'ride' && d.to && d.fromCoords && d.toCoords &&
+    PLAN[n + 1]?.kind === 'ride' && PLAN[n + 1]?.to)
+  const day = PLAN[i]
+  const following = PLAN[i + 1]
+  await pg.query('delete from route_days')
+
+  // He takes the day off: the day now ends where the one before it did.
+  const standing = PLAN[i - 1]?.to ?? day.from
+  await saveDay(
+    { date: day.date, kind: 'rest', from: null, fromCoords: null,
+      to: standing, toCoords: PLAN[i - 1]?.toCoords ?? day.fromCoords,
+      miles: null, note: '', needsReview: false },
+    'john@example.com',
+  )
+  await rechainNextDay(day.date, 'john@example.com')
+
+  const after = (await loadRoute()).find((d) => d.date === following.date)
+  check('the day after a new rest day starts where he actually is',
+    after.from === standing, `${following.from} -> ${after.from}`)
+  check('and its road is fetched again from there',
+    Array.isArray(after.routeCoords) && after.routeCoords.length > 1,
+    `${after.routeCoords?.length} points`)
+  await pg.query('delete from route_days')
+}
+
 // ── The fortnight ahead ────────────────────────────────────────────────────
 // What people actually ask, after "where is he": where will he be. Read from
 // the merge, so a reroute entered last night is what they see this morning.

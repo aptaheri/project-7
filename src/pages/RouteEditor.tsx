@@ -235,7 +235,13 @@ export default function RouteEditor() {
           // standing in. Flagged rather than saved quietly as zero miles,
           // because it is the morning email's destination too.
           needsReview: !toRest && (!to || to === from),
-          rechain: false,
+          // Changing what kind of day this is changes where he ends up, so the
+          // day after has to start somewhere else — and its road has to be
+          // fetched again, because it now runs from a different town. Without
+          // this, taking a day off left tomorrow setting out from a place he
+          // never reached. rechainNextDay does nothing when the two already
+          // agree, so this is free on the days it does not apply to.
+          rechain: true,
         }),
       })
       if (!response.ok) {
