@@ -147,6 +147,26 @@ interface DaySummary {
 const EMPTY_POINTS: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] }
 
 /**
+ * Below this the night markers are hidden, and above it they fade in.
+ *
+ * Zoomed out to a continent, 264 nights and every day he has ridden come out as
+ * a string of beads along the route — they stop reading as places and start
+ * reading as texture on the line, and none of them is small enough to hit
+ * anyway. A marker is worth drawing at the point it is worth clicking.
+ *
+ * The live position is a DOM marker rather than a layer and is deliberately
+ * not covered by this: where he is now is the one thing worth seeing from
+ * any distance.
+ */
+const MARKERS_FROM = 5
+const MARKERS_FULL = 6
+
+/** Fades a marker in across the zoom levels where it becomes clickable. */
+const markerFade: mapboxgl.ExpressionSpecification = [
+  'interpolate', ['linear'], ['zoom'], MARKERS_FROM, 0, MARKERS_FULL, 1,
+]
+
+/**
  * The world route, drawn once and shipped with the site.
  *
  * One cycling LineString per stage, in the order he rides them. This is the
@@ -671,11 +691,14 @@ export default function TrackMap({ emailPref }: Props) {
         id: 'ahead-stop-markers',
         type: 'circle',
         source: 'ahead-stops',
+        minzoom: MARKERS_FROM,
         paint: {
           'circle-radius': 6,
           'circle-color': 'rgba(10,10,15,0.85)',
           'circle-stroke-width': 2.5,
           'circle-stroke-color': AHEAD_RED,
+          'circle-opacity': markerFade,
+          'circle-stroke-opacity': markerFade,
         },
       })
 
@@ -685,6 +708,7 @@ export default function TrackMap({ emailPref }: Props) {
         id: 'day-markers',
         type: 'circle',
         source: 'days',
+        minzoom: MARKERS_FROM,
         paint: {
           'circle-radius': 6,
           'circle-color': [
@@ -694,6 +718,8 @@ export default function TrackMap({ emailPref }: Props) {
           'circle-stroke-color': [
             'case', ['get', 'reconstructed'], BACKFILL_BLUE, LIVE_BLUE,
           ],
+          'circle-opacity': markerFade,
+          'circle-stroke-opacity': markerFade,
         },
       })
 
