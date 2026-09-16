@@ -95,27 +95,39 @@ they are the things a reasonable change would otherwise undo.
    (`src/data/destination-facts.json`). Correcting a bad generated line means
    adding it there. A hand-written place still gets a *distance* sentence
    written for it — that is the second half of what the warmer stores, and the
-   only way those mornings get one — but its fact is never regenerated.
+   only way those mornings get one — but its fact is never regenerated, and
+   never lengthened either. 30 of the 33 in that file are under 50 words, which
+   is why a famous destination can still read thin: that is an editorial choice
+   in a file, not something the warmer can reach.
 
-7. **`FORMAT_VERSION` in `lib/fact.mts` is what makes a change to the brief
+7. **A short *generated* fact is asked once whether there is more.** Asking the
+   brief for length does not work — four rewrites, a hard floor, a three-beat
+   structure and a run at medium effort all produced the same two sentences,
+   because the model writes what it verified in one pass and stops. Under
+   `MIN_FACT_WORDS` it is handed back its own answer and asked a second question
+   on a later run. If it cannot do better the row is marked `thin` and never
+   asked again, so a village of four hundred people is not re-asked eight times
+   a day forever.
+
+8. **`FORMAT_VERSION` in `lib/fact.mts` is what makes a change to the brief
    take effect.** Rows below it are rewritten on the next warming run, and
    every place previously given up on is asked again. Without bumping it, a
    longer or differently-shaped line only ever appears for places nobody has
    warmed yet, and two shapes of email go out depending on when a place
    happened to come up.
 
-8. **A row in `destination_facts` with a null `fact` is a record of having
+9. **A row in `destination_facts` with a null `fact` is a record of having
    tried.** The model answering "nothing" is correct behaviour, not an error,
    but nothing was stored when it did, so the same village was re-asked every
    run forever. After `GIVE_UP_AFTER` refusals the warmer stops asking. The
    send treats a null fact exactly like no row at all.
 
-9. **Bootstrap owners cannot be removed from the sharing page.** Every address
+10. **Bootstrap owners cannot be removed from the sharing page.** Every address
    in `TRACK_OWNER_EMAILS` is re-seeded as an owner on each load and re-promoted
    on each sign-in, so a delete succeeds and is undone a moment later. The API
    refuses with a 409 that says so; the row is tagged "Always owner".
 
-10. **A morning the schedule missed can only be recovered by hand.** Every gate
+11. **A morning the schedule missed can only be recovered by hand.** Every gate
     in `runDailyEmail` can decide *not* to send and nothing more, so a day it
     skipped at 07:00 — he had not set off yet — stayed skipped once the window
     closed. `/api/email-admin?send=all` is an owner overruling that: it ignores
@@ -130,7 +142,7 @@ they are the things a reasonable change would otherwise undo.
     signed-in owner and still leaves the day unclaimed. `check-sql` asserts all
     of it.
 
-11. **Falling behind is an edit, not a special case.** He loses days routinely —
+12. **Falling behind is an edit, not a special case.** He loses days routinely —
     that is why `daysFromPlan` measures against the plan and never against
     `route_days`. `shiftFrom` slides the editor's window one day later, each day
     taking what the day before it held, and it deliberately touches **only the
@@ -143,7 +155,7 @@ they are the things a reasonable change would otherwise undo.
     window moves, the day before it does not, nothing past it does, and no
     Mapbox call is made.
 
-12. **Access is granted to an identity, never to an email address.** Microsoft
+13. **Access is granted to an identity, never to an email address.** Microsoft
     lets any tenant set a user's email attribute to anything and signs no
     `email_verified` claim, and this app accepts tokens from **any** tenant
     because every university is its own — so an address in a Microsoft token is
@@ -155,14 +167,14 @@ they are the things a reasonable change would otherwise undo.
     `email_verified` means something. `check-access` asserts that a second
     tenant claiming a bound address is a stranger.
 
-13. **Which way in somebody uses is observed, not inferred.** Guessing from the
+14. **Which way in somebody uses is observed, not inferred.** Guessing from the
     domain's MX records was tried and does not survive this list: Cornell's mail
     is Microsoft's and its people sign in with Google, Mayo runs its own, and
     Harvard, Stanford and JPMorgan sit behind gateways that say nothing about
     who authenticates them. All three buttons are offered; `viewers.last_provider`
     records what worked so it can be offered first next time.
 
-14. **The road ahead is one line, cut into a segment per night.** The geometry
+15. **The road ahead is one line, cut into a segment per night.** The geometry
     comes from `public/geojson/stage*-map.geojson` — the whole world route,
     already drawn by Mapbox as cycling, one LineString per stage. `TrackMap`
     finds his position on it and walks forward, cutting a slice between each
@@ -171,7 +183,7 @@ they are the things a reasonable change would otherwise undo.
     he is not going to Venice any more and the plan's road through it should
     not still be there.
 
-15. **A day John has edited replaces its slice.** `saveDay` routes an edit when
+16. **A day John has edited replaces its slice.** `saveDay` routes an edit when
     he saves it and stores the line on the day; `upcomingRoute` carries that,
     and it wins over the plan's road for that night. So the red line reads as
     the plan except where he has changed his mind. It rides on

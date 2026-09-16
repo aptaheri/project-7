@@ -592,5 +592,55 @@ check('and gets no cookie either', unsigned.headers.get('set-cookie') === null)
 check('the window itself is halfway', sessionLib.dueForRenewal({ email: 'x', exp: Math.floor(Date.now() / 1000) + 14 * DAY }) === true)
 check('and not before', sessionLib.dueForRenewal({ email: 'x', exp: Math.floor(Date.now() / 1000) + 16 * DAY }) === false)
 
+// ── Being let in says so ───────────────────────────────────────────────────
+// Asking for access has always told the owners; being granted it told nobody,
+// so everybody approved until now had to be tipped off by hand, and anyone who
+// was not sat looking at "an owner has not granted access yet" days after one
+// had. The part that needs pinning is the guard: this must fire on the way in
+// and stay quiet every other time.
+const viewersFn = await bundle('netlify/functions/viewers.mts', 'viewers-access.mjs')
+
+await pg.query(`insert into viewers (email, role) values ('newcomer@example.com', 'pending')
+                on conflict (email) do update set role = 'pending'`)
+await pg.query(`update viewers set first_name = 'Cameron', last_name = 'Bruce'
+                where email = 'newcomer@example.com'`)
+
+const asOwner = createSession('boss@example.com').value
+const grant = (email, role) =>
+  viewersFn.default(new Request('https://project7.bike/api/viewers', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', cookie: `p7_session=${encodeURIComponent(asOwner)}` },
+    body: JSON.stringify({ email, role }),
+  }))
+
+sentMail.length = 0
+const granted = await grant('newcomer@example.com', 'viewer')
+check('granting access succeeds', granted.status === 200, String(granted.status))
+check('and tells them', sentMail.length === 1, `${sentMail.length} email(s)`)
+check('addressed to them, not the owners',
+  sentMail[0]?.to?.[0] === 'newcomer@example.com', JSON.stringify(sentMail[0]?.to))
+check('with a name an owner had typed', (sentMail[0]?.html ?? '').includes('Cameron Bruce'))
+check('and a way to watch', (sentMail[0]?.html ?? '').includes('/track'))
+// A notification about access is not a subscription; the only unsubscribe
+// token we hold would drop them from the daily email instead.
+check('and no unsubscribe link', !(sentMail[0]?.headers?.['List-Unsubscribe']))
+
+// The guard. Re-saving a row that is already in, or moving somebody between
+// owner and viewer, is not news.
+sentMail.length = 0
+await grant('newcomer@example.com', 'viewer')
+check('saving the same role again says nothing', sentMail.length === 0, `${sentMail.length} email(s)`)
+await grant('newcomer@example.com', 'owner')
+check('and promoting a viewer to owner says nothing', sentMail.length === 0, `${sentMail.length} email(s)`)
+await grant('newcomer@example.com', 'viewer')
+check('nor does demoting them back', sentMail.length === 0, `${sentMail.length} email(s)`)
+
+// Being put back to pending and let in again is a real second grant.
+sentMail.length = 0
+await grant('newcomer@example.com', 'pending')
+check('sending somebody back to pending says nothing', sentMail.length === 0, `${sentMail.length} email(s)`)
+await grant('newcomer@example.com', 'viewer')
+check('and letting them in again does tell them', sentMail.length === 1, `${sentMail.length} email(s)`)
+
 console.log(failures === 0 ? '\nAll access checks passed.' : `\n${failures} check(s) failed.`)
 process.exit(failures === 0 ? 0 : 1)

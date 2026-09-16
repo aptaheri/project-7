@@ -42,6 +42,7 @@ await pg.exec(`
     fact           text,
     distance_line  text,
     distance_miles double precision,
+    thin           boolean,
     model          text not null,
     format_version int not null default 1,
     attempts       int not null default 0,
@@ -66,7 +67,7 @@ const { factFor, ensureFact, FORMAT_VERSION } = await import(pathToFileURL(resol
 // answers in JSON because the request pins a schema.
 let calls = 0
 let lastPrompt = ''
-let reply = { fact: 'A bastide founded in 1332. Its market hall still stands.', distance: 'Today is four times the length of the valley below.' }
+let reply = { fact: 'A bastide founded in 1332, laid out on a grid by a lord who wanted taxes and got a town. Its market hall still stands on the square and still holds a market on Sundays. The arcades around it were built for traders who came up from the valley. Most of the stone came from a quarry that is now a pond on the edge of the village.', distance: 'Today is four times the length of the valley below.' }
 globalThis.fetch = async (url, init) => {
   if (!String(url).includes('api.anthropic.com')) throw new Error(`unexpected fetch: ${url}`)
   calls++
@@ -127,7 +128,7 @@ check('no usable line for a hand-written place is a decline',
   (await ensureFact('Nazaré', 40)) === 'declined')
 check('and its fact still reads fine', (await factFor('Nazaré')).fact !== null)
 
-reply = { fact: 'A bastide founded in 1332. Its market hall still stands.', distance: 'Today is four times the length of the valley below.' }
+reply = { fact: 'A bastide founded in 1332, laid out on a grid by a lord who wanted taxes and got a town. Its market hall still stands on the square and still holds a market on Sundays. The arcades around it were built for traders who came up from the valley. Most of the stone came from a quarry that is now a pond on the edge of the village.', distance: 'Today is four times the length of the valley below.' }
 
 // ── Warming writes both pieces, once ────────────────────────────────────────
 calls = 0
@@ -275,6 +276,65 @@ calls = 0
 check('with no key it fails without calling', (await ensureFact('Keyless Place', 70)) === 'failed' && calls === 0)
 const keyless = await factFor('Keyless Place')
 check('and the send still reads cleanly', keyless.fact === null && keyless.distance === null)
+
+// The keyless test above removed it, and everything below needs a model again.
+process.env.ANTHROPIC_API_KEY = 'sk-ant-test-not-used'
+
+// ── A short fact is asked once whether there is more ───────────────────────
+// Dubrovnik came back as twenty-eight words, for a city with a thousand years
+// of written history. Asking the brief to be longer has never worked — four
+// rewrites, a hard floor, a structure, and a run at medium effort all produced
+// the same two sentences — so this asks a second question instead.
+const SHORT = 'The walls have never been breached. It was a republic for 450 years.'
+const LONG = ('The walls have never been breached, and they run two kilometres around a town ' +
+  'that bought its freedom rather than fighting for it. Ragusa paid tribute to whoever was ' +
+  'largest that century and stayed independent for four hundred and fifty years. It abolished ' +
+  'slavery in 1416, centuries before its neighbours. An earthquake flattened it in 1667 and it ' +
+  'was rebuilt to the same plan, which is the town people walk around today.')
+
+reply = { fact: SHORT, distance: 'A long day down the coast.' }
+// A generated place, not a hand-written one: rule 6 means a curated fact is
+// never rewritten, so using one here would test the opposite of the intent.
+check('a short fact is stored on the first pass',
+  (await ensureFact('Ragusa Vecchia', 89)) === 'written')
+check('and it is short', (await row('Ragusa Vecchia'))?.fact === SHORT)
+
+calls = 0
+reply = { fact: LONG, distance: '' }
+check('the next run asks whether there is more', (await ensureFact('Ragusa Vecchia', 89)) === 'written')
+check('and it is asked as an expansion, not a fresh write',
+  lastPrompt.includes('It is shorter than the brief allows'), 'expansion brief')
+check('the model is shown what it already wrote', lastPrompt.includes(SHORT))
+check('one call, not two', calls === 1, `${calls} call(s)`)
+check('the fuller version replaces it', (await row('Ragusa Vecchia'))?.fact === LONG)
+check('and the distance line it already had is untouched',
+  (await row('Ragusa Vecchia'))?.distance_line === 'A long day down the coast.')
+
+// Long enough now, so it is left alone.
+calls = 0
+check('a long fact is not asked again', (await ensureFact('Ragusa Vecchia', 89)) === 'stored')
+check('and costs nothing', calls === 0, `${calls} call(s)`)
+
+// A hamlet says no, and is believed. This is the half that stops a village
+// being re-asked eight times a day forever.
+reply = { fact: 'A church, a bridge and four hundred people.', distance: '' }
+check('a village stores its short fact', (await ensureFact('Small Hamlet', 40)) === 'written')
+reply = { fact: 'A church, a bridge and four hundred people.', distance: '' }
+check('is asked once whether there is more', (await ensureFact('Small Hamlet', 40)) === 'stored')
+check('and marked as having nothing to add', (await row('Small Hamlet'))?.thin === true)
+calls = 0
+check('so it is never asked again', (await ensureFact('Small Hamlet', 40)) === 'stored')
+check('and spends nothing', calls === 0, `${calls} call(s)`)
+
+// A hand-written fact is the correction mechanism and is never rewritten,
+// however short it is.
+reply = { fact: 'IGNORED', distance: 'A local comparison.' }
+await ensureFact('Porto', 62)
+calls = 0
+const portoFact = (await factFor('Porto')).fact
+check('a hand-written fact is never expanded', (await ensureFact('Porto', 62)) === 'stored')
+check('and stays exactly as written', (await factFor('Porto')).fact === portoFact)
+check('costing nothing', calls === 0, `${calls} call(s)`)
 
 console.log(failures === 0 ? '\nAll fact checks passed.' : `\n${failures} check(s) failed.`)
 process.exit(failures === 0 ? 0 : 1)

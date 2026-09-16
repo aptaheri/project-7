@@ -1,0 +1,11 @@
+-- Places that have been asked twice and had nothing more to say.
+--
+-- Mirrors ensureSchema in netlify/lib/db.mts, which is what actually runs on
+-- deploy. A new file rather than an edit to an older one: these are applied on
+-- deploy and checksummed, and changing one that has already run fails the build.
+--
+-- Dubrovnik came back as twenty-eight words. The brief has asked for more since
+-- version 3 and the model does not oblige, so short facts get one follow-up
+-- question. This records the answer when the honest reply is "no, that is all
+-- there is", so a village of four hundred people is not asked forever.
+alter table destination_facts add column if not exists thin boolean;

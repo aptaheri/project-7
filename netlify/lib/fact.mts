@@ -142,6 +142,52 @@ Rules for both:
 Place: ${destination}`
 
 /** The shape the model must answer in. Both fields may be empty strings. */
+/**
+ * Below this many words, a place is asked once whether there is more.
+ *
+ * Dubrovnik came back as twenty-eight words — city walls, an independent
+ * republic — for somewhere with a thousand years of written history. The brief
+ * has asked for more since version 3 and the model does not oblige: four
+ * rewrites, a hard floor, a three-beat structure and a run at medium effort all
+ * produced the same two sentences. It writes what it verified in one pass and
+ * stops.
+ *
+ * So the second pass is a second question rather than a firmer instruction. It
+ * is asked once per place. If it cannot do better, the place is marked as
+ * having little to say and is never asked again.
+ */
+const MIN_FACT_WORDS = 50
+
+function wordsIn(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length
+}
+
+/**
+ * The second question, for a place that came back thinner than it deserves.
+ *
+ * Given what it already wrote, so it extends rather than starts again — and
+ * told plainly that returning the same thing is a fine answer, because for a
+ * hamlet it is the true one.
+ */
+const EXPAND_PROMPT = (destination: string, existing: string) => `You wrote this about ${destination} for a daily email about a cycling expedition:
+
+"${existing}"
+
+It is shorter than the brief allows. Search the web again and decide honestly: is there more here worth telling, or is this genuinely a small place with little recorded about it?
+
+If there is more, write the fuller version — the whole paragraph, not an addition to paste on the end. Up to 120 words. Keep what is already there if it is the best of it, and add what you verify: a person, an industry, something that happened, what the place is now. Same voice as before — short sentences, one idea each, no semicolons, plain words, the surprising thing first.
+
+If there is not more, return exactly what is quoted above and nothing else. That is a real answer and there is no penalty for it; many of these are villages of a few hundred people.
+
+Rules:
+- No preamble, no quotes around the answer, no source list.
+- Do not describe anywhere as charming, picturesque, quaint, or a hidden gem.
+- No superlatives unless a source says so plainly.
+- Use only figures you have actually verified.
+- Return an empty string for "ride" — the distance sentence is already written.
+
+Place: ${destination}`
+
 const SCHEMA = {
   type: 'object',
   properties: {
@@ -209,6 +255,8 @@ async function generate(
   destination: string,
   ride: RideContext,
   existingFact: string | null = null,
+  /** Ask whether a thin answer can be improved, rather than writing afresh. */
+  expand = false,
 ): Promise<Attempt> {
   if (!process.env.ANTHROPIC_API_KEY) {
     console.warn(`no fact generated for ${destination}: ANTHROPIC_API_KEY is not set`)
@@ -246,9 +294,11 @@ async function generate(
       tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: 3 }],
       messages: [{
         role: 'user',
-        content: existingFact
-          ? DISTANCE_ONLY_PROMPT(destination, ride, existingFact)
-          : PROMPT(destination, ride),
+        content: expand && existingFact
+          ? EXPAND_PROMPT(destination, existingFact)
+          : existingFact
+            ? DISTANCE_ONLY_PROMPT(destination, ride, existingFact)
+            : PROMPT(destination, ride),
       }],
     })])
 
@@ -272,9 +322,12 @@ async function generate(
       return { type: 'declined' }
     }
 
-    // When the fact is already written by hand, that is the fact — the model
-    // was asked for the second piece only and told to leave this one empty.
-    const fact = existingFact ?? tidy(typeof parsed.fact === 'string' ? parsed.fact : '')
+    // On an expansion the model was asked for the paragraph, so its answer is
+    // the fact. Otherwise a hand-written one stands and it was asked only for
+    // the second piece.
+    const fact = expand
+      ? tidy(typeof parsed.fact === 'string' ? parsed.fact : '')
+      : existingFact ?? tidy(typeof parsed.fact === 'string' ? parsed.fact : '')
     const distance = tidy(typeof parsed.ride === 'string' ? parsed.ride : '')
 
     // For a place being written from scratch, an empty fact is the model doing
@@ -282,7 +335,8 @@ async function generate(
     if (!fact || fact.includes(NOTHING)) return { type: 'declined' }
 
     // For a hand-written place there is nothing new without a distance line.
-    if (existingFact && !distance) return { type: 'declined' }
+    // An expansion is judged on the paragraph instead.
+    if (!expand && existingFact && !distance) return { type: 'declined' }
 
     // The brief asks for a hundred words. Anything approaching double that is
     // the model ignoring it, and an email is not the place to find out.
@@ -399,7 +453,7 @@ export async function ensureFact(
     const sql = db()
 
     const stored = (await sql`
-      select fact, distance_line, distance_miles, format_version, attempts
+      select fact, distance_line, distance_miles, format_version, attempts, thin
       from destination_facts where destination = ${destination}
     `) as unknown as {
       fact: string | null
@@ -407,6 +461,7 @@ export async function ensureFact(
       distance_miles: number | null
       format_version: number
       attempts: number
+      thin: boolean | null
     }[]
 
     // The sentence was written about a number, and the number has changed —
@@ -422,11 +477,22 @@ export async function ensureFact(
     // place happened to be warmed.
     const outdated = stored[0] && stored[0].format_version < FORMAT_VERSION
 
+    // A place that came back thinner than it deserves gets one follow-up
+    // question. Dubrovnik was twenty-eight words, and the brief asking for more
+    // has never worked — so this asks again rather than instructing harder. A
+    // place that has already answered "no, that is all there is" carries thin
+    // and is left alone; a hand-written fact is never touched.
+    const short =
+      !written &&
+      Boolean(stored[0]?.fact) &&
+      stored[0]?.thin !== true &&
+      wordsIn(stored[0]?.fact ?? '') < MIN_FACT_WORDS
+
     // A hand-written place needs nothing but its distance sentence, and needs
     // that only once. Its fact is never regenerated.
     if (written) {
       if (stored[0]?.distance_line && !outdated && !staleDistance) return 'stored'
-    } else if (stored[0]?.fact && !outdated && !staleDistance) {
+    } else if (stored[0]?.fact && !outdated && !staleDistance && !short) {
       return 'stored'
     }
 
@@ -440,8 +506,37 @@ export async function ensureFact(
     // Rewriting a stale comparison does not mean rewriting the paragraph above
     // it: the place has not changed, only the distance to it. The existing fact
     // is handed back to the model as context, exactly as a hand-written one is.
-    const keepFact = written ?? (staleDistance ? stored[0]?.fact ?? null : null)
-    const attempt = await generate(destination, { ...ride, miles }, keepFact)
+    // An expansion hands the model what it already wrote and asks whether there
+    // is more; everything else keeps the existing behaviour.
+    const expanding = short && !outdated && !staleDistance
+    const keepFact = expanding
+      ? stored[0]?.fact ?? null
+      : written ?? (staleDistance ? stored[0]?.fact ?? null : null)
+    const attempt = await generate(destination, { ...ride, miles }, keepFact, expanding)
+
+    if (expanding) {
+      const grown =
+        attempt.type === 'written' &&
+        wordsIn(attempt.generated.fact) > wordsIn(stored[0]?.fact ?? '')
+      if (!grown) {
+        // Asked and answered. Marked so a hamlet is not asked forever.
+        await sql`
+          update destination_facts set thin = true where destination = ${destination}
+        `
+        console.log(`fact: ${destination} has no more to say, left at ${wordsIn(stored[0]?.fact ?? '')} words`)
+        return 'stored'
+      }
+      await sql`
+        update destination_facts
+           set fact = ${attempt.generated.fact}, thin = false, created_at = now()
+         where destination = ${destination}
+      `
+      console.log(
+        `fact expanded for ${destination}: ${wordsIn(stored[0]?.fact ?? '')} -> ` +
+          `${wordsIn(attempt.generated.fact)} words`,
+      )
+      return 'written'
+    }
 
     // A decline is recorded rather than forgotten. The row may hold no fact at
     // all — it exists only to say that this was tried, and how often.

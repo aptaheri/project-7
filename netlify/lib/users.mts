@@ -235,15 +235,57 @@ export async function listViewers(): Promise<Viewer[]> {
   return rows.map((row) => ({ ...row, bootstrap: isBootstrapOwner(row.email) }))
 }
 
-export async function setRole(email: string, role: Role, grantedBy: string): Promise<void> {
+export interface RoleChange {
+  /** What they were before, or null if this row is new. */
+  previous: Role | null
+  firstName: string | null
+  lastName: string | null
+}
+
+/**
+ * Sets somebody's role, and says what it was before.
+ *
+ * The caller needs the previous value to know whether this is somebody being
+ * let in for the first time or an owner being flipped to viewer and back. Only
+ * the first deserves an email, and reading it afterwards would be too late —
+ * the row already says the new thing.
+ *
+ * One statement, so the read and the write cannot disagree about what was
+ * there: two calls would let a second owner approving the same person at the
+ * same moment produce two "you're in" emails.
+ */
+export async function setRole(
+  email: string,
+  role: Role,
+  grantedBy: string,
+): Promise<RoleChange> {
   await ensureSchema()
   const sql = db()
-  await sql`
-    insert into viewers (email, role, granted_by)
-    values (${normalizeEmail(email)}, ${role}, ${grantedBy})
-    on conflict (email) do update
-      set role = ${role}, granted_by = ${grantedBy}, updated_at = now()
-  `
+  const address = normalizeEmail(email)
+  const rows = (await sql`
+    with prior as (
+      select role, first_name, last_name from viewers where email = ${address}
+    ),
+    upsert as (
+      insert into viewers (email, role, granted_by)
+      values (${address}, ${role}, ${grantedBy})
+      on conflict (email) do update
+        set role = ${role}, granted_by = ${grantedBy}, updated_at = now()
+      returning email
+    )
+    select
+      (select role from prior) as previous,
+      (select first_name from prior) as first_name,
+      (select last_name from prior) as last_name
+    from upsert
+  `) as unknown as { previous: string | null; first_name: string | null; last_name: string | null }[]
+
+  const previous = rows[0]?.previous
+  return {
+    previous: previous === 'owner' || previous === 'viewer' || previous === 'pending' ? previous : null,
+    firstName: rows[0]?.first_name ?? null,
+    lastName: rows[0]?.last_name ?? null,
+  }
 }
 
 export function isEmailPref(value: unknown): value is EmailPref {

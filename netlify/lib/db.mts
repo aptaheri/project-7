@@ -206,6 +206,9 @@ export function ensureSchema(): Promise<void> {
       // The mileage the distance sentence was written about. When the day's
       // distance changes, the sentence is about the wrong number and has to go.
       await sql`alter table destination_facts add column if not exists distance_miles double precision`
+      // Set when a place has been asked a second time and had nothing to add,
+      // so a hamlet is not re-asked every time the warmer comes round.
+      await sql`alter table destination_facts add column if not exists thin boolean`
 
       // The route as it now stands — see lib/route.mts. Only days he has
       // changed live here; the rest are the plan in src/data/itinerary.json.

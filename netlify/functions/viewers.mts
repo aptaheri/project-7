@@ -13,6 +13,8 @@ import {
   setRole,
 } from '../lib/users.mts'
 import { db, ensureSchema } from '../lib/db.mts'
+import { buildApprovalEmail } from '../lib/approval-email.mts'
+import { mailerConfigured, sendBatch } from '../lib/mailer.mts'
 import type { Role } from '../lib/session.mts'
 
 /**
@@ -36,6 +38,44 @@ async function requireOwner(req: Request): Promise<{ email: string } | Response>
 
   if (rows[0]?.role !== 'owner') return json({ error: 'forbidden' }, 403)
   return { email: normalizeEmail(session.email) }
+}
+
+
+/**
+ * Tells somebody an owner has let them in.
+ *
+ * Deliberately swallows its own failures. The grant is already recorded, and a
+ * Resend outage is no reason to report that it did not happen — the worst case
+ * is the owner mentioning it themselves, which is the situation this replaces.
+ *
+ * Awaited rather than fired and forgotten: a serverless function is frozen the
+ * moment it responds, and an unawaited send would be cancelled about as often
+ * as it completed.
+ */
+async function tellThemTheyAreIn(
+  req: Request,
+  email: string,
+  asOwner: boolean,
+  who: { firstName: string | null; lastName: string | null },
+): Promise<void> {
+  try {
+    if (!mailerConfigured()) {
+      console.warn(`approval for ${email} not emailed: RESEND_API_KEY is not set`)
+      return
+    }
+    const origin = process.env.URL ?? new URL(req.url).origin ?? 'https://project7.bike'
+    const name = [who.firstName, who.lastName].filter(Boolean).join(' ') || null
+    const { subject, html, text } = buildApprovalEmail({ name, origin, asOwner })
+    // No unsubscribe link: this is a one-off notification about access, not the
+    // daily list, and the only token we have would drop them from that instead.
+    const result = await sendBatch([{ to: email, subject, html, text }])
+    console.log(
+      `approval emailed to ${email}` +
+        (result.failed.length ? `: failed — ${result.failed[0].error}` : ''),
+    )
+  } catch (error) {
+    console.error('approval notification failed', error)
+  }
 }
 
 export default async function handler(req: Request): Promise<Response> {
@@ -115,7 +155,23 @@ export default async function handler(req: Request): Promise<Response> {
         return json({ error: bootstrapRefusal }, 409)
       }
 
-      await setRole(email, body.role, owner.email)
+      const change = await setRole(email, body.role, owner.email)
+
+      // Only on the way in. Asking for access has always told the owners;
+      // being given it told nobody, so everybody approved until now has had to
+      // be tipped off by hand — and anyone who was not is still looking at a
+      // page saying an owner has not granted access yet, days after one did.
+      //
+      // Guarded on the previous role so that flipping somebody between owner
+      // and viewer, or re-saving a row that was already let in, stays quiet.
+      const letIn =
+        (body.role === 'viewer' || body.role === 'owner') &&
+        change.previous !== 'viewer' &&
+        change.previous !== 'owner'
+      if (letIn) {
+        await tellThemTheyAreIn(req, email, body.role === 'owner', change)
+      }
+
       return json({ ok: true })
     }
 
