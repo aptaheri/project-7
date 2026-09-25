@@ -321,6 +321,56 @@ for (const method of ['GET', 'POST']) {
 // And an owner can.
 check('GET is allowed for an owner', (await callRoute('GET', asUser('boss@example.com'))) === 200)
 
+// ── Warming on demand is owners-only ───────────────────────────────────────
+// fact-admin spends money on every call — one model question per unit of
+// budget — so the gate on it matters more than on a read. It exists because
+// Netlify answers 403 to an HTTP request for a scheduled function, which left
+// no way to warm a line without waiting for the cron.
+// warm.mts is swapped out: the gate is what is under test, and letting the
+// real one through would call the model from a test suite.
+const warmShim = resolve(dir, 'warm-shim.mjs')
+writeFileSync(warmShim, `export async function warmOnce(budget) {
+  globalThis.__budgets.push(budget)
+  return { counts: {}, seconds: 0, spentOn: [] }
+}
+`)
+globalThis.__budgets = []
+const factAdminBuilt = await esbuild.build({
+  entryPoints: ['netlify/functions/fact-admin.mts'],
+  bundle: true, format: 'esm', platform: 'node', write: false, external: ['tz-lookup'],
+  plugins: [{ name: 'swap', setup(b) {
+    b.onResolve({ filter: /db\.mts$/ }, () => ({ path: shimPath }))
+    b.onResolve({ filter: /warm\.mts$/ }, () => ({ path: warmShim }))
+  } }],
+})
+const factAdminOut = join(dir, 'fact-admin-access.mjs')
+writeFileSync(factAdminOut, factAdminBuilt.outputFiles[0].text)
+const factAdmin = await import(pathToFileURL(resolve(factAdminOut)).href)
+const callFactAdmin = async (headers, query = '?place=Nowhere') => {
+  const res = await factAdmin.default(
+    new Request(`https://project7.bike/api/fact-admin${query}`, { headers: { ...headers } }),
+  )
+  return res.status
+}
+
+check('warming is refused with no session', (await callFactAdmin({})) === 401)
+check('warming is refused for a pending account',
+  (await callFactAdmin(asUser('jane@example.com'))) === 403)
+check('warming is refused for a viewer',
+  (await callFactAdmin(asUser('watcher@example.com'))) === 403)
+check('an owner may read what is stored', (await callFactAdmin(asUser('boss@example.com'))) === 200)
+
+// The budget is capped: each question can take twenty-five seconds, and a
+// request asking for twenty would time out having paid for the ones it lost.
+const budgets = globalThis.__budgets
+check('a budget of one is one question',
+  (await callFactAdmin(asUser('boss@example.com'), '?warm=1')) === 200 && budgets.pop() === 1)
+check('an absurd budget is capped rather than obeyed',
+  (await callFactAdmin(asUser('boss@example.com'), '?warm=99')) === 200 && budgets.pop() === 3)
+check('nonsense falls back to one',
+  (await callFactAdmin(asUser('boss@example.com'), '?warm=banana')) === 200 && budgets.pop() === 1)
+check('a refused caller never reaches the warmer', budgets.length === 0, `${budgets.length} left`)
+
 // A forged cookie is not a session.
 check('a tampered cookie is refused',
   (await callRoute('GET', { cookie: 'p7_session=boss%40example.com.notasignature' })) === 401)

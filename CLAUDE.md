@@ -225,6 +225,17 @@ they are the things a reasonable change would otherwise undo.
     wrapped, since a coarser token costs a stale road and a throw costs the
     whole feed.
 
+17. **A warming run can be asked for, not only waited for.** Netlify answers
+    **403** to an HTTP request for a scheduled function, so `fact-warm`'s own
+    URL is not a way to trigger it — and `email-admin` renders from the cache
+    and never writes to it, so after a `FORMAT_VERSION` bump it keeps showing
+    the old line until the cron happens to run. `/api/fact-admin?warm=N` is an
+    owner asking for a run now; `?place=X` reads back what is stored without
+    spending anything. The run itself lives in `lib/warm.mts` so the cron and
+    the endpoint cannot drift apart. `N` is capped at 3 because a question can
+    take 25 seconds and a request that times out halfway has paid for answers
+    it did not record. `check-access` asserts the gate and the cap.
+
 ## Testing
 
 Every change to SQL or to a rule gets an assertion in `scripts/check-*.mjs`.
