@@ -131,19 +131,32 @@ export async function warmOnce(budget = ATTEMPTS_PER_RUN): Promise<{
     const queue = [...soon, ...later.map((_, i) => later[(start + i) % later.length])]
 
     let attempts = 0
-    for (let i = 0; i < queue.length; i++) {
+    outer: for (let i = 0; i < queue.length; i++) {
       const { to, miles, from, note } = queue[i]
-      // Reads are cheap and tell us whether there is anything to do; calling
-      // the model is the part that is rationed.
-      const outcome = await ensureFact(to, miles, attempts < budget, { from, note })
-      counts[outcome] += 1
-      if (outcome === 'written' || outcome === 'declined' || outcome === 'failed') {
+      // A place takes more than one question to finish — the paragraph, then
+      // the present — so finish the one nearest his arrival before moving on.
+      // Visiting each place once instead spreads a budget of three across three
+      // days and completes none of them, which is what a warm=3 did on the day
+      // this shipped: three histories rewritten, not one town finished.
+      //
+      // Bounded by the budget and by the queue, and `stored` or `exhausted`
+      // ends it, so a place that keeps timing out cannot hold the loop.
+      for (;;) {
+        // Reads are cheap and tell us whether there is anything to do; calling
+        // the model is the part that is rationed.
+        const outcome = await ensureFact(to, miles, attempts < budget, { from, note })
+        counts[outcome] += 1
+        if (outcome !== 'written' && outcome !== 'declined' && outcome !== 'failed') break
         attempts += 1
         spentOn.push(`${to} (${outcome})`)
         if (attempts >= budget) {
           console.log(`fact-warm: attempts spent on ${spentOn.join(', ')}, the rest waits`)
-          break
+          break outer
         }
+        // A question that failed or was refused does not get asked again in the
+        // same run: the next one is the next place's turn, and ensureFact has
+        // already recorded the attempt.
+        if (outcome !== 'written') break
       }
     }
 

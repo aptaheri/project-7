@@ -416,6 +416,64 @@ check('a present line that is nothing but an aside is dropped',
 check('leaving the record of having asked', (await row('Silent Place'))?.now_line === '')
 check('and no paragraph for the send', (await factFor('Silent Place')).now === null)
 
+// ── A warming run finishes a town before moving to the next ────────────────
+// A place takes two questions — the paragraph, then the present — so a loop
+// that visits each place once spends a budget of three on three different days
+// and completes none of them. That is what a warm=3 did on the day the
+// on-demand endpoint shipped: three histories rewritten, and the town he
+// reaches tonight still missing half its section.
+{
+  const today = new Date().toISOString().slice(0, 10)
+  const plus = (n) => new Date(Date.parse(`${today}T00:00:00Z`) + n * 86400000).toISOString().slice(0, 10)
+  const routeShim = resolve(dir, 'route-shim-warm.mjs')
+  writeFileSync(routeShim, `export async function loadRoute() {
+  return [
+    { date: '${today}',  kind: 'ride', from: 'Kavala',         to: 'Nearest Town', miles: 99, note: '' },
+    { date: '${plus(1)}', kind: 'ride', from: 'Nearest Town',  to: 'Second Town',  miles: 96, note: '' },
+    { date: '${plus(2)}', kind: 'ride', from: 'Second Town',   to: 'Third Town',   miles: 60, note: '' },
+  ]
+}
+`)
+  const warmBuilt = await esbuild.build({
+    entryPoints: ['netlify/lib/warm.mts'],
+    bundle: true, format: 'esm', platform: 'node', write: false,
+    plugins: [{ name: 'swap', setup(b) {
+      b.onResolve({ filter: /db\.mts$/ }, () => ({ path: shimPath }))
+      b.onResolve({ filter: /route\.mts$/ }, () => ({ path: routeShim }))
+    } }],
+  })
+  const warmOut = join(dir, 'warm.mjs')
+  writeFileSync(warmOut, warmBuilt.outputFiles[0].text)
+  const { warmOnce } = await import(pathToFileURL(resolve(warmOut)).href)
+
+  reply = {
+    fact: SETTLED,
+    distance: 'A long day.',
+    // Long enough to survive the aside filter's floor, which drops anything
+    // trimmed down to a fragment.
+    now: 'The town lives on its port and its university, and the ferries to the ' +
+      'islands run hardest through July and August when the seafront fills up.',
+  }
+  calls = 0
+  const run = await warmOnce(3)
+  const nearest = await row('Nearest Town')
+  check('a budget of three finishes the nearest town first',
+    Boolean(nearest?.fact) && Boolean(nearest?.now_line),
+    run.spentOn.join(' | '))
+  check('before spending anything on the day after it',
+    (await row('Second Town'))?.fact !== undefined, 'second town reached')
+  check('and it is three questions, not more', calls === 3, `${calls} call(s)`)
+
+  // The cron keeps its single attempt: two questions in one run could take
+  // fifty seconds and the function has thirty.
+  calls = 0
+  await pg.query(`delete from destination_facts where destination like '% Town'`)
+  const one = await warmOnce(1)
+  check('a budget of one is still one question', calls === 1, `${calls} call(s)`)
+  check('spent on the nearest town', one.spentOn.join().startsWith('Nearest Town'),
+    one.spentOn.join(' | '))
+}
+
 // A hand-written fact is the correction mechanism and is never rewritten,
 // however short it is.
 reply = { fact: 'IGNORED', distance: 'A local comparison.' }

@@ -236,6 +236,13 @@ they are the things a reasonable change would otherwise undo.
     take 25 seconds and a request that times out halfway has paid for answers
     it did not record. `check-access` asserts the gate and the cap.
 
+    A run **finishes the nearest town before moving to the next**. A place takes
+    two questions, so a loop visiting each place once spends a budget of three
+    on three different days and completes none — which is what the first
+    `warm=3` did: three histories rewritten and tonight's town still missing
+    half its section. The cron is unaffected at a budget of one. `check-fact`
+    asserts both.
+
 ## Testing
 
 Every change to SQL or to a rule gets an assertion in `scripts/check-*.mjs`.
