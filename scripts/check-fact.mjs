@@ -337,7 +337,7 @@ calls = 0
 reply = { fact: LONG, distance: '' }
 check('the next run asks whether there is more', (await ensureFact('Ragusa Vecchia', 89)) === 'written')
 check('and it is asked as an expansion, not a fresh write',
-  lastPrompt.includes('It is shorter than the brief allows'), 'expansion brief')
+  lastPrompt.includes('is there a story here you did not tell'), 'expansion brief')
 check('the model is shown what it already wrote', lastPrompt.includes(SHORT))
 check('one call, not two', calls === 1, `${calls} call(s)`)
 check('the fuller version replaces it', (await row('Ragusa Vecchia'))?.fact === LONG)

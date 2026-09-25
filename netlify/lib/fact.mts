@@ -69,7 +69,7 @@ const NOTHING = 'NONE'
  * two answers; one question with a bigger word count produced the same two
  * sentences however it was phrased.
  */
-export const FORMAT_VERSION = 5
+export const FORMAT_VERSION = 6
 
 /**
  * The brief for a place whose fact is already written by hand.
@@ -117,7 +117,15 @@ const PROMPT = (destination: string, ride: RideContext) => `You write the part o
 
 Search the web first.
 
-PIECE ONE — "history": four or five sentences about the place, past tense. Plain English a twelve-year-old would follow. Lead with the single most surprising or human thing you found — not where the town is, and not a list of centuries. A person, something that happened, something that failed, something still standing. The kind of detail somebody repeats to whoever is in the room.
+PIECE ONE — "history": one story about this place, in three or four sentences. One story — not a survey of the town's past.
+
+Pick the single thing a reader would repeat to somebody that evening, and then tell that thing properly: what led to it, what happened, what came of it. A person and what they did. Something that was built and why. Something that failed. Something still standing and what it was for. If the name has a story behind it, that can be the story. If a railway made the place out of nothing, that can be the story.
+
+Then stop. Everything in the paragraph has to belong to the one story you chose, and anything that does not serve it comes out however interesting it is on its own — the height of the tower belongs, the number of steps inside it does not.
+
+What ruins it is a line of unrelated facts in date order. "The name came from a holy man under a tree. Until the 1800s there were only fishermen here. Then a railway arrived. A French company built a lighthouse in 1880. It was renamed after a king in 1920." — that is five beginnings and no story, and a reader finishes it holding nothing. Choose one of those and follow it through instead.
+
+Plain English a twelve-year-old would follow. No list of centuries.
 
 PIECE TWO — "ride": one or two sentences about what kind of day today is for the rider.
 
@@ -157,7 +165,7 @@ Place: ${destination}`
  * is asked once per place. If it cannot do better, the place is marked as
  * having little to say and is never asked again.
  */
-const MIN_FACT_WORDS = 70
+const MIN_FACT_WORDS = 40
 
 function wordsIn(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length
@@ -174,11 +182,11 @@ const EXPAND_PROMPT = (destination: string, existing: string) => `You wrote this
 
 "${existing}"
 
-It is shorter than the brief allows. Search the web again and decide honestly: is there more here worth telling, or is this genuinely a small place with little recorded about it?
+It is short. Search again and decide honestly: is there a story here you did not tell — either more of the one you chose, or a better one you missed — or is this genuinely a small place with little recorded about it?
 
-If there is more, write the fuller version — the whole paragraph, not an addition to paste on the end. Up to 160 words. Keep what is already there if it is the best of it, and add what you verify: a person, an industry, something that happened, what the place is now. Same voice as before — short sentences, one idea each, no semicolons, plain words, the surprising thing first.
+If there is, write the paragraph again from the start, three or four sentences, telling one story properly: what led to it, what happened, what came of it. Not the old paragraph with more facts appended to it — a reader should finish holding one thing, not four. Same voice as before: short sentences, one idea each, no semicolons, plain words.
 
-If there is not more, return exactly what is quoted above and nothing else. That is a real answer and there is no penalty for it; many of these are villages of a few hundred people.
+If there is not, return exactly what is quoted above and nothing else. That is a real answer and there is no penalty for it; many of these are villages of a few hundred people.
 
 Rules:
 - No preamble, no quotes around the answer, no source list.
@@ -205,9 +213,11 @@ const NOW_PROMPT = (destination: string, history: string) => `A daily email abou
 
 "${history}"
 
-Search the web — news, and what is scheduled — and write three or four sentences about ${destination} today. Not its history: the present.
+Search the web — news, and what is scheduled — and tell me the one thing worth knowing about ${destination} today, in two or three sentences. Not its history: the present.
 
-Almost every inhabited place has an answer to this, so look for one before deciding there is none. What does the town live on now — an industry, a crop, tourism, a university, a port? What is it known for today? What is coming up there, or what happened there recently? For Davos that is the World Economic Forum each January — who is going, what is on the agenda. For a fishing town it might be the season and the catch. For a small one it might simply be what most people there do for a living, and that is a perfectly good answer.
+One thing, told properly — not a list of what the town has. "It has a port, a university, an LNG terminal and some beaches" is an inventory, and nobody remembers an inventory. Pick whichever is truest of the place now and say why it matters: what it lives on, what has changed there lately, what is coming up, what it is known for.
+
+For Davos that is the World Economic Forum each January — who goes, what gets argued about. For a fishing town it might be the season and what the boats are bringing in. For a small place it might simply be what most people there do for a living, and that is a perfectly good answer. Almost every inhabited place has one, so look before deciding there is none.
 
 Rules:
 - No preamble, no quotes, no source list, no headings.
@@ -215,6 +225,7 @@ Rules:
 - Do not repeat anything in the paragraph above.
 - Short sentences. One idea each. Plain English. No semicolons.
 - Say when something is happening if you know it. Do not imply something is imminent when you only know it is annual — "each January" is honest, "next week" had better be true.
+- This paragraph is written days before anybody reads it, so date things rather than placing them relative to now. "Restarted in August" survives the wait; "this winter", "last month" and "recently" do not.
 - No superlatives unless a source says so plainly. Use only figures you verified.
 - Return an empty string only if you genuinely cannot find out anything about the place as it is today. That is the right answer for a hamlet of forty people and it will not be asked again — but it is the wrong answer for anywhere with a population, an economy or a season, and those are most of them.
 
@@ -434,7 +445,7 @@ async function generate(
       if (nowText && spoken !== nowText) {
         console.warn(`trimmed an aside from the now line for ${destination}: ${nowText.slice(0, 160)}…`)
       }
-      const usableNow = spoken && !spoken.includes(NOTHING) && spoken.length <= 1000
+      const usableNow = spoken && !spoken.includes(NOTHING) && spoken.length <= 700
       if (nowText && !usableNow) {
         console.warn(`dropped an unusable now line for ${destination}: ${nowText.slice(0, 120)}…`)
       }
@@ -453,7 +464,7 @@ async function generate(
 
     // The brief asks for a hundred words. Anything approaching double that is
     // the model ignoring it, and an email is not the place to find out.
-    if (fact.length > 1300) {
+    if (fact.length > 950) {
       console.warn(`discarded an overlong fact for ${destination}: ${fact.slice(0, 120)}…`)
       return { type: 'declined' }
     }
@@ -469,7 +480,7 @@ async function generate(
     // The modern half is optional in the same way the ride line is: a village
     // with nothing scheduled and nothing in the news is the ordinary case, and
     // an invented festival would be far worse than a missing paragraph.
-    const nowUsable = nowText && !nowText.includes(NOTHING) && nowText.length <= 1000
+    const nowUsable = nowText && !nowText.includes(NOTHING) && nowText.length <= 700
     if (nowText && !nowUsable) {
       console.warn(`dropped an unusable now line for ${destination}: ${nowText.slice(0, 120)}…`)
     }

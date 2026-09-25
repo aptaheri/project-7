@@ -91,7 +91,18 @@ they are the things a reasonable change would otherwise undo.
    timeouts in a run would exceed the limit and lose the whole run — and
    rotates its queue so a slow place cannot take every run's attempt.
 
-5a. **The destination piece is two questions, asked on different runs.** A
+5a. **Each paragraph is one story, not a run of facts.** Asked for "the most
+   surprising thing" and then left to fill a length, the model writes a
+   chronology of unrelated things — Alexandroupoli came back as a holy man's
+   tree, then fishermen, then a railway, then a lighthouse, then a king, which
+   is five beginnings and nothing a reader carries away. Both briefs now name
+   the failure, show it as an example, and ask for one story followed through:
+   what led to it, what happened, what came of it. The same rule governs the
+   present half — "a port, a university, an LNG terminal and some beaches" is
+   an inventory. Length fell out of this rather than being set: ~185 words
+   against ~230 for the version that listed.
+
+5b. **The destination piece is two questions, asked on different runs.** A
    place gets a paragraph about its past and a second about what it is now, and
    asking for both in one call does not come back inside the deadline —
    measured at the full 25 seconds on Davos, Kavala and Scuol, all three
@@ -101,7 +112,7 @@ they are the things a reasonable change would otherwise undo.
    line — which can be *wrong* rather than merely missing — and the present
    last. Two questions of twenty seconds fit where one of forty does not.
 
-5b. **An empty answer to the present is written down as an empty string.**
+5c. **An empty answer to the present is written down as an empty string.**
    Same trap as rule 9, one question over: a hamlet with nothing scheduled
    answers "nothing" correctly, and a null would mean never-asked and buy the
    question again every run forever. `now_line = ''` is the record of having
