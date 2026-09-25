@@ -91,6 +91,26 @@ they are the things a reasonable change would otherwise undo.
    timeouts in a run would exceed the limit and lose the whole run — and
    rotates its queue so a slow place cannot take every run's attempt.
 
+5a. **The destination piece is two questions, asked on different runs.** A
+   place gets a paragraph about its past and a second about what it is now, and
+   asking for both in one call does not come back inside the deadline —
+   measured at the full 25 seconds on Davos, Kavala and Scuol, all three
+   returning nothing at all. `Mode` in `lib/fact.mts` names the four questions a
+   run may ask (`fresh`, `expand`, `curated`, `now`) and `ensureFact` picks
+   exactly one: the paragraph first, then a thin one expanded, then the ride
+   line — which can be *wrong* rather than merely missing — and the present
+   last. Two questions of twenty seconds fit where one of forty does not.
+
+5b. **An empty answer to the present is written down as an empty string.**
+   Same trap as rule 9, one question over: a hamlet with nothing scheduled
+   answers "nothing" correctly, and a null would mean never-asked and buy the
+   question again every run forever. `now_line = ''` is the record of having
+   asked; `factFor` reads it back as no paragraph. And the brief for it must
+   forbid the model writing about itself — asked about Bad Wiessee it signed
+   off "I could not reach any news sources tonight", which is addressed to a
+   developer and was going to forty readers. `withoutAsides` drops such
+   sentences and keeps the rest if enough of it survives.
+
 6. **Hand-written facts beat generated ones**, always
    (`src/data/destination-facts.json`). Correcting a bad generated line means
    adding it there. A hand-written place still gets a *distance* sentence
@@ -98,7 +118,9 @@ they are the things a reasonable change would otherwise undo.
    only way those mornings get one — but its fact is never regenerated, and
    never lengthened either. 30 of the 33 in that file are under 50 words, which
    is why a famous destination can still read thin: that is an editorial choice
-   in a file, not something the warmer can reach.
+   in a file, not something the warmer can reach. It does get the *present*
+   paragraph written for it, the same as any other place — that half is about
+   the town today and is not a correction anybody made.
 
 7. **A short *generated* fact is asked once whether there is more.** Asking the
    brief for length does not work — four rewrites, a hard floor, a three-beat

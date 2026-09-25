@@ -1,0 +1,12 @@
+-- What the place is now, as opposed to what happened there.
+--
+-- Mirrors ensureSchema in netlify/lib/db.mts, which is what actually runs on
+-- deploy. A new file rather than an edit to an older one: these are applied on
+-- deploy and checksummed.
+--
+-- The "about" paragraph is the only part of the daily email that changes from
+-- one day to the next, and readers asked for more of it. Asking the brief for
+-- length never worked; asking for a different kind of content does, so version
+-- 4 asks for the history and then for the present — something coming up there,
+-- something that happened recently, what the place lives on.
+alter table destination_facts add column if not exists now_line text;

@@ -27,6 +27,12 @@ export interface DailyEmailInput {
    */
   fact: string | null
   /**
+   * What the place is now — something coming up, something recent, what it
+   * lives on. Drawn under the history as its own paragraph, because it answers
+   * a different question and reads as a different thought.
+   */
+  now: string | null
+  /**
    * A sentence putting today's distance in terms of the destination, written
    * with the fact. Null falls back to the arithmetic comparisons below, which
    * are true by construction.
@@ -153,6 +159,7 @@ export function buildDailyEmail(input: DailyEmailInput): {
   text: string
 } {
   const fact = input.fact
+  const now = input.now
   // Written about this place if there is one, arithmetic about the number if
   // not. The fallback is never wrong, which is why it stays.
   const scale = input.distanceLine ?? scaleLine(input.plannedMiles, input.dayNumber)
@@ -230,6 +237,7 @@ export function buildDailyEmail(input: DailyEmailInput): {
         <tr><td style="padding:20px 22px;border-left:4px solid ${RED};border-radius:12px 0 0 12px;">
           <div style="font:700 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${RED};letter-spacing:.12em;text-transform:uppercase;">About ${escape(input.to)}</div>
           <div style="font:400 17px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${TEXT};padding-top:11px;">${escape(fact)}</div>
+          ${now ? `<div style="font:400 17px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${TEXT};padding-top:14px;">${escape(now)}</div>` : ''}
           ${scale ? `<div style="font:400 15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${MUTED};padding-top:12px;">${escape(scale)}</div>` : ''}
         </td></tr>
       </table>
@@ -283,6 +291,8 @@ export function buildDailyEmail(input: DailyEmailInput): {
     `${input.milesSoFar.toFixed(1)} miles covered so far today.`,
     '',
     fact ? `About ${input.to}: ${fact}` : null,
+    now ? '' : null,
+    now,
     fact ? '' : null,
     scale,
     scale ? '' : null,

@@ -40,6 +40,7 @@ await pg.exec(`
   create table destination_facts (
     destination    text primary key,
     fact           text,
+    now_line       text,
     distance_line  text,
     distance_miles double precision,
     thin           boolean,
@@ -67,17 +68,31 @@ const { factFor, ensureFact, FORMAT_VERSION } = await import(pathToFileURL(resol
 // answers in JSON because the request pins a schema.
 let calls = 0
 let lastPrompt = ''
-let reply = { fact: 'A bastide founded in 1332, laid out on a grid by a lord who wanted taxes and got a town. Its market hall still stands on the square and still holds a market on Sundays. The arcades around it were built for traders who came up from the valley. Most of the stone came from a quarry that is now a pond on the edge of the village.', distance: 'Today is four times the length of the valley below.' }
+let lastBody = null
+let reply = { now: 'The Sunday market still runs. A new bypass opens next year.', fact: 'A bastide founded in 1332, laid out on a grid by a lord who wanted taxes and got a town. Its market hall still stands on the square and still holds a market on Sundays. The arcades around it were built for traders who came up from the valley. Most of the stone came from a quarry that is now a pond on the edge of the village.', distance: 'Today is four times the length of the valley below.' }
 globalThis.fetch = async (url, init) => {
   if (!String(url).includes('api.anthropic.com')) throw new Error(`unexpected fetch: ${url}`)
   calls++
-  lastPrompt = JSON.parse(init.body).messages[0].content
+  lastBody = JSON.parse(init.body)
+  lastPrompt = lastBody.messages[0].content
   if (reply.throw) throw new Error('connection reset')
   if (reply.status) {
     return new Response(JSON.stringify({ type: 'error', error: { type: 'api_error', message: 'boom' } }),
       { status: reply.status, headers: { 'content-type': 'application/json' } })
   }
-  const answer = reply.raw ?? JSON.stringify({ fact: reply.fact ?? '', ride: reply.distance ?? '' })
+  // Which of the four questions this is decides what comes back. The present
+  // is asked on its own run, under its own schema, so a stub that always
+  // answered with a paragraph would hide the split rather than exercise it.
+  const asksNow = lastPrompt.includes('write two or three sentences about')
+  const answer =
+    reply.raw ??
+    (asksNow
+      ? JSON.stringify({ now: reply.now ?? '' })
+      : JSON.stringify({
+          history: reply.fact ?? '',
+          now: '',
+          ride: reply.distance ?? '',
+        }))
   const blocks = reply.narrate ? [reply.narrate, answer] : [answer]
   return new Response(JSON.stringify({
     id: 'msg_test', type: 'message', role: 'assistant', model: 'claude-opus-5',
@@ -112,7 +127,11 @@ check('reading it costs no model call', calls === 0, `${calls} call(s)`)
 
 // A hand-written place still gets a distance sentence written about it — that
 // is the only way those mornings get one, since the fact itself never changes.
-reply = { fact: 'IGNORED — the model was told to leave this empty', distance: 'Today is four times the length of the Douro gorge.' }
+reply = {
+  fact: 'IGNORED — the model was told to leave this empty',
+  distance: 'Today is four times the length of the Douro gorge.',
+  now: 'The port lodges still ship from Vila Nova de Gaia. Serralves holds its festival in June.',
+}
 check('a hand-written place gets a distance line', (await ensureFact('Porto', 62)) === 'written')
 check('and the model is shown the fact it must not repeat',
   lastPrompt.includes('already written'), 'distance-only brief')
@@ -121,6 +140,15 @@ check('the line is stored', portoRow?.distance_line === reply.distance)
 check('the hand-written fact is what the send reads',
   (await factFor('Porto')).fact?.startsWith('The port wine'))
 check('alongside the written line', (await factFor('Porto')).distance === reply.distance)
+check('then a later run asks what the place is now',
+  (await ensureFact('Porto', 62)) === 'written')
+check('under its own brief, not the one that writes a paragraph',
+  lastPrompt.includes('write two or three sentences about'), 'present brief')
+check('and the present is stored beside the hand-written fact',
+  (await row('Porto'))?.now_line === reply.now)
+check('which the send reads without touching the fact',
+  (await factFor('Porto')).now === reply.now &&
+  (await factFor('Porto')).fact?.startsWith('The port wine'))
 check('and it is not asked twice', (await ensureFact('Porto', 62)) === 'stored')
 
 reply = { fact: '', distance: '' }
@@ -140,8 +168,11 @@ check('stamped with the current brief', solomiac?.format_version === FORMAT_VERS
 check('the day\'s mileage reaches the model', lastPrompt.includes('88 miles'), '88 miles / 142 km')
 const read = await factFor('Solomiac')
 check('and both come back at send time', read.fact === reply.fact && read.distance === reply.distance)
+check('the present is a second question, on a later run',
+  (await ensureFact('Solomiac', 88)) === 'written')
+check('and the first run did not ask it', read.now === null)
 check('warming again is a no-op', (await ensureFact('Solomiac', 88)) === 'stored')
-check('so the model is asked exactly once', calls === 1, `${calls} call(s)`)
+check('so the model is asked twice and no more', calls === 2, `${calls} call(s)`)
 
 // A run that has used its one write leaves the rest for the next run.
 check('writing can be withheld', (await ensureFact('Held Back', 40, false)) === 'skipped')
@@ -230,6 +261,7 @@ check('the model was shown that fact rather than asked for a new one',
 check('one call, not two', calls === 1, `${calls} call(s)`)
 
 // A rounding difference is not a correction.
+await ensureFact('Corrected Place', 60) // the present, asked once
 check('a trivial difference is ignored', (await ensureFact('Corrected Place', 60.4)) === 'stored')
 
 // ── Tried, and given up on ─────────────────────────────────────────────────
@@ -311,6 +343,7 @@ check('and the distance line it already had is untouched',
   (await row('Ragusa Vecchia'))?.distance_line === 'A long day down the coast.')
 
 // Long enough now, so it is left alone.
+await ensureFact('Ragusa Vecchia', 89) // the present, asked once
 calls = 0
 check('a long fact is not asked again', (await ensureFact('Ragusa Vecchia', 89)) === 'stored')
 check('and costs nothing', calls === 0, `${calls} call(s)`)
@@ -322,9 +355,62 @@ check('a village stores its short fact', (await ensureFact('Small Hamlet', 40)) 
 reply = { fact: 'A church, a bridge and four hundred people.', distance: '' }
 check('is asked once whether there is more', (await ensureFact('Small Hamlet', 40)) === 'stored')
 check('and marked as having nothing to add', (await row('Small Hamlet'))?.thin === true)
+await ensureFact('Small Hamlet', 40) // the present, asked once
 calls = 0
 check('so it is never asked again', (await ensureFact('Small Hamlet', 40)) === 'stored')
 check('and spends nothing', calls === 0, `${calls} call(s)`)
+
+// ── Nothing current is a real answer, and is written down ──────────────────
+// The same trap as a refused fact, one question over. A village with nothing
+// scheduled and nothing in the news answers "nothing" correctly — and if that
+// is not recorded, it is asked again every run forever at two cents a time.
+const SETTLED =
+  'A long enough paragraph that nobody will ask whether there is more to it, ' +
+  'which takes rather more than fifty words and so goes on for a while yet, ' +
+  'past the point where the brief would call it thin, and then a little ' +
+  'further still so that the expansion question is never reached at all.'
+reply = { fact: SETTLED, distance: 'A short day.', now: '' }
+check('a quiet village gets its paragraph', (await ensureFact('Quiet Village', 40)) === 'written')
+calls = 0
+check('and is asked once about the present', (await ensureFact('Quiet Village', 40)) === 'written')
+check('under a schema that admits nothing else',
+  Object.keys(lastBody.output_config.format.schema.properties).join() === 'now',
+  Object.keys(lastBody.output_config.format.schema.properties).join())
+check('an empty answer is recorded rather than forgotten',
+  (await row('Quiet Village'))?.now_line === '')
+check('and the send reads it as no paragraph at all',
+  (await factFor('Quiet Village')).now === null)
+check('the fact it does have is untouched', (await factFor('Quiet Village')).fact === SETTLED)
+calls = 0
+check('so it is never asked about the present again',
+  (await ensureFact('Quiet Village', 40)) === 'stored')
+check('and spends nothing', calls === 0, `${calls} call(s)`)
+
+// ── The model must not talk about itself ───────────────────────────────────
+// Asked about Bad Wiessee it finished with "I could not reach any news sources
+// tonight, so take this as background rather than the latest word" — addressed
+// to a developer, sent to forty readers.
+reply = {
+  fact: SETTLED,
+  distance: 'A short day.',
+  now: 'The town lives on its spa hotels and the summer sailing on the lake. ' +
+    'Most people here work in hospitality one way or another. ' +
+    'I could not reach any news sources tonight, so take this as background.',
+}
+await ensureFact('Chatty Place', 40)
+check('an aside is cut out of the present', (await ensureFact('Chatty Place', 40)) === 'written')
+check('and the sentences worth keeping are kept',
+  (await row('Chatty Place'))?.now_line ===
+    'The town lives on its spa hotels and the summer sailing on the lake. ' +
+    'Most people here work in hospitality one way or another.')
+
+// Trimmed to a fragment, it is not worth printing at all.
+reply = { fact: SETTLED, distance: 'A short day.', now: 'I could not find anything about this place.' }
+await ensureFact('Silent Place', 40)
+check('a present line that is nothing but an aside is dropped',
+  (await ensureFact('Silent Place', 40)) === 'written')
+check('leaving the record of having asked', (await row('Silent Place'))?.now_line === '')
+check('and no paragraph for the send', (await factFor('Silent Place')).now === null)
 
 // A hand-written fact is the correction mechanism and is never rewritten,
 // however short it is.

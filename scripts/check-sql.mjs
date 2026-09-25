@@ -90,6 +90,7 @@ await pg.exec(`
   create table destination_facts (
     destination text primary key, fact text,
     model text not null,
+    now_line text, thin boolean,
     distance_line text, distance_miles double precision,
     format_version int not null default 1, attempts int not null default 0,
     declined_at timestamptz, created_at timestamptz not null default now()
@@ -228,6 +229,38 @@ check('rather than staying on the planned start',
   `planned start ${lon0.toFixed(4)},${lat0.toFixed(4)} should not be pinned`)
 check('and his own distance is what is shown', rerouted.subject?.includes('60 miles'),
   rerouted.subject)
+
+// ── Both halves of the destination piece reach the email ───────────────────
+// Readers asked for the town's past and its present, and the two are written by
+// separate runs of the warmer — so the send has to print whichever of them is
+// there, and neither when there is not.
+await pg.query(
+  `insert into destination_facts (destination, fact, now_line, model, format_version)
+   values ('Rerouted End', $1, $2, 'claude-opus-5', 99)
+   on conflict (destination) do update set fact = excluded.fact, now_line = excluded.now_line`,
+  [
+    'A bridge here was the only crossing for forty miles until 1952.',
+    'The town now lives on the paper mill and a Thursday market.',
+  ],
+)
+const withFact = await runDailyEmail({ force: true, dryRun: true })
+const withFactHtml = withFact.preview?.html ?? ''
+check('the history paragraph reaches the email',
+  withFactHtml.includes('the only crossing for forty miles'))
+check('and the present one after it',
+  withFactHtml.includes('lives on the paper mill'))
+check('in that order',
+  withFactHtml.indexOf('only crossing') < withFactHtml.indexOf('paper mill'))
+
+// A place asked about the present and found to have none carries an empty
+// string, not a paragraph. Printing it would leave a blank gap in the email.
+await pg.query(`update destination_facts set now_line = '' where destination = 'Rerouted End'`)
+const noNow = await runDailyEmail({ force: true, dryRun: true })
+check('an empty present is not printed as a paragraph',
+  !(noNow.preview?.html ?? '').includes('lives on the paper mill'))
+check('while the history still is',
+  (noNow.preview?.html ?? '').includes('the only crossing for forty miles'))
+await pg.query(`delete from destination_facts where destination = 'Rerouted End'`)
 
 // ── The country is named ───────────────────────────────────────────────────
 // Nobody outside France has heard of Saint-Marcellin.

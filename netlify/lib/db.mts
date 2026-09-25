@@ -209,6 +209,9 @@ export function ensureSchema(): Promise<void> {
       // Set when a place has been asked a second time and had nothing to add,
       // so a hamlet is not re-asked every time the warmer comes round.
       await sql`alter table destination_facts add column if not exists thin boolean`
+      // What the place is now, as opposed to what happened there. The half
+      // people said was missing: something coming up, something recent.
+      await sql`alter table destination_facts add column if not exists now_line text`
 
       // The route as it now stands — see lib/route.mts. Only days he has
       // changed live here; the rest are the plan in src/data/itinerary.json.
