@@ -68,6 +68,7 @@ const RED = '#E31A28'
 const BLUE = '#4285f4'
 const TEXT = '#f3f4f6'
 const MUTED = '#8b8f9a'
+const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
 
 /**
  * A light second line, worked out from the day's distance.
@@ -237,14 +238,14 @@ export function buildDailyEmail(input: DailyEmailInput): {
         <tr><td style="padding:20px 22px;border-left:4px solid ${RED};border-radius:12px 0 0 12px;">
           <div style="font:700 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${RED};letter-spacing:.12em;text-transform:uppercase;">About ${escape(input.to)}</div>
           <div style="font:400 17px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${TEXT};padding-top:11px;">${escape(fact)}</div>
-          ${now ? `<div style="font:400 17px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${TEXT};padding-top:14px;">${escape(now)}</div>` : ''}
-          ${scale ? `<div style="font:400 15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${MUTED};padding-top:12px;">${escape(scale)}</div>` : ''}
+          ${now ? `<div style="font:700 11px/1 ${FONT};color:${RED};letter-spacing:.12em;text-transform:uppercase;padding-top:22px;">The town today</div>
+          <div style="font:400 17px/1.65 ${FONT};color:${TEXT};padding-top:11px;">${escape(now)}</div>` : ''}
         </td></tr>
       </table>
     </td></tr>` : ''}
 
-    ${!fact && scale ? `<tr><td style="padding:18px 28px 0;">
-      <div style="font:400 15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${MUTED};font-style:italic;">${escape(scale)}</div>
+    ${scale ? `<tr><td style="padding:18px 28px 0;">
+      <div style="font:400 15px/1.6 ${FONT};color:${MUTED};">${escape(scale)}</div>
     </td></tr>` : ''}
 
     <tr><td align="center" style="padding:28px;">
@@ -292,8 +293,8 @@ export function buildDailyEmail(input: DailyEmailInput): {
     '',
     fact ? `About ${input.to}: ${fact}` : null,
     now ? '' : null,
-    now,
-    fact ? '' : null,
+    now ? `The town today: ${now}` : null,
+    fact || now ? '' : null,
     scale,
     scale ? '' : null,
     `Watch him live: ${input.liveUrl}`,

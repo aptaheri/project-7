@@ -69,7 +69,7 @@ const { factFor, ensureFact, FORMAT_VERSION } = await import(pathToFileURL(resol
 let calls = 0
 let lastPrompt = ''
 let lastBody = null
-let reply = { now: 'The Sunday market still runs. A new bypass opens next year.', fact: 'A bastide founded in 1332, laid out on a grid by a lord who wanted taxes and got a town. Its market hall still stands on the square and still holds a market on Sundays. The arcades around it were built for traders who came up from the valley. Most of the stone came from a quarry that is now a pond on the edge of the village.', distance: 'Today is four times the length of the valley below.' }
+let reply = { now: 'The Sunday market still runs. A new bypass opens next year.', fact: 'A bastide founded in 1332, laid out on a grid by a lord who wanted taxes and got a town. Its market hall still stands on the square and still holds a market on Sundays. The arcades around it were built for traders who came up from the valley. Most of the stone came from a quarry that is now a pond on the edge of the village. A fire in 1783 took the north side of the square and it was rebuilt a storey taller, which is why one side still looks wrong.', distance: 'Today is four times the length of the valley below.' }
 globalThis.fetch = async (url, init) => {
   if (!String(url).includes('api.anthropic.com')) throw new Error(`unexpected fetch: ${url}`)
   calls++
@@ -83,7 +83,9 @@ globalThis.fetch = async (url, init) => {
   // Which of the four questions this is decides what comes back. The present
   // is asked on its own run, under its own schema, so a stub that always
   // answered with a paragraph would hide the split rather than exercise it.
-  const asksNow = lastPrompt.includes('write two or three sentences about')
+  // Keyed off the schema rather than the brief's wording, which is edited
+  // often and would silently stop matching.
+  const asksNow = !('history' in lastBody.output_config.format.schema.properties)
   const answer =
     reply.raw ??
     (asksNow
@@ -143,7 +145,7 @@ check('alongside the written line', (await factFor('Porto')).distance === reply.
 check('then a later run asks what the place is now',
   (await ensureFact('Porto', 62)) === 'written')
 check('under its own brief, not the one that writes a paragraph',
-  lastPrompt.includes('write two or three sentences about'), 'present brief')
+  lastPrompt.includes('Not its history: the present.'), 'present brief')
 check('and the present is stored beside the hand-written fact',
   (await row('Porto'))?.now_line === reply.now)
 check('which the send reads without touching the fact',
@@ -156,7 +158,7 @@ check('no usable line for a hand-written place is a decline',
   (await ensureFact('Nazaré', 40)) === 'declined')
 check('and its fact still reads fine', (await factFor('Nazaré')).fact !== null)
 
-reply = { fact: 'A bastide founded in 1332, laid out on a grid by a lord who wanted taxes and got a town. Its market hall still stands on the square and still holds a market on Sundays. The arcades around it were built for traders who came up from the valley. Most of the stone came from a quarry that is now a pond on the edge of the village.', distance: 'Today is four times the length of the valley below.' }
+reply = { fact: 'A bastide founded in 1332, laid out on a grid by a lord who wanted taxes and got a town. Its market hall still stands on the square and still holds a market on Sundays. The arcades around it were built for traders who came up from the valley. Most of the stone came from a quarry that is now a pond on the edge of the village. A fire in 1783 took the north side of the square and it was rebuilt a storey taller, which is why one side still looks wrong.', distance: 'Today is four times the length of the valley below.' }
 
 // ── Warming writes both pieces, once ────────────────────────────────────────
 calls = 0
@@ -213,7 +215,7 @@ check('an empty fact is a decline', (await ensureFact('Tiny Hamlet', 70)) === 'd
 check('leaving a marker, not a fact', (await row('Tiny Hamlet'))?.fact === null)
 check('and the send reads it as blank', (await factFor('Tiny Hamlet')).fact === null)
 
-reply = { fact: 'x'.repeat(1200), distance: 'fine' }
+reply = { fact: 'x'.repeat(1600), distance: 'fine' }
 check('an overlong fact is a decline', (await ensureFact('Rambling Place', 70)) === 'declined')
 check('and no fact is stored for it', (await row('Rambling Place'))?.fact === null)
 
@@ -366,9 +368,11 @@ check('and spends nothing', calls === 0, `${calls} call(s)`)
 // is not recorded, it is asked again every run forever at two cents a time.
 const SETTLED =
   'A long enough paragraph that nobody will ask whether there is more to it, ' +
-  'which takes rather more than fifty words and so goes on for a while yet, ' +
+  'which takes rather more than seventy words and so goes on for a while yet, ' +
   'past the point where the brief would call it thin, and then a little ' +
-  'further still so that the expansion question is never reached at all.'
+  'further still so that the expansion question is never reached at all, ' +
+  'because an expansion would spend a run that this check needs for the ' +
+  'second question about the present, and the count of calls is the assertion.'
 reply = { fact: SETTLED, distance: 'A short day.', now: '' }
 check('a quiet village gets its paragraph', (await ensureFact('Quiet Village', 40)) === 'written')
 calls = 0
