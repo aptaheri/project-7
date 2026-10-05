@@ -25,6 +25,7 @@
 /api/auth/magic    /.netlify/functions/auth?action=magic       200!
 /api/auth/verify   /.netlify/functions/auth?action=verify      200!
 /api/viewers       /.netlify/functions/viewers                200!
+/api/viewer-stats  /.netlify/functions/viewer-stats           200!
 /api/unsubscribe   /.netlify/functions/unsubscribe            200!
 /api/email-admin   /.netlify/functions/email-admin            200!
 /api/fact-admin    /.netlify/functions/fact-admin             200!

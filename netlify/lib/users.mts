@@ -181,6 +181,22 @@ export async function ownerEmails(): Promise<string[]> {
 }
 
 /**
+ * When this address first signed in, or null if it is not on file.
+ *
+ * People were let in at every stage of the trip, so a raw visit count from
+ * the sharing page's detail view means something different for somebody who
+ * joined yesterday than for somebody who has had it for months — this is
+ * what lets that view say which.
+ */
+export async function joinedAt(email: string): Promise<string | null> {
+  await ensureSchema()
+  const rows = (await db()`
+    select created_at from viewers where email = ${normalizeEmail(email)}
+  `) as unknown as { created_at: string }[]
+  return rows[0]?.created_at ?? null
+}
+
+/**
  * Sets or clears the name on one address, as typed by an owner.
  *
  * Nulls are a legitimate value: clearing a name Google guessed badly should be

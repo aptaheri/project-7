@@ -33,3 +33,17 @@ export async function requireTrackViewer(
     return json({ error: 'query failed' }, 500)
   }
 }
+
+/** The same wall, for the admin surfaces behind the sharing page. */
+export async function requireOwner(req: Request): Promise<{ email: string } | Response> {
+  const session = currentSession(req)
+  if (!session) return json({ error: 'unauthorized' }, 401)
+
+  await ensureSchema()
+  const rows = (await db()`
+    select role from viewers where email = ${normalizeEmail(session.email)}
+  `) as unknown as { role: Role }[]
+
+  if (rows[0]?.role !== 'owner') return json({ error: 'forbidden' }, 403)
+  return { email: normalizeEmail(session.email) }
+}

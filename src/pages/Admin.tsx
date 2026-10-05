@@ -17,6 +17,9 @@ interface Viewer {
   granted_by: string | null
   /** Owner by way of TRACK_OWNER_EMAILS, so the role cannot be changed here. */
   bootstrap: boolean
+  /** How often, and how recently, this person has opened the tracker. */
+  totalVisits: number
+  lastVisit: string | null
 }
 
 /**
@@ -245,6 +248,10 @@ export default function Admin() {
                   {(v.first_name || v.last_name) && (
                     <span className="admin-email">{v.email}</span>
                   )}
+                  <Link className="admin-visits" to={`/track/sharing/${encodeURIComponent(v.email)}`}>
+                    {v.totalVisits} visit{v.totalVisits === 1 ? '' : 's'}
+                    {v.lastVisit && ` · last ${new Date(v.lastVisit).toLocaleDateString()}`}
+                  </Link>
                 </div>
                 <span className={`admin-role admin-role-${v.role}`}>{ROLE_LABELS[v.role]}</span>
                 {v.bootstrap && (

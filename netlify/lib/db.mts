@@ -281,6 +281,19 @@ export function ensureSchema(): Promise<void> {
       await sql`
         create index if not exists locations_received_at_idx on locations (received_at)
       `
+
+      // One row per viewer per day the tracker was opened. Written once a
+      // session — see lib/visits.mts — rather than on every 30-second poll, so
+      // this stays as cheap as the feed itself has to be.
+      await sql`
+        create table if not exists track_visits (
+          email      text not null,
+          local_date date not null,
+          visits     int not null default 0,
+          last_seen  timestamptz not null default now(),
+          primary key (email, local_date)
+        )
+      `
     })()
     schemaReady.catch(() => {
       schemaReady = null

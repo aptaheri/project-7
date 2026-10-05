@@ -1,5 +1,4 @@
 import { json } from '../lib/auth.mts'
-import { currentSession } from '../lib/session.mts'
 import {
   cleanName,
   isBootstrapOwner,
@@ -12,33 +11,20 @@ import {
   setName,
   setRole,
 } from '../lib/users.mts'
-import { db, ensureSchema } from '../lib/db.mts'
+import { requireOwner } from '../lib/gate.mts'
+import { visitSummaries } from '../lib/visits.mts'
 import { buildApprovalEmail } from '../lib/approval-email.mts'
 import { mailerConfigured, sendBatch } from '../lib/mailer.mts'
-import type { Role } from '../lib/session.mts'
 
 /**
  * Owner-only management of who can see the tracker.
  *
- *   GET  /api/viewers → list everyone who has signed in, with their role
+ *   GET  /api/viewers → list everyone who has signed in, with their role and
+ *                       how often they have opened the tracker
  *   POST /api/viewers → { email, role } to grant, { email, emailPref } to change
  *                       who gets the daily mail, { email, firstName, lastName }
  *                       to set a name, or { email, remove: true }
  */
-
-async function requireOwner(req: Request): Promise<{ email: string } | Response> {
-  const session = currentSession(req)
-  if (!session) return json({ error: 'unauthorized' }, 401)
-
-  await ensureSchema()
-  const sql = db()
-  const rows = (await sql`select role from viewers where email = ${normalizeEmail(session.email)}`) as unknown as {
-    role: Role
-  }[]
-
-  if (rows[0]?.role !== 'owner') return json({ error: 'forbidden' }, 403)
-  return { email: normalizeEmail(session.email) }
-}
 
 
 /**
@@ -84,7 +70,14 @@ export default async function handler(req: Request): Promise<Response> {
     if (owner instanceof Response) return owner
 
     if (req.method === 'GET') {
-      return json({ viewers: await listViewers() })
+      const [viewers, visits] = await Promise.all([listViewers(), visitSummaries()])
+      return json({
+        viewers: viewers.map((v) => ({
+          ...v,
+          totalVisits: visits.get(v.email)?.totalVisits ?? 0,
+          lastVisit: visits.get(v.email)?.lastSeen ?? null,
+        })),
+      })
     }
 
     if (req.method === 'POST') {

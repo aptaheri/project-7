@@ -1,6 +1,7 @@
 import { json } from '../lib/auth.mts'
 import { db, ensureSchema } from '../lib/db.mts'
 import { requireTrackViewer } from '../lib/gate.mts'
+import { recordVisit } from '../lib/visits.mts'
 import { testDevices } from '../lib/devices.mts'
 import { localDayRange } from '../lib/day.mts'
 import { loadHistory } from '../lib/rollups.mts'
@@ -59,6 +60,10 @@ export default async function handler(req: Request): Promise<Response> {
 
   const gate = await requireTrackViewer(req)
   if (gate instanceof Response) return gate
+
+  // Counted here, once a session, rather than in the live feed, which polls
+  // every 30 seconds for as long as the map stays open.
+  await recordVisit(gate.email)
 
   const isOwner = gate.role === 'owner'
   const wantsTest = new URL(req.url).searchParams.get('mode') === 'test'

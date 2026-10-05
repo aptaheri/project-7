@@ -156,6 +156,12 @@ await pg.exec(`
     recipients int not null default 0, subject text,
     primary key (local_date, kind)
   );
+  create table track_visits (
+    email text not null, local_date date not null,
+    visits int not null default 0,
+    last_seen timestamptz not null default now(),
+    primary key (email, local_date)
+  );
 `)
 await pg.query(`insert into viewers (email, role) values ('owner@example.com', 'owner')`)
 
@@ -354,6 +360,24 @@ check('the history endpoint returns the finished days', firstHistory.days.length
 check('and the route behind him', firstHistory.trail.length > 0,
   `${firstHistory.trail.length} points`)
 check('and its version matches the live feed', firstHistory.version === afterFix.body.historyVersion)
+
+// ── Opening the tracker is counted, not polled for ──────────────────────────
+//
+// Counted from track-history.mts, which is fetched once a session, rather
+// than from the live feed above, which this file has already polled several
+// times for the same session without the count below moving.
+const visitOnce = await pg.query(`select visits from track_visits where email = $1`, [
+  'owner@example.com',
+])
+check('opening the tracker records one visit', visitOnce.rows[0]?.visits === 1,
+  JSON.stringify(visitOnce.rows))
+
+await historyOf(await freshHistoryHandler())
+const visitTwice = await pg.query(`select visits from track_visits where email = $1`, [
+  'owner@example.com',
+])
+check('opening it again the same day increments the same row', visitTwice.rows[0]?.visits === 2,
+  JSON.stringify(visitTwice.rows))
 
 const before = firstHistory.days[0].distanceKm
 await pg.query(

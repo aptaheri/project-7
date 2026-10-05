@@ -140,6 +140,16 @@ globalThis.__ensureSchema = async () => {
       updated_by text, updated_at timestamptz not null default now()
     );
   `)
+  // How often each viewer has opened the tracker, by day. See lib/visits.mts.
+  await pg.exec(`
+    create table if not exists track_visits (
+      email      text not null,
+      local_date date not null,
+      visits     int not null default 0,
+      last_seen  timestamptz not null default now(),
+      primary key (email, local_date)
+    );
+  `)
 }
 const users = await bundle('netlify/lib/users.mts', 'users-access.mjs')
 const { buildAccessRequestEmail } = await bundle(
@@ -691,6 +701,57 @@ await grant('newcomer@example.com', 'pending')
 check('sending somebody back to pending says nothing', sentMail.length === 0, `${sentMail.length} email(s)`)
 await grant('newcomer@example.com', 'viewer')
 check('and letting them in again does tell them', sentMail.length === 1, `${sentMail.length} email(s)`)
+
+// ── How often somebody opens the tracker, on the sharing page ──────────────
+// Counted in track_visits by track-history.mts (see check-feed), surfaced here
+// as the owner-only read side: the list annotates everyone with it, and the
+// detail endpoint behind a click answers for one address at a time.
+const viewerStatsFn = await bundle('netlify/functions/viewer-stats.mts', 'viewer-stats-access.mjs')
+
+await pg.query(
+  `insert into track_visits (email, local_date, visits, last_seen) values
+   ('newcomer@example.com', current_date, 3, now()),
+   ('newcomer@example.com', current_date - 1, 1, now() - interval '1 day')`,
+)
+
+const viewersList = await viewersFn.default(
+  new Request('https://project7.bike/api/viewers', {
+    headers: { cookie: `p7_session=${encodeURIComponent(asOwner)}` },
+  }),
+)
+const { viewers: listedViewers } = await viewersList.json()
+const newcomerRow = listedViewers.find((v) => v.email === 'newcomer@example.com')
+check('the sharing list carries a visit total', newcomerRow?.totalVisits === 4,
+  JSON.stringify(newcomerRow))
+check('and the most recent open', Boolean(newcomerRow?.lastVisit), newcomerRow?.lastVisit)
+const strangerRow = listedViewers.find((v) => v.email === 'sees@example.com')
+check('somebody who has never opened it reads as zero, not missing',
+  strangerRow?.totalVisits === 0 && strangerRow?.lastVisit === null, JSON.stringify(strangerRow))
+
+const statsFor = (email, session) =>
+  viewerStatsFn.default(
+    new Request(`https://project7.bike/api/viewer-stats?email=${encodeURIComponent(email)}`, {
+      headers: { cookie: `p7_session=${encodeURIComponent(session)}` },
+    }),
+  )
+
+const stats = await statsFor('newcomer@example.com', asOwner)
+check('an owner reads the detail', stats.status === 200, String(stats.status))
+const statsBody = await stats.json()
+check('with the same total as the list', statsBody.totalVisits === 4, JSON.stringify(statsBody))
+check('and a day-by-day breakdown', statsBody.days.length === 2, JSON.stringify(statsBody.days))
+check('and when they joined, so a raw count can be read in context',
+  Boolean(statsBody.joinedAt), statsBody.joinedAt)
+
+const asViewer = createSession('sees@example.com').value
+const forbidden = await statsFor('newcomer@example.com', asViewer)
+check('a viewer cannot read somebody else\'s detail', forbidden.status === 403,
+  String(forbidden.status))
+
+const noVisits = await statsFor('waiting@example.com', asOwner)
+const noVisitsBody = await noVisits.json()
+check('an address nobody has opened the tracker as reads as zero, not an error',
+  noVisits.status === 200 && noVisitsBody.totalVisits === 0, JSON.stringify(noVisitsBody))
 
 console.log(failures === 0 ? '\nAll access checks passed.' : `\n${failures} check(s) failed.`)
 process.exit(failures === 0 ? 0 : 1)
