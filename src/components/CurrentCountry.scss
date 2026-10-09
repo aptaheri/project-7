@@ -92,14 +92,16 @@
   }
 }
 
-// Emoji ignore the surrounding font weight, so size is the only lever.
+// An image rather than the flag emoji — see CurrentCountry.tsx. Height fixed,
+// width left to the image's own ratio: Nepal and Switzerland are not 4:3, and
+// stretching them to be would be its own small wrongness.
 .current-country-flag {
-  font-size: 16px;
-  line-height: 1;
-  // Centring the box leaves the glyph itself sitting high, because a flag emoji
-  // is drawn in the upper part of its em square rather than filling it. One
-  // pixel down puts its middle on the middle of the country name.
-  transform: translateY(1px);
+  height: 14px;
+  width: auto;
+  border-radius: 2px;
+  // Most flags meet a dark pill edge-on somewhere along their border; a
+  // hairline keeps that edge from disappearing into the background.
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
 }
 
 // The only sign that the pill goes anywhere, so it is drawn rather than typed:

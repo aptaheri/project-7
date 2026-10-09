@@ -59,10 +59,19 @@ export default function CurrentCountry() {
         <span className="current-country-label">Current location:</span>
         <span className="current-country-value">
           {where.country}
-          {/* The flag says "Spain" a second time to a screen reader, so it is
-              decoration here rather than content. */}
-          {where.flag && (
-            <span className="current-country-flag" aria-hidden="true">{where.flag}</span>
+          {/* An actual image rather than the flag emoji: Windows did not add
+              flag glyphs to its emoji font until 11 22H2, so anyone on an
+              older Windows saw either the bare letters or nothing at all. An
+              image renders the same everywhere. Decorative — the country name
+              already says "Spain" to a screen reader. */}
+          {where.code && (
+            <img
+              className="current-country-flag"
+              src={`https://flagcdn.com/h20/${where.code.toLowerCase()}.png`}
+              srcSet={`https://flagcdn.com/h40/${where.code.toLowerCase()}.png 2x`}
+              alt=""
+              aria-hidden="true"
+            />
           )}
         </span>
       </span>
