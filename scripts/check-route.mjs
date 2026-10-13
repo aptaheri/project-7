@@ -85,7 +85,7 @@ const bundle = await esbuild.build({
 })
 const outPath = join(dir, 'route.mjs')
 writeFileSync(outPath, bundle.outputFiles[0].text)
-const { loadRoute, saveDay, rechainNextDay, shiftFrom, upcomingRoute, cyclingRoute, lineForEmail, lineForMap, PLAN } =
+const { loadRoute, saveDay, rechainNextDay, shiftFrom, upcomingRoute, fillMissingRoads, cyclingRoute, lineForEmail, lineForMap, PLAN } =
   await import(pathToFileURL(resolve(outPath)).href)
 
 let failures = 0
@@ -360,6 +360,53 @@ if (resting) check('a rest day has a destination but no line', resting.line === 
 
 await pg.query('delete from route_days')
 await pg.query('delete from route_geometry')
+
+// ── A day saved without a road gets one later ──────────────────────────────
+// saveDay asks Mapbox once, from a phone. Through Georgia two of his replanned
+// days had no road, and the map drew the plan's road through Marneuli and
+// Rustavi instead — a road he had replanned away from.
+check('an unedited day says so', ahead.every((d) => d.edited === false))
+const [first, second] = PLAN.filter((d) => d.kind === 'ride' && d.fromCoords && d.toCoords)
+  .filter((d) => d.date > from0.date).slice(0, 2)
+directionsKm = 5000 // the save-time fetch comes back as nonsense and is discarded
+for (const d of [first, second]) {
+  await saveDay(
+    { date: d.date, kind: 'ride', from: d.from, fromCoords: d.fromCoords,
+      to: d.to, toCoords: d.toCoords, miles: null, note: '', needsReview: false },
+    'john@example.com',
+  )
+}
+const unrouted = (await upcomingRoute(from0.date, 14)).find((d) => d.date === first.date)
+check('a replanned day with no road is marked edited, for a straight hop',
+  unrouted.edited === true && unrouted.line === null)
+
+// Lagodekhi to Balakan: a closed border, routed the long way round. Asking
+// again gets the same nonsense, which must not be stored.
+const stillClosed = await fillMissingRoads(from0.date, second.date)
+check('a road that still cannot be routed stays empty',
+  stillClosed === 0 && !(await dayOn(first.date)).routeCoords?.length, `${stillClosed} filled`)
+
+directionsKm = null
+const callsBeforeFill = directionsCalls
+const filled = await fillMissingRoads(from0.date, first.date)
+check('filling fetches only the days in the window', filled === 1 && directionsCalls === callsBeforeFill + 1,
+  `${filled} filled, ${directionsCalls - callsBeforeFill} calls`)
+const nowRouted = await dayOn(first.date)
+check('and stores the road it got', nowRouted.routeCoords?.length > 1, `${nowRouted.routeCoords?.length} points`)
+check('without claiming anybody edited it', nowRouted.editedBy === 'john@example.com', nowRouted.editedBy)
+check('and a day saved with no distance takes the road\'s',
+  nowRouted.miles === Math.round(nowRouted.cyclingMiles), `${nowRouted.miles} mi`)
+
+const callsBeforeRepeat = directionsCalls
+await fillMissingRoads(from0.date, first.date)
+check('a day that already has a road costs nothing', directionsCalls === callsBeforeRepeat,
+  `${directionsCalls - callsBeforeRepeat} calls`)
+
+const planAfterFill = JSON.parse(readFileSync('src/data/itinerary.json', 'utf8')).days
+check('filling leaves the plan on disk untouched',
+  JSON.stringify(planAfterFill.find((d) => d.date === first.date)) === JSON.stringify(PLAN.find((d) => d.date === first.date)))
+
+await pg.query('delete from route_days')
 
 // ── A road is a road, not a boat ───────────────────────────────────────────
 // The cycling profile takes ferries by default, and did: Cesarica to Split came

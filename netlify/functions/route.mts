@@ -1,6 +1,6 @@
 import { json } from '../lib/auth.mts'
 import { requireTrackViewer } from '../lib/gate.mts'
-import { loadRoute, rechainNextDay, saveDay, shiftFrom } from '../lib/route.mts'
+import { fillMissingRoads, loadRoute, rechainNextDay, saveDay, shiftFrom } from '../lib/route.mts'
 import type { DayKind, SaveDay } from '../lib/route.mts'
 
 /**
@@ -47,6 +47,15 @@ export default async function handler(req: Request): Promise<Response> {
 
   try {
     if (req.method === 'GET') {
+      // Any day in the window saved without a road gets asked for one again —
+      // the save-time fetch is one attempt from a phone on one bar. Only days
+      // missing a road cost anything, so an ordinary load makes no calls. A
+      // failure here must not cost him the editor.
+      const filled = await fillMissingRoads(from, until).catch((error) => {
+        console.error('route: filling missing roads failed', error)
+        return 0
+      })
+      if (filled > 0) console.log(`route: fetched ${filled} missing road(s)`)
       const days = await loadRoute()
       return json({
         today,

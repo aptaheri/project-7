@@ -347,6 +347,12 @@ export interface UpcomingDay {
    * guess rather than pretending to be a route.
    */
   line: [number, number][] | null
+  /**
+   * True when he has changed this day. An edited day with no line must not be
+   * drawn as a slice of the plan's road: he is not riding it. Through Georgia
+   * that drew him through Marneuli and Rustavi, which he had replanned away from.
+   */
+  edited: boolean
 }
 
 /**
@@ -388,8 +394,65 @@ export async function upcomingRoute(today: string, days = DRAWN_DAYS): Promise<U
       origin: day.fromCoords,
       destination: day.toCoords as [number, number],
       line: own?.length ? thinLine(own, near ? NEAR_LINE_POINTS : MAP_LINE_POINTS) : null,
+      edited: day.edited === true,
     }
   })
+}
+
+/**
+ * Fetches the road again for edited days that were saved without one.
+ *
+ * saveDay asks Mapbox once, at the moment he saves, from a phone on whatever
+ * signal a mountain village has. A timeout there is stored as no road at all,
+ * and nothing ever asked again, so the map fell back to the plan's road for a
+ * day he had replanned. This asks again for every such day in the window.
+ *
+ * Some legs will never route: Lagodekhi to Balakan is fifteen kilometres over
+ * a border Mapbox treats as closed, and comes back as a 470 km detour that the
+ * plausibility check rightly throws away. Those stay empty and are asked again
+ * next time, which is one directions call; the map draws them as a straight hop.
+ *
+ * A day with no start of its own starts where the day before ended.
+ * `updated_at` moves on a fill, because that is what tells an open map that the
+ * road ahead has changed. `updated_by` does not: nobody edited anything.
+ */
+export async function fillMissingRoads(from: string, until: string): Promise<number> {
+  await ensureSchema()
+  const sql = db()
+
+  const days = await loadRoute()
+  const missing = days
+    .map((day, i) => ({ day, origin: day.fromCoords ?? days[i - 1]?.toCoords ?? null }))
+    .filter(({ day, origin }) =>
+      day.edited &&
+      day.date >= from && day.date <= until &&
+      day.kind !== 'rest' &&
+      origin && day.toCoords &&
+      !day.routeCoords?.length,
+    )
+  if (missing.length === 0) return 0
+
+  const routed = await Promise.all(
+    missing.map(async ({ day, origin }) => ({
+      day,
+      road: await cyclingRoute(origin as [number, number], day.toCoords as [number, number]),
+    })),
+  )
+
+  let filled = 0
+  for (const { day, road } of routed) {
+    if (!road) continue
+    await sql`
+      update route_days set
+        route_coords = ${JSON.stringify(road.coords)}::jsonb,
+        cycling_miles = ${road.miles},
+        miles = coalesce(miles, ${Math.round(road.miles)}),
+        updated_at = now()
+      where date = ${day.date}::date
+    `
+    filled += 1
+  }
+  return filled
 }
 
 /**

@@ -57,6 +57,8 @@ interface UpcomingDay {
   destination: [number, number]
   /** Null where nobody has fetched the road yet; drawn as a straight hop. */
   line: [number, number][] | null
+  /** He has changed this day, so the plan's road is not his road. */
+  edited?: boolean
 }
 
 interface History {
@@ -250,6 +252,8 @@ function aheadSegments(
   }
 
   const features: GeoJSON.Feature[] = []
+  // Where the last night was, for a day that does not say where it starts.
+  let previous: [number, number] | null = at
   for (const day of days) {
     const properties = {
       date: day.date, to: day.to, from: day.from, miles: day.miles, kind: day.kind,
@@ -265,12 +269,34 @@ function aheadSegments(
         properties,
         geometry: { type: 'LineString', coordinates: day.line },
       })
+      previous = day.destination
       continue
     }
 
     // A rest day is a night, not a ride — it moves nothing along the line.
     if (day.kind === 'rest') continue
 
+    // A day he changed but whose road could not be fetched — a border Mapbox
+    // treats as closed, a save on one bar. The plan's road is the one thing
+    // it certainly is not: through Georgia that drew him via Marneuli and
+    // Rustavi, and left gaps wherever his towns were far from the plan. A
+    // straight hop between his own towns is honest about being a guess.
+    if (day.edited) {
+      const start = day.origin ?? previous
+      const found = advanceTo(day.destination)
+      if (found) { stage = found.stage; index = found.index }
+      if (start) {
+        features.push({
+          type: 'Feature',
+          properties,
+          geometry: { type: 'LineString', coordinates: [start, day.destination] },
+        })
+      }
+      previous = day.destination
+      continue
+    }
+
+    previous = day.destination
     const found = advanceTo(day.destination)
     if (!found) continue
     const sameStage = found.stage === stage
