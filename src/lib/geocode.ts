@@ -57,9 +57,13 @@ export async function searchPlaces(
   if (query.trim().length < 2) return []
 
   const proximity = near ? `&proximity=${near[0]},${near[1]}` : ''
+  // In English. Left to itself Mapbox names a town in its own script, and the
+  // name he saves is the one in the email's subject line and the tracker's
+  // panel — through Georgia that was "ვალე → აწყური", to forty readers who all
+  // read English.
   const url =
     `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query.trim())}.json` +
-    `?types=${DESTINATION_TYPES.join(',')}&limit=5${proximity}&access_token=${token}`
+    `?types=${DESTINATION_TYPES.join(',')}&limit=5&language=en${proximity}&access_token=${token}`
 
   const response = await fetch(url)
   if (!response.ok) {

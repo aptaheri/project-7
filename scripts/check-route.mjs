@@ -457,10 +457,13 @@ await searchPlaces('Saint-Marcellin', null, 'pk.test').catch((e) => { raised = e
 check('a failed lookup throws rather than returning nothing', raised instanceof GeocodeError,
   raised?.message)
 
-globalThis.fetch = async () => new Response(JSON.stringify({
+let geocodeUrl = ''
+globalThis.fetch = async (url) => (geocodeUrl = String(url), new Response(JSON.stringify({
   features: [{ text: 'Saint-Marcellin', place_name: 'Saint-Marcellin, Isère, France', center: [5.32, 45.15] }],
-}), { status: 200, headers: { 'content-type': 'application/json' } })
+}), { status: 200, headers: { 'content-type': 'application/json' } }))
 const found = await searchPlaces('Saint-Marcellin', [4.38, 44.62], 'pk.test')
+check('towns are named in English, not their own script', geocodeUrl.includes('language=en'),
+  geocodeUrl.slice(geocodeUrl.indexOf('?')))
 check('a good lookup returns the town and its coordinates',
   found[0]?.name === 'Saint-Marcellin' && found[0]?.coords[0] === 5.32, found[0]?.context)
 check('a query too short to mean anything asks nothing',
