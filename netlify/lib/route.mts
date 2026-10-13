@@ -158,6 +158,51 @@ export async function cyclingRoute(
   from: [number, number],
   to: [number, number],
 ): Promise<CyclingRoute | null> {
+  const direct = await directions(from, to)
+  if (direct) return direct
+
+  // No road, or only an absurd one: perhaps a border crossing Mapbox will not
+  // route through. Each side of it routes fine on its own, so ride to the near
+  // post and on from the far one. Only crossings roughly on the way are tried,
+  // so an ordinary failure costs nothing extra.
+  const straight = haversineKm(from, to)
+  for (const crossing of CROSSINGS) {
+    const [near, far] =
+      haversineKm(from, crossing.sides[0]) <= haversineKm(from, crossing.sides[1])
+        ? crossing.sides
+        : [crossing.sides[1], crossing.sides[0]]
+    const via = haversineKm(from, near) + haversineKm(far, to)
+    if (via > straight * 1.5 + 5) continue
+
+    const [before, after] = await Promise.all([directions(from, near), directions(far, to)])
+    if (!before || !after) continue
+    console.log(`route: routed through the ${crossing.name} crossing`)
+    return {
+      miles: before.miles + after.miles + haversineKm(near, far) / 1.609344,
+      coords: [...before.coords, ...after.coords],
+    }
+  }
+  return null
+}
+
+/**
+ * Border crossings Mapbox treats as closed, as the last point it will route to
+ * on each side. The gap between the two is the crossing itself.
+ *
+ * Lagodekhi to Balakan is fifteen kilometres; asked directly, Mapbox goes round
+ * by 470 km and the plausibility check throws it away, so the day between Kaspi
+ * and Balakan was drawn as a straight line across Kakheti. Found by routing to
+ * points either side until one came back short.
+ */
+const CROSSINGS: { name: string; sides: [[number, number], [number, number]] }[] = [
+  { name: 'Lagodekhi–Mazımçay', sides: [[46.3012, 41.7866], [46.3130, 41.787]] },
+]
+
+/** One request to the cycling router, plausibility-checked. */
+async function directions(
+  from: [number, number],
+  to: [number, number],
+): Promise<CyclingRoute | null> {
   const token = process.env.VITE_MAPBOX_TOKEN ?? process.env.MAPBOX_TOKEN
   if (!token) {
     console.warn('route: no Mapbox token, skipping directions')
@@ -453,6 +498,96 @@ export async function fillMissingRoads(from: string, until: string): Promise<num
     filled += 1
   }
   return filled
+}
+
+/** A letter from any script but Latin: Georgian, Cyrillic, Arabic, Chinese. */
+const NOT_LATIN = /(?=\p{L})\P{Script=Latin}/u
+
+/**
+ * The English name for a town saved in its own script.
+ *
+ * Searched for by the name it was saved under, near where it was saved: that
+ * is how it was found in the first place, and it finds Atskuri and Balakan,
+ * which a reverse lookup of the same coordinates does not. Georgia has two
+ * Atskuris, so the answer must be the one at the saved point.
+ */
+async function englishName(local: string, at: [number, number]): Promise<string | null> {
+  const token = process.env.VITE_MAPBOX_TOKEN ?? process.env.MAPBOX_TOKEN
+  if (!token) return null
+  const url =
+    `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(local)}.json` +
+    `?types=place,locality,district&limit=5&language=en&proximity=${at[0]},${at[1]}` +
+    `&access_token=${token}`
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(8000) })
+    if (!response.ok) return null
+    const body = (await response.json()) as {
+      features?: { text?: string; center?: [number, number] }[]
+    }
+    const match = (body.features ?? []).find(
+      (f) => f.center && f.text && haversineKm(at, f.center) <= 15,
+    )
+    const name = match?.text?.trim()
+    // Mapbox answers in the local script where it has no English name, and
+    // that is no better than what is stored.
+    return name && !NOT_LATIN.test(name) ? name : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Renames towns that were saved in their own script.
+ *
+ * Until the editor asked for English, a town came back from the place search
+ * in whatever script it is written in locally, and that name is the email's
+ * subject line and the tracker's panel: "ვალე → აწყური", to readers who all
+ * read English. Each such name is looked up again from its coordinates.
+ *
+ * A destination's lines are stored against its name, so they are copied to the
+ * new one. Without that, renaming the place the morning email is about to use
+ * empties its description until the warmer next comes round.
+ */
+export async function englishNames(from: string, until: string): Promise<number> {
+  await ensureSchema()
+  const sql = db()
+
+  const days = (await loadRoute()).filter(
+    (d) => d.edited && d.date >= from && d.date <= until,
+  )
+  const wanted = new Map<string, [number, number]>()
+  for (const day of days) {
+    if (day.from && day.fromCoords && NOT_LATIN.test(day.from)) wanted.set(day.from, day.fromCoords)
+    if (day.to && day.toCoords && NOT_LATIN.test(day.to)) wanted.set(day.to, day.toCoords)
+  }
+  if (wanted.size === 0) return 0
+
+  let renamed = 0
+  for (const [local, at] of wanted) {
+    const english = await englishName(local, at)
+    if (!english) continue
+    // The facts first: a rename that lands without them is the empty email.
+    await sql`
+      insert into destination_facts
+      select (jsonb_populate_record(
+        null::destination_facts,
+        to_jsonb(f) || jsonb_build_object('destination', ${english}::text)
+      )).*
+      from destination_facts f where f.destination = ${local}
+      on conflict (destination) do nothing
+    `
+    await sql`
+      update route_days set from_place = ${english}, updated_at = now()
+      where from_place = ${local} and date between ${from}::date and ${until}::date
+    `
+    await sql`
+      update route_days set to_place = ${english}, updated_at = now()
+      where to_place = ${local} and date between ${from}::date and ${until}::date
+    `
+    console.log(`route: renamed ${local} to ${english}`)
+    renamed += 1
+  }
+  return renamed
 }
 
 /**

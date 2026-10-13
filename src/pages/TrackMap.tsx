@@ -236,7 +236,7 @@ function aheadSegments(
   }
 
   /** The next point on or after the cursor closest to this town. */
-  function advanceTo(target: [number, number]): { stage: number; index: number } | null {
+  function advanceTo(target: [number, number]): { stage: number; index: number; km: number } | null {
     let best = { stage: -1, index: -1, km: Infinity }
     for (let si = stage; si < stages.length; si += 1) {
       const line = stages[si]
@@ -248,12 +248,13 @@ function aheadSegments(
       // convincing rather than scanning to Antarctica for every day.
       if (best.km < 25) break
     }
-    return best.km <= 60 ? { stage: best.stage, index: best.index } : null
+    return best.km <= 60 ? best : null
   }
 
+  /** Close enough to the plan's road that the plan's road is his road. */
+  const ON_PLAN_KM = 15
+
   const features: GeoJSON.Feature[] = []
-  // Where the last night was, for a day that does not say where it starts.
-  let previous: [number, number] | null = at
   for (const day of days) {
     const properties = {
       date: day.date, to: day.to, from: day.from, miles: day.miles, kind: day.kind,
@@ -269,7 +270,6 @@ function aheadSegments(
         properties,
         geometry: { type: 'LineString', coordinates: day.line },
       })
-      previous = day.destination
       continue
     }
 
@@ -277,26 +277,30 @@ function aheadSegments(
     if (day.kind === 'rest') continue
 
     // A day he changed but whose road could not be fetched — a border Mapbox
-    // treats as closed, a save on one bar. The plan's road is the one thing
-    // it certainly is not: through Georgia that drew him via Marneuli and
-    // Rustavi, and left gaps wherever his towns were far from the plan. A
+    // treats as closed, a save on one bar. If both its towns are on the plan's
+    // road it is a plan day that moved, as every shift makes, and the plan's
+    // road is right. Otherwise the plan's road is the one thing it certainly is
+    // not — through Georgia that drew him via Marneuli and Rustavi — and a
     // straight hop between his own towns is honest about being a guess.
-    if (day.edited) {
-      const start = day.origin ?? previous
-      const found = advanceTo(day.destination)
-      if (found) { stage = found.stage; index = found.index }
-      if (start) {
+    if (day.edited && day.origin) {
+      const destination = advanceTo(day.destination)
+      const onPlan =
+        destination !== null && destination.km <= ON_PLAN_KM &&
+        (advanceTo(day.origin)?.km ?? Infinity) <= ON_PLAN_KM
+      if (!onPlan) {
+        if (destination) { stage = destination.stage; index = destination.index }
         features.push({
           type: 'Feature',
           properties,
-          geometry: { type: 'LineString', coordinates: [start, day.destination] },
+          geometry: { type: 'LineString', coordinates: [day.origin, day.destination] },
         })
+        continue
       }
-      previous = day.destination
-      continue
     }
 
-    previous = day.destination
+    // A day with no start of its own follows the plan, never a line from the
+    // night before: after the ferry days that was Baku, and the line went
+    // straight across the Caspian. The plan's road picks up at Fort-Shevchenko.
     const found = advanceTo(day.destination)
     if (!found) continue
     const sameStage = found.stage === stage

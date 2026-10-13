@@ -1,6 +1,6 @@
 import { json } from '../lib/auth.mts'
 import { requireTrackViewer } from '../lib/gate.mts'
-import { fillMissingRoads, loadRoute, rechainNextDay, saveDay, shiftFrom } from '../lib/route.mts'
+import { englishNames, fillMissingRoads, loadRoute, rechainNextDay, saveDay, shiftFrom } from '../lib/route.mts'
 import type { DayKind, SaveDay } from '../lib/route.mts'
 
 /**
@@ -56,6 +56,10 @@ export default async function handler(req: Request): Promise<Response> {
         return 0
       })
       if (filled > 0) console.log(`route: fetched ${filled} missing road(s)`)
+      // Towns saved in their own script before the search asked for English.
+      await englishNames(from, until).catch((error) => {
+        console.error('route: renaming towns failed', error)
+      })
       const days = await loadRoute()
       return json({
         today,

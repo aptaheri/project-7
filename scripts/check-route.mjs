@@ -39,6 +39,10 @@ await pg.exec(`
     needs_review boolean not null default false,
     updated_by text, updated_at timestamptz not null default now()
   );
+  create table destination_facts (
+    destination text primary key, fact text, model text not null,
+    created_at timestamptz not null default now(), now_line text, distance_line text
+  );
   create table route_geometry (
     date date primary key,
     from_lon double precision not null, from_lat double precision not null,
@@ -85,7 +89,7 @@ const bundle = await esbuild.build({
 })
 const outPath = join(dir, 'route.mjs')
 writeFileSync(outPath, bundle.outputFiles[0].text)
-const { loadRoute, saveDay, rechainNextDay, shiftFrom, upcomingRoute, fillMissingRoads, cyclingRoute, lineForEmail, lineForMap, PLAN } =
+const { loadRoute, saveDay, rechainNextDay, shiftFrom, upcomingRoute, fillMissingRoads, englishNames, cyclingRoute, lineForEmail, lineForMap, PLAN } =
   await import(pathToFileURL(resolve(outPath)).href)
 
 let failures = 0
@@ -425,6 +429,87 @@ const sane = await cyclingRoute([15.0213211, 44.5648438], [16.4435148, 43.514711
 check('and a plausible one is kept', sane !== null && Math.round(sane.miles) === 135,
   `${sane && Math.round(sane.miles)} mi`)
 directionsKm = null
+
+// ── A border Mapbox will not cross ─────────────────────────────────────────
+// Lagodekhi to Balakan: fifteen kilometres, which Mapbox routes 470 km round
+// because it treats the crossing as closed. Each side routes on its own.
+{
+  const realFetch = globalThis.fetch
+  const asked = []
+  globalThis.fetch = async (url) => {
+    const pair = String(url).match(/cycling\/([^?]+)\?/)[1]
+    asked.push(pair)
+    const [a, b] = pair.split(';').map((p) => p.split(',').map(Number))
+    const crow = Math.hypot((b[0] - a[0]) * 83, (b[1] - a[1]) * 111)
+    // Through the border: round by Red Bridge, about 450 km further, as the
+    // real router answers (618 km for Kaspi to Balakan). Either side: a road.
+    const through = (a[0] < 46.305) !== (b[0] < 46.305)
+    return new Response(JSON.stringify({ code: 'Ok', routes: [{
+      distance: (through ? crow + 450 : crow * 1.3) * 1000,
+      geometry: { coordinates: [a, b] },
+    }] }), { status: 200 })
+  }
+  const kaspi = [44.42, 41.92]
+  const balakan = [46.408936, 41.724606]
+  const crossed = await cyclingRoute(kaspi, balakan)
+  check('a closed border is ridden through its crossing', crossed !== null && crossed.coords.length === 4,
+    crossed ? `${Math.round(crossed.miles)} mi` : 'no road')
+  check('as one road from each side', asked.length === 3, asked.join(' | '))
+
+  asked.length = 0
+  const elsewhere = await cyclingRoute([15.0213211, 44.5648438], [15.2, 44.6])
+  check('a road nowhere near a crossing asks nothing more', elsewhere !== null && asked.length === 1,
+    `${asked.length} calls`)
+  globalThis.fetch = realFetch
+}
+
+// ── Towns saved in their own script are renamed in English ─────────────────
+// Before the search asked for English, Vale and Atskuri were saved as ვალე and
+// აწყური — the subject line of an email to forty English readers.
+{
+  const realFetch = globalThis.fetch
+  globalThis.fetch = async (url) => {
+    const u = String(url)
+    if (u.includes('api.mapbox.com/directions')) return realFetch(url)
+    if (!u.includes('language=en')) throw new Error(`not asked in English: ${u}`)
+    const query = decodeURIComponent(u.match(/places\/([^.]+)\.json/)[1])
+    const features = {
+      'ვალე': [{ text: 'Vale', center: [42.873492, 41.609154] }],
+      // Two Atskuris; the one in Kakheti is first and is the wrong one.
+      'აწყური': [
+        { text: 'Atskuri', center: [45.363456, 41.959613] },
+        { text: 'Atskuri', center: [43.153467, 41.723619] },
+      ],
+    }[query] ?? []
+    return new Response(JSON.stringify({ features }), { status: 200 })
+  }
+  const [d1, d2] = PLAN.filter((d) => d.kind === 'ride').slice(10, 12)
+  const vale = [42.8735, 41.6091]
+  const atskuri = [43.1535, 41.7236]
+  await pg.query(`insert into route_days (date, kind, from_place, to_place, from_lon, from_lat, to_lon, to_lat, updated_by)
+    values ($1, 'ride', 'Keda', 'ვალე', 42.0, 41.6, $2, $3, 'john@example.com'),
+           ($4, 'ride', 'ვალე', 'აწყური', $2, $3, $5, $6, 'john@example.com')`,
+    [d1.date, vale[0], vale[1], d2.date, atskuri[0], atskuri[1]])
+  await pg.query(`insert into destination_facts (destination, fact, model, now_line)
+    values ('აწყური', 'A fortress above the Mtkvari.', 'test', 'A village today.')`)
+
+  const renamed = await englishNames(d1.date, d2.date)
+  const one = await dayOn(d1.date)
+  const two = await dayOn(d2.date)
+  check('a town saved in its own script is renamed in English',
+    renamed === 2 && one.to === 'Vale' && two.from === 'Vale' && two.to === 'Atskuri',
+    `${one.from} → ${one.to}, ${two.from} → ${two.to}`)
+  check('a Latin name is left alone', one.from === 'Keda', one.from)
+  const facts = await pg.query(`select destination, fact, now_line from destination_facts order by destination`)
+  check('and its warmed lines follow it, so the email is not left empty',
+    facts.rows.some((r) => r.destination === 'Atskuri' && r.fact === 'A fortress above the Mtkvari.' && r.now_line === 'A village today.'),
+    facts.rows.map((r) => r.destination).join(', '))
+  check('a second pass has nothing left to rename', (await englishNames(d1.date, d2.date)) === 0)
+
+  globalThis.fetch = realFetch
+  await pg.query('delete from route_days')
+  await pg.query('delete from destination_facts')
+}
 
 // ── An unreachable database is the plan, not an empty map ──────────────────
 globalThis.__pg = () => { throw new Error('no database') }
