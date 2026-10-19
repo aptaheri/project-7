@@ -526,19 +526,40 @@ export interface DestinationLines {
   distance: string | null
 }
 
-export async function factFor(destination: string): Promise<DestinationLines> {
+export async function factFor(
+  destination: string,
+  /**
+   * Today's distance, when the caller knows it. The ride sentence was written
+   * about a number, and is only printed beside the same one.
+   */
+  miles?: number | null,
+): Promise<DestinationLines> {
   const written = curated(destination)
 
   try {
     await ensureSchema()
     const stored = (await db()`
-      select fact, now_line, distance_line from destination_facts
+      select fact, now_line, distance_line, distance_miles from destination_facts
       where destination = ${destination}
     `) as unknown as {
       fact: string | null
       now_line: string | null
       distance_line: string | null
+      distance_miles: number | null
     }[]
+    // Şamaxı went out on 18 October as "293 miles from Gurjaani, close to three
+    // centuries in a single day" above a stat box reading 67 mi: the line was
+    // written about an earlier version of the day, routed round a border
+    // crossing Mapbox thinks is closed, and the warmer had not replaced it. A
+    // sentence about another number is worse than the arithmetic fallback, so
+    // the send checks the number itself rather than trusting the warmer to have
+    // come round in time.
+    const writtenFor = stored[0]?.distance_miles ?? null
+    const sameDay =
+      miles === undefined ||
+      (miles === null
+        ? writtenFor === null
+        : writtenFor !== null && Math.abs(writtenFor - miles) < 1)
     return {
       // Hand-written still wins outright. The stored row may exist anyway,
       // holding the distance sentence written about that hand-written fact —
@@ -549,7 +570,7 @@ export async function factFor(destination: string): Promise<DestinationLines> {
       // nothing current. The reader wants the same thing as never-asked: no
       // paragraph.
       now: stored[0]?.now_line || null,
-      distance: stored[0]?.distance_line ?? null,
+      distance: sameDay ? (stored[0]?.distance_line ?? null) : null,
     }
   } catch (error) {
     console.error(`fact lookup failed for ${destination}`, error)
@@ -706,6 +727,38 @@ export async function ensureFact(
       if (line) console.log(`now written for ${destination}: ${line}`)
       else console.log(`now: nothing current to say about ${destination}`)
       return 'written'
+    }
+
+    // Only the ride line was asked for, so only the ride line is written. The
+    // full upsert below would also overwrite now_line with the null this mode
+    // returns, throwing away the present and buying the question again.
+    //
+    // A refusal still clears a stale line: the old sentence is about a number
+    // that is no longer the day's, and no sentence is better than a wrong one.
+    if (mode === 'curated') {
+      if (attempt.type === 'written') {
+        await sql`
+          insert into destination_facts
+            (destination, fact, distance_line, distance_miles, model, format_version, attempts)
+          values (
+            ${destination}, ${haveFact}, ${attempt.generated.distance}, ${miles},
+            ${attempt.generated.model}, ${FORMAT_VERSION}, 0
+          )
+          on conflict (destination) do update set
+            distance_line = excluded.distance_line,
+            distance_miles = excluded.distance_miles
+        `
+        console.log(`ride line written for ${destination}: ${attempt.generated.distance}`)
+        return 'written'
+      }
+      if (staleDistance) {
+        await sql`
+          update destination_facts set distance_line = null, distance_miles = ${miles}
+          where destination = ${destination}
+        `
+        console.log(`ride line for ${destination} cleared: written about another distance`)
+      }
+      if (attempt.type === 'failed') return 'failed'
     }
 
     if (mode === 'expand') {

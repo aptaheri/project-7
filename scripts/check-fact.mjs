@@ -266,6 +266,38 @@ check('one call, not two', calls === 1, `${calls} call(s)`)
 await ensureFact('Corrected Place', 60) // the present, asked once
 check('a trivial difference is ignored', (await ensureFact('Corrected Place', 60.4)) === 'stored')
 
+// ── The send never prints a sentence about another day's distance ─────────
+// Şamaxı, 18 October: "He covers 293 miles from Gurjaani…" above a stat box
+// reading 67 mi, because the day had been replanned and the warmer had not yet
+// replaced the line. The send checks the number itself.
+check('the send prints the line beside the distance it was written for',
+  (await factFor('Corrected Place', 60)).distance === 'Sixty miles is one and a half lakes.')
+check('and within rounding of it',
+  (await factFor('Corrected Place', 60.4)).distance !== null)
+const otherDay = await factFor('Corrected Place', 293)
+check('but not beside a different distance', otherDay.distance === null)
+check('which still keeps the paragraphs', otherDay.fact !== null && otherDay.now !== undefined)
+check('nor on a day with no distance at all', (await factFor('Corrected Place', null)).distance === null)
+
+// Rewriting the ride line touches only the ride line. It used to go through
+// the full upsert, which wrote the null this mode returns over the present.
+await pg.query(`update destination_facts set now_line = 'The market runs on Fridays.' where destination = 'Corrected Place'`)
+calls = 0
+reply = { fact: 'IGNORED', distance: 'Forty miles is one lake.' }
+check('a second correction is rewritten', (await ensureFact('Corrected Place', 40)) === 'written')
+check('with the new line', (await row('Corrected Place'))?.distance_line === reply.distance)
+check('and the present is left as it was',
+  (await row('Corrected Place'))?.now_line === 'The market runs on Fridays.')
+check('so nothing is asked again', (await ensureFact('Corrected Place', 40)) === 'stored' && calls === 1,
+  `${calls} call(s)`)
+
+// A refusal to rewrite a stale line clears it: no sentence beats a wrong one.
+reply = { fact: 'IGNORED', distance: '' }
+check('a refused rewrite is a decline', (await ensureFact('Corrected Place', 25)) === 'declined')
+check('and the stale line is gone', (await row('Corrected Place'))?.distance_line === null)
+check('the paragraph above it is untouched',
+  (await row('Corrected Place'))?.fact === 'A place with a fact. And a second sentence.')
+
 // ── Tried, and given up on ─────────────────────────────────────────────────
 // An empty answer is the brief working, but nothing was stored when it
 // happened, so the same village was re-asked every run at two cents a time.
