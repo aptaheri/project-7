@@ -1,5 +1,6 @@
 import tzLookup from 'tz-lookup'
 import itinerary from '../../src/data/itinerary.json'
+import stageFinishes from '../../src/data/stage-finishes.json'
 import { db, ensureSchema } from './db.mts'
 import { factFor } from './fact.mts'
 import { buildDailyEmail } from './email.mts'
@@ -347,6 +348,16 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
     countryAt(leg.destination[1], leg.destination[0]),
   ])
 
+  // The stage's own numbers, from what the tracker banked, on the one morning
+  // a stage ends. Read only then, so every other morning costs nothing more.
+  const milestone = milestoneFor(leg.to)
+  if (milestone) {
+    milestone.stats = [
+      ...(await stageStats(sql, milestone.stage, today, record.day, leg.plannedMiles)),
+      ...milestone.stats,
+    ]
+  }
+
   const plannedToday = route.find((d) => d.date === leg.date)?.routeCoords ?? null
   const routeLineToday = plannedToday?.length ? lineForEmail(plannedToday) : null
 
@@ -363,6 +374,8 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
       fact,
       now,
       distanceLine: distance,
+      // The last town of a stage gets its own section, written by hand.
+      milestone,
       // The roads he means to ride, thinned to fit inside a static-map URL.
       routeLine: routeLineToday,
       country: toCountry
@@ -497,5 +510,87 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
     recipients,
     failed: result.failed,
     messageIds: result.ids,
+  }
+}
+
+type Milestone = NonNullable<Parameters<typeof buildDailyEmail>[0]['milestone']>
+
+/** The hand-written stage-finish section for a destination, if it ends one. */
+export function milestoneFor(destination: string): (Milestone & { stage?: string }) | null {
+  // Baku is Bakı in Azerbaijani, and a name saved from the place search may
+  // carry either, so an entry lists the spellings it answers to.
+  const plain = (name: string) => name.normalize('NFC').toLowerCase().trim()
+  const entries = Object.entries(stageFinishes as Record<string, unknown>)
+  const entry = entries.find(([name, value]) =>
+    name !== '_comment' &&
+    [name, ...(((value as { aliases?: string[] }).aliases) ?? [])].some((n) => plain(n) === plain(destination)),
+  )?.[1]
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null
+  // A copy: the send adds measured figures to its stats.
+  const found = entry as Milestone & { stage?: string }
+  return { ...found, body: [...found.body], stats: [...found.stats] }
+}
+
+const FEET_PER_METRE = 3.28084
+const EVEREST_M = 8849
+const STAGE_START = new Map<string, string>()
+for (const day of itinerary.days as { date: string; stage: string }[]) {
+  if (!STAGE_START.has(day.stage)) STAGE_START.set(day.stage, day.date)
+}
+
+/**
+ * Distance, days and climbing for a stage, as the tracker measured them.
+ *
+ * Finished days come from day_rollups — one bounded read, never `locations`
+ * (rule 2) — and today's ride is counted at its planned distance, because the
+ * email goes out as he sets off and the section is about tonight. If the
+ * rollups do not cover the stage — tracking began late, or a rebuild is
+ * pending — the measured figures are left out rather than printed short:
+ * "3,100 miles across Europe" would be a number about the tracker, not him.
+ */
+async function stageStats(
+  sql: ReturnType<typeof db>,
+  stage: string | undefined,
+  today: string,
+  dayNumber: number,
+  plannedToday: number | null,
+): Promise<[string, string, string?][]> {
+  const start = stage ? STAGE_START.get(stage) : undefined
+  const days: [string, string, string?] = ['Days', String(dayNumber), 'on the road']
+  if (!start) return [days]
+  try {
+    const rows = (await sql`
+      select
+        min(local_date)::text as first,
+        count(*) filter (where distance_m >= 15000)::int as riding_days,
+        coalesce(sum(distance_m), 0)::float8 as distance_m,
+        coalesce(sum(gain_m), 0)::float8 as gain_m,
+        coalesce(max(distance_m), 0)::float8 as longest_m
+      from day_rollups
+      where mode = 'production' and local_date >= ${start}::date and local_date < ${today}::date
+    `) as unknown as {
+      first: string | null
+      riding_days: number
+      distance_m: number
+      gain_m: number
+      longest_m: number
+    }[]
+    const r = rows[0]
+    const startedLate = !r?.first || Date.parse(r.first) - Date.parse(start) > 3 * 86_400_000
+    if (!r || startedLate) return [days]
+
+    const miles = r.distance_m / 1609.344 + (plannedToday ?? 0)
+    const feet = r.gain_m * FEET_PER_METRE
+    const n = (x: number) => Math.round(x).toLocaleString('en-US')
+    days[2] = `${r.riding_days + (plannedToday ? 1 : 0)} of them riding`
+    return [
+      ['Miles', n(miles), `${n(miles * 1.609344)} km`],
+      days,
+      ['Feet climbed', n(feet), `${(r.gain_m / EVEREST_M).toFixed(1)} Everests`],
+      ['Longest day', `${n(r.longest_m / 1609.344)} mi`],
+    ]
+  } catch (error) {
+    console.error('stage stats failed', error)
+    return [days]
   }
 }

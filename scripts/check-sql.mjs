@@ -262,6 +262,21 @@ check('while the history still is',
   (noNow.preview?.html ?? '').includes('the only crossing for forty miles'))
 await pg.query(`delete from destination_facts where destination = 'Rerouted End'`)
 
+// ── The last town of a stage gets its own section ─────────────────────────
+check('an ordinary day has no stage-finish section', !reroutedHtml.includes('Stage 1 complete'))
+await pg.query(`update route_days set to_place = 'Bakı' where date = $1::date`, [leg.date])
+const finish = await runDailyEmail({ force: true, dryRun: true })
+check('the day into the end of a stage carries it, whatever the spelling',
+  (finish.preview?.html ?? '').includes('Stage 1 complete') &&
+  (finish.preview?.text ?? '').includes('One continent down.'))
+check('above the town\'s own section',
+  !(finish.preview?.html ?? '').includes('About Bakı') ||
+  finish.preview.html.indexOf('Stage 1 complete') < finish.preview.html.indexOf('About Bakı'))
+check('with the day count beside the hand-written figures',
+  (finish.preview?.text ?? '').includes('Days: ') && (finish.preview?.text ?? '').includes('Countries: 15'))
+check('and its own subject', finish.subject === "John's on the move: final leg of Stage 1, Europe", finish.subject)
+await pg.query(`update route_days set to_place = 'Rerouted End' where date = $1::date`, [leg.date])
+
 // ── The country is named ───────────────────────────────────────────────────
 // Nobody outside France has heard of Saint-Marcellin.
 check('the country is named in the body', reroutedHtml.includes('France'),

@@ -53,6 +53,18 @@ export interface DailyEmailInput {
     /** Set only on a day that crosses a border. */
     crossingFrom: { name: string; flag: string } | null
   } | null
+  /**
+   * The morning he rides into the last town of a stage. Hand-written, from
+   * src/data/stage-finishes.json, and drawn above the town's own section.
+   */
+  milestone?: {
+    label: string
+    heading: string
+    body: string[]
+    /** Label, value, and an optional line under the value. */
+    stats: [string, string, string?][]
+    subject?: string
+  } | null
   liveUrl: string
   unsubscribeUrl: string
   mapboxToken: string | null
@@ -146,6 +158,24 @@ export function legMapUrl(
   )
 }
 
+/**
+ * A chequered strip, the finish line, as table cells: background images and
+ * gradients are exactly what Outlook drops.
+ */
+function finishLine(): string {
+  const cell = (dark: boolean) =>
+    `<td width="14" height="7" style="width:14px;height:7px;background:${dark ? INK : TEXT};font-size:0;line-height:0;">&nbsp;</td>`
+  const strip = (offset: number) =>
+    Array.from({ length: 40 }, (_, i) => cell((i + offset) % 2 === 0)).join('')
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="table-layout:fixed;"><tr>${strip(0)}</tr><tr>${strip(1)}</tr></table>`
+}
+
+function rows<T>(items: T[], size: number): T[][] {
+  const out: T[][] = []
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size))
+  return out
+}
+
 function escape(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -169,9 +199,12 @@ export function buildDailyEmail(input: DailyEmailInput): {
     ? legMapUrl(input.fromCoords, input.toCoords, input.mapboxToken, input.routeLine)
     : null
 
-  const subject = planned
-    ? `John's riding: ${input.from} → ${input.to}, ${planned}`
-    : `John's riding: ${input.from} → ${input.to}`
+  const milestone = input.milestone ?? null
+  const subject = milestone?.subject
+    ? milestone.subject.replace('{from}', input.from).replace('{to}', input.to)
+    : planned
+      ? `John's riding: ${input.from} → ${input.to}, ${planned}`
+      : `John's riding: ${input.from} → ${input.to}`
 
   const stat = (label: string, value: string) => `
     <td align="center" style="padding:0 8px;">
@@ -233,6 +266,26 @@ export function buildDailyEmail(input: DailyEmailInput): {
       </table>
     </td></tr>
 
+    ${milestone ? `<tr><td style="padding:26px 20px 0;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${INK};border:1px solid rgba(255,255,255,.12);border-radius:12px;overflow:hidden;">
+        <tr><td style="padding:0;line-height:0;font-size:0;">${finishLine()}</td></tr>
+        <tr><td style="padding:24px 24px 6px;">
+          <div style="font:700 11px/1 ${FONT};color:${BLUE};letter-spacing:.14em;text-transform:uppercase;">${escape(milestone.label)}</div>
+          <div style="font:800 30px/1.2 ${FONT};color:${TEXT};padding-top:12px;">${escape(milestone.heading)}</div>
+          ${milestone.body.map((p) => `<div style="font:400 17px/1.6 ${FONT};color:${TEXT};padding-top:12px;">${escape(p)}</div>`).join('')}
+        </td></tr>
+        ${milestone.stats.length ? `<tr><td style="padding:14px 16px 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            ${rows(milestone.stats, 3).map((row) => `<tr>${row.map(([label, value, sub]) => `<td align="center" valign="top" width="33%" style="padding:12px 4px;">
+              <div style="font:800 24px/1.1 ${FONT};color:${TEXT};">${escape(value)}</div>
+              <div style="font:600 10px/1.4 ${FONT};color:${RED};letter-spacing:.1em;text-transform:uppercase;padding-top:6px;">${escape(label)}</div>
+              ${sub ? `<div style="font:400 12px/1.4 ${FONT};color:${MUTED};padding-top:2px;">${escape(sub)}</div>` : ''}
+            </td>`).join('')}</tr>`).join('')}
+          </table>
+        </td></tr>` : ''}
+      </table>
+    </td></tr>` : ''}
+
     ${fact ? `<tr><td style="padding:26px 20px 0;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:rgba(255,255,255,.045);border-radius:12px;">
         <tr><td style="padding:20px 22px;border-left:4px solid ${RED};border-radius:12px 0 0 12px;">
@@ -291,6 +344,13 @@ export function buildDailyEmail(input: DailyEmailInput): {
     `${input.from} -> ${input.to}${planned ? ` (${planned})` : ''}`,
     `${input.milesSoFar.toFixed(1)} miles covered so far today.`,
     '',
+    milestone ? `${milestone.label.toUpperCase()}: ${milestone.heading}` : null,
+    ...(milestone ? milestone.body.flatMap((p) => ['', p]) : []),
+    milestone?.stats.length ? '' : null,
+    milestone?.stats.length
+      ? milestone.stats.map(([l, v, sub]) => `${l}: ${v}${sub ? ` (${sub})` : ''}`).join('\n')
+      : null,
+    milestone ? '' : null,
     fact ? `About ${input.to}: ${fact}` : null,
     now ? '' : null,
     now ? `The town today: ${now}` : null,

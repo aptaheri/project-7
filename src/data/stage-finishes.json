@@ -1,0 +1,35 @@
+{
+  "_comment": [
+    "A section the daily email adds on the morning he rides into the last town",
+    "of a stage, keyed by that town's name as the route spells it, plus aliases.",
+    "Hand-written: seven mornings in fifteen months, and each deserves somebody",
+    "choosing the words. Distance, days and climbing are added at send time from",
+    "day_rollups, so they are what he rode rather than what was planned; `stats`",
+    "here are the figures nothing measures."
+  ],
+  "Baku": {
+    "aliases": [
+      "Bakı",
+      "Baki"
+    ],
+    "label": "Stage 1 complete · Europe",
+    "heading": "One continent down.",
+    "body": [
+      "Today John finishes the first of seven. On 1 August he dipped his tire in the Atlantic at Praia do Guincho, outside Lisbon. Tonight he dips it in the Caspian at Baku.",
+      "In between came the Atlantic coast of Spain, the Pyrenees, the Alps, the Dolomites, the Adriatic, the Balkans, the whole width of Turkey and the Caucasus. Every mile of it was ridden for the Marty Lyons Foundation.",
+      "Stage 1 ends here. Next comes the ferry across the Caspian to Aktau, in Kazakhstan, and Stage 1A: the Stans."
+    ],
+    "stats": [
+      [
+        "Countries",
+        "15"
+      ],
+      [
+        "Continents",
+        "1 of 7"
+      ]
+    ],
+    "subject": "John's on the move: final leg of Stage 1, Europe",
+    "stage": "1"
+  }
+}
