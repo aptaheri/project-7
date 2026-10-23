@@ -65,6 +65,8 @@ interface History {
   version: string
   days: DaySummary[]
   trail: [number, number][]
+  /** Where the trail starts a new leg, after a crossing. Absent from an older server. */
+  breaks?: number[]
   backfillTrail: [number, number][]
   backfillKm: number
   /** Today and the fortnight after it, from the route as it now stands. */
@@ -194,6 +196,40 @@ function kmBetween(a: [number, number], b: [number, number]): number {
   const h =
     Math.sin(dLat / 2) ** 2 + Math.cos(rad(a[1])) * Math.cos(rad(b[1])) * Math.sin(dLon / 2) ** 2
   return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(h)))
+}
+
+/** Matches GAP_M in lib/rollups.mts: further than this between fixes was not ridden. */
+const GAP_KM = 200
+
+/**
+ * The line behind him as separate legs, broken wherever he crossed water or
+ * flew. The stored history says where its own breaks are — it is simplified,
+ * so two of its points can be far apart on a straight desert road — and the
+ * seam onto today, and today itself, are checked by distance, which is safe
+ * there because no single day's line has a span that long.
+ */
+function trailLegs(
+  history: [number, number][],
+  breaks: number[],
+  today: [number, number][],
+): [number, number][][] {
+  const legs: [number, number][][] = []
+  let start = 0
+  for (const at of [...breaks, history.length]) {
+    legs.push(history.slice(start, at))
+    start = at
+  }
+  let current = legs.pop() ?? []
+  for (const point of today) {
+    const prev = current[current.length - 1]
+    if (prev && kmBetween(prev, point) > GAP_KM) {
+      legs.push(current)
+      current = []
+    }
+    current.push(point)
+  }
+  legs.push(current)
+  return legs
 }
 
 /**
@@ -799,7 +835,9 @@ export default function TrackMap({ emailPref }: Props) {
         // where the tracker begins, and joining them would draw a straight line
         // across whatever sits between.
         ...line(history?.backfillTrail ?? []),
-        ...line([...(history?.trail ?? []), ...feed.trail]),
+        // And the recorded route in legs: a ferry or a flight has no fixes on
+        // it, and joined up it is a straight line across the Caspian.
+        ...trailLegs(history?.trail ?? [], history?.breaks ?? [], feed.trail).flatMap(line),
       ],
     })
 

@@ -417,15 +417,19 @@ const independent = await pg.query(`
       lag(lon) over (order by tst) as plon
     from locations where source = 'device'
   )
-  select coalesce(sum(
-    case when plat is null then 0 else
+  , steps as (
+    select case when plat is null then 0 else
       2 * 6371000 * asin(least(1, sqrt(
         power(sin(radians(lat - plat) / 2), 2) +
         cos(radians(plat)) * cos(radians(lat)) *
         power(sin(radians(lon - plon) / 2), 2)
       )))
-    end), 0) / 1000.0 as km
-  from ordered
+    end as step_m
+    from ordered
+  )
+  -- A jump of more than 200 km between two fixes was a ferry or a flight.
+  select coalesce(sum(case when step_m > 200000 then 0 else step_m end), 0) / 1000.0 as km
+  from steps
 `)
 const expected = Number(independent.rows[0].km)
 check('the split total matches a plain full-history sum',
@@ -455,19 +459,85 @@ const afterMove = await pg.query(`
       lag(lon) over (order by tst) as plon
     from locations where source = 'device'
   )
-  select coalesce(sum(
-    case when plat is null then 0 else
+  , steps as (
+    select case when plat is null then 0 else
       2 * 6371000 * asin(least(1, sqrt(
         power(sin(radians(lat - plat) / 2), 2) +
         cos(radians(plat)) * cos(radians(lat)) *
         power(sin(radians(lon - plon) / 2), 2)
       )))
-    end), 0) / 1000.0 as km
-  from ordered
+    end as step_m
+    from ordered
+  )
+  -- A jump of more than 200 km between two fixes was a ferry or a flight.
+  select coalesce(sum(case when step_m > 200000 then 0 else step_m end), 0) / 1000.0 as km
+  from steps
 `)
 check('nothing is double counted across the boundary',
   Math.abs(moved.body.distanceKm - Number(afterMove.rows[0].km)) < 0.01,
   `feed ${moved.body.distanceKm.toFixed(1)} km vs ${Number(afterMove.rows[0].km).toFixed(1)} km`)
+
+
+// ── A ferry is neither drawn nor counted ───────────────────────────────────
+//
+// Baku to Aktau has no fixes on it: one on the dock, the next in Kazakhstan,
+// 375 km across the Caspian. Joined up, that was a straight line over the sea
+// on the map, and a day's riding in the totals.
+const kmBetween = (a, b) => {
+  const rad = (d) => (d * Math.PI) / 180
+  const h = Math.sin(rad(b[1] - a[1]) / 2) ** 2 +
+    Math.cos(rad(a[1])) * Math.cos(rad(b[1])) * Math.sin(rad(b[0] - a[0]) / 2) ** 2
+  return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(h)))
+}
+for (let i = 0; i < 6; i++) {
+  const [lon, lat] = i < 3 ? [49.87 + i * 0.01, 40.41] : [51.20 + i * 0.01, 43.65]
+  await pg.query(
+    `insert into locations (device, tst, lat, lon, alt, source, raw, received_at)
+     values ('phone', now() - make_interval(mins => $1), $2, $3, 0, 'device', '{}'::jsonb, now())`,
+    [30 * 60 - i * 10, lat, lon],
+  )
+}
+const ferried = await poll(await freshHandler())
+const ferryHistory = await historyOf(await freshHistoryHandler())
+check('a crossing forces the history to be rebuilt', ferried.sql.filter(isRebuild).length === 1)
+const breakSet = new Set(ferryHistory.breaks ?? [])
+const spans = ferryHistory.trail.slice(1)
+  .map((p, i) => ({ km: kmBetween(ferryHistory.trail[i], p), at: i + 1 }))
+  .filter((s) => !breakSet.has(s.at))
+const longest = Math.max(...spans.map((s) => s.km))
+check('the stored line breaks at the crossing', breakSet.size >= 1,
+  `${breakSet.size} break(s)`)
+check('and joins nothing across it', longest < 200, `longest joined span ${longest.toFixed(0)} km`)
+const legSizes = [...(ferryHistory.breaks ?? []), ferryHistory.trail.length]
+  .map((at, i, all) => at - (i ? all[i - 1] : 0))
+check('and every leg is a line rather than nothing', legSizes.every((n) => n >= 1),
+  legSizes.join(', '))
+const withFerry = await pg.query(`
+  with ordered as (
+    select tst, lat, lon, lag(lat) over (order by tst) as plat, lag(lon) over (order by tst) as plon
+    from locations where source = 'device'
+  ), steps as (
+    select case when plat is null then 0 else
+      2 * 6371000 * asin(least(1, sqrt(
+        power(sin(radians(lat - plat) / 2), 2) +
+        cos(radians(plat)) * cos(radians(lat)) *
+        power(sin(radians(lon - plon) / 2), 2)
+      )))
+    end as step_m from ordered
+  )
+  select coalesce(sum(case when step_m > 200000 then 0 else step_m end), 0) / 1000.0 as km
+  from steps
+`)
+check('and the crossing is not counted as riding',
+  Math.abs(ferried.body.distanceKm - Number(withFerry.rows[0].km)) < 0.01 &&
+  ferried.body.distanceKm < 1000,
+  `feed ${ferried.body.distanceKm.toFixed(1)} km vs ${Number(withFerry.rows[0].km).toFixed(1)} km`)
+
+// A history stored before breaks existed is a bare array; it must be rebuilt
+// rather than read as an object with no points.
+await pg.query(`update trail_cache set points = '[[0,0],[1,1]]'::jsonb`)
+const legacy = await poll(await freshHandler())
+check('a line stored before the breaks is rebuilt', legacy.sql.filter(isRebuild).length === 1)
 
 
 // ── The stored line still follows the road ─────────────────────────────────

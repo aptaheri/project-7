@@ -130,7 +130,7 @@ const IMPLAUSIBLE_DETOUR = 3
 const EARTH_KM = 6371
 
 /** Straight-line distance, for judging whether a road is a road. */
-function haversineKm(a: [number, number], b: [number, number]): number {
+export function haversineKm(a: [number, number], b: [number, number]): number {
   const rad = (d: number) => (d * Math.PI) / 180
   const dLat = rad(b[1] - a[1])
   const dLon = rad(b[0] - a[0])

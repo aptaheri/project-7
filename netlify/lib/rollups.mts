@@ -36,6 +36,17 @@ export const ELEVATION_SAMPLE_M = 100
 export const TRAIL_SMOOTHING = 2
 
 /**
+ * Two consecutive fixes further apart than this were not ridden between.
+ *
+ * The ferry from Baku to Aktau has no fixes on it: the last one is on the dock
+ * in Baku and the next is in Kazakhstan, 375 km across the Caspian. Joined up,
+ * that drew a line across the sea and counted it as a day's riding. Nobody
+ * rides 200 km between two fixes — a dead phone for a whole day would — so a
+ * gap this long is a boat, a train or a plane: not counted, and not drawn.
+ */
+export const GAP_M = 200_000
+
+/**
  * Total ascent over a series of altitudes, ignoring wobble under the threshold.
  *
  * Run here rather than in SQL because the sequential form needs a recursive CTE
@@ -116,6 +127,8 @@ export interface RollupTotals {
 export interface RollupHistory {
   days: DaySummary[]
   trail: [number, number][]
+  /** Indexes into the trail where a new leg starts — after a ferry, say. */
+  breaks: number[]
   version: string
 }
 
@@ -172,12 +185,18 @@ async function needsRefresh(ctx: RollupContext): Promise<boolean> {
   `) as unknown as { through: string | null; days: number; zone: string | null }[]
 
   const cache = (await sql`
-    select to_char(through_date, 'YYYY-MM-DD') as through_date, seen_received::text as seen
+    select
+      to_char(through_date, 'YYYY-MM-DD') as through_date, seen_received::text as seen,
+      jsonb_typeof(points) as shape
     from trail_cache where mode = ${mode}
-  `) as unknown as { through_date: string; seen: string }[]
+  `) as unknown as { through_date: string; seen: string; shape: string }[]
 
   // Nothing stored yet, or the two halves disagree about how far they reach.
   if (state[0]?.days === 0 || !cache[0]) return true
+
+  // Stored before the line knew where its gaps were: a bare array of points,
+  // drawn straight across the Caspian, beside days that counted the crossing.
+  if (cache[0].shape !== 'object') return true
   if (state[0]?.through !== cache[0].through_date) return true
 
   // He has crossed into a different timezone since these were computed. Day
@@ -256,7 +275,8 @@ async function rebuild(ctx: RollupContext): Promise<void> {
       totals as (
         select
           local_date,
-          coalesce(sum(step_m), 0)::float8 as distance_m,
+          coalesce(sum(case when step_m > ${GAP_M}::float8 then 0 else step_m end), 0)::float8
+            as distance_m,
           extract(epoch from (max(tst) - min(tst)))::float8 as elapsed_s,
           count(*)::int as fixes,
           bool_or(source = 'backfill') as reconstructed
@@ -529,18 +549,13 @@ async function rebuildTrail(ctx: RollupContext): Promise<void> {
   // what decides which points survive, and it can only keep what it is given.
   const spacing = Math.max(MIN_SPACING_M, (totals[0]?.distance_m ?? 0) / RAW_POINT_CEILING)
 
+  // Legs first, from the raw fixes, so that nothing after it reaches across a
+  // gap: the smoothing would otherwise average Baku with Aktau and put points
+  // out in the sea, and the slices would join the two shores.
   const rows = (await sql`
-    with ordered as (
+    with raw as (
       select
         tst, lat, lon,
-        avg(lat) over (
-          order by tst
-          rows between ${TRAIL_SMOOTHING} preceding and ${TRAIL_SMOOTHING} following
-        ) as lat_s,
-        avg(lon) over (
-          order by tst
-          rows between ${TRAIL_SMOOTHING} preceding and ${TRAIL_SMOOTHING} following
-        ) as lon_s,
         lag(lat) over (order by tst) as plat,
         lag(lon) over (order by tst) as plon
       from locations
@@ -548,9 +563,36 @@ async function rebuildTrail(ctx: RollupContext): Promise<void> {
         and (device = any(${devices}::text[])) = ${isTest}::boolean
         and source = 'device'
     ),
+    legs as (
+      select
+        tst, lat, lon,
+        sum(case when plat is not null and
+          2 * 6371000 * asin(least(1, sqrt(
+            power(sin(radians(lat - plat) / 2), 2) +
+            cos(radians(plat)) * cos(radians(lat)) *
+            power(sin(radians(lon - plon) / 2), 2)
+          ))) > ${GAP_M}::float8
+        then 1 else 0 end) over (order by tst) as leg
+      from raw
+    ),
+    ordered as (
+      select
+        tst, leg,
+        avg(lat) over (
+          partition by leg order by tst
+          rows between ${TRAIL_SMOOTHING} preceding and ${TRAIL_SMOOTHING} following
+        ) as lat_s,
+        avg(lon) over (
+          partition by leg order by tst
+          rows between ${TRAIL_SMOOTHING} preceding and ${TRAIL_SMOOTHING} following
+        ) as lon_s,
+        lag(lat) over (partition by leg order by tst) as plat,
+        lag(lon) over (partition by leg order by tst) as plon
+      from legs
+    ),
     steps as (
       select
-        tst, lat_s, lon_s,
+        tst, leg, lat_s, lon_s,
         case when plat is null then 0 else
           2 * 6371000 * asin(least(1, sqrt(
             power(sin(radians(lat_s - plat) / 2), 2) +
@@ -562,29 +604,44 @@ async function rebuildTrail(ctx: RollupContext): Promise<void> {
     ),
     bucketed as (
       select
-        tst, lat_s, lon_s,
+        tst, leg, lat_s, lon_s,
         floor(sum(step_m) over (order by tst) / ${spacing}::float8) as slice
       from steps
     ),
     thinned as (
-      select distinct on (slice) tst, lat_s, lon_s
+      select distinct on (leg, slice) tst, leg, lat_s, lon_s
       from bucketed
-      order by slice, tst
+      order by leg, slice, tst
     )
-    select lon_s as lon, lat_s as lat from thinned order by tst
-  `) as unknown as { lon: number; lat: number }[]
+    select lon_s as lon, lat_s as lat, leg::int as leg from thinned order by tst
+  `) as unknown as { lon: number; lat: number; leg: number }[]
 
   const seen = (await sql`
     select coalesce(max(received_at), now())::text as seen from locations
     where tst < ${before}::timestamptz
   `) as unknown as { seen: string }[]
 
-  const { points, toleranceM } = simplifyToBudget(
-    rows.map((r) => [r.lon, r.lat] as [number, number]),
-    HISTORY_POINT_BUDGET,
-  )
+  // Each leg simplified on its own, with its share of the budget. Simplified
+  // as one line, the two shores of a crossing would be a segment like any other.
+  const legs = new Map<number, [number, number][]>()
+  for (const r of rows) {
+    const leg = legs.get(r.leg)
+    if (leg) leg.push([r.lon, r.lat])
+    else legs.set(r.leg, [[r.lon, r.lat]])
+  }
+  const points: [number, number][] = []
+  const breaks: number[] = []
+  let toleranceM = HISTORY_TOLERANCE_M
+  for (const leg of legs.values()) {
+    const share = Math.max(2, Math.floor((HISTORY_POINT_BUDGET * leg.length) / rows.length))
+    const simplified = simplifyToBudget(leg, share)
+    if (points.length > 0) breaks.push(points.length)
+    points.push(...simplified.points)
+    toleranceM = Math.max(toleranceM, simplified.toleranceM)
+  }
   console.log(
-    `history trail rebuilt: ${rows.length} fixes -> ${points.length} points at ${toleranceM.toFixed(0)}m`,
+    `history trail rebuilt: ${rows.length} fixes -> ${points.length} points in ` +
+      `${legs.size} leg(s) at ${toleranceM.toFixed(0)}m`,
   )
   // Yesterday, in his local reckoning: the last day the stored line covers.
   const throughDate = new Date(todayStart.getTime() - 1)
@@ -594,7 +651,7 @@ async function rebuildTrail(ctx: RollupContext): Promise<void> {
     values (
       ${mode},
       coalesce((select max(local_date) from day_rollups where mode = ${mode}), ${today}::date - 1),
-      ${JSON.stringify(points)}::jsonb,
+      ${JSON.stringify({ points, breaks })}::jsonb,
       ${seen[0]?.seen ?? throughDate.toISOString()}::timestamptz,
       now()
     )
@@ -679,11 +736,12 @@ export async function loadHistory(ctx: RollupContext): Promise<RollupHistory> {
 
   const cached = (await ctx.sql`
     select points from trail_cache where mode = ${ctx.mode}
-  `) as unknown as { points: [number, number][] }[]
+  `) as unknown as { points: { points: [number, number][]; breaks: number[] } }[]
 
   return {
     days: rows.map(toSummary),
-    trail: cached[0]?.points ?? [],
+    trail: cached[0]?.points.points ?? [],
+    breaks: cached[0]?.points.breaks ?? [],
     version: await version(ctx),
   }
 }

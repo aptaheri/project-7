@@ -33,6 +33,8 @@ interface HistoryPayload {
   days: DaySummary[]
   /** The route so far, simplified to follow the roads it was ridden on. */
   trail: [number, number][]
+  /** Where the trail starts a new leg: the far shore of a crossing. Not joined up. */
+  breaks: number[]
   /** Reconstructed riding from before the tracker existed. Drawn dashed. */
   backfillTrail: [number, number][]
   backfillKm: number
@@ -89,6 +91,7 @@ export default async function handler(req: Request): Promise<Response> {
         version: 'empty',
         days: [],
         trail: [],
+        breaks: [],
         backfillTrail: [],
         backfillKm: 0,
         upcoming: [],
@@ -149,6 +152,7 @@ export default async function handler(req: Request): Promise<Response> {
       version: history.version,
       days: history.days,
       trail: history.trail,
+      breaks: history.breaks,
       backfillTrail: backfillCache.trail,
       backfillKm: backfillCache.km,
       // Read here rather than in the feed: it moves when he reroutes, and the

@@ -331,6 +331,22 @@ for (const method of ['GET', 'POST']) {
 // And an owner can.
 check('GET is allowed for an owner', (await callRoute('GET', asUser('boss@example.com'))) === 200)
 
+// Even an owner cannot end a day's ride in another country 2,400 km away. The
+// place search once offered a Romanian hamlet for a Kazakh village and it was
+// saved unseen; the refusal is what makes that a question instead of a map.
+const farRide = await routeFn.default(new Request('https://project7.bike/api/route', {
+  method: 'POST',
+  headers: { ...asUser('boss@example.com'), 'content-type': 'application/json' },
+  body: JSON.stringify({
+    date: new Date().toISOString().slice(0, 10), kind: 'ride',
+    from: 'Aktau', fromCoords: [51.2, 43.65],
+    to: 'Oteștii de Sus', toCoords: [24.39, 44.72], miles: null, note: '',
+  }),
+}))
+const farBody = await farRide.json()
+check('a ride to somewhere no day could reach is refused', farRide.status === 400,
+  farBody.error)
+
 // ── Warming on demand is owners-only ───────────────────────────────────────
 // fact-admin spends money on every call — one model question per unit of
 // budget — so the gate on it matters more than on a read. It exists because

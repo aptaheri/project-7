@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
-import { GeocodeError, searchPlaces } from '../lib/geocode'
+import { GeocodeError, MAX_DAY_KM, searchPlaces } from '../lib/geocode'
 import type { Place } from '../lib/geocode'
 import './RouteEditor.scss'
 
@@ -148,6 +148,14 @@ export default function RouteEditor() {
         if (found.length === 0) {
           throw new Error(
             `Couldn't find "${typed}". Check the spelling, or try the nearest larger town.`,
+          )
+        }
+        // Nearest first, but never a town no day could reach. Taken unseen, the
+        // first answer for "Say-Otes" was a hamlet in Romania.
+        if (found[0].km !== undefined && found[0].km > MAX_DAY_KM) {
+          throw new Error(
+            `The nearest "${typed}" found is ${found[0].context}, ${found[0].km.toLocaleString()} km away. ` +
+              'Pick from the list, or try the nearest larger town.',
           )
         }
         destination = found[0]
@@ -423,7 +431,10 @@ export default function RouteEditor() {
                         <li key={`${r.name}-${r.coords.join(',')}`}>
                           <button type="button" onClick={() => { setChosen(r); setPlace(r.name); setResults([]) }}>
                             <strong>{r.name}</strong>
-                            <span>{r.context}</span>
+                            <span>
+                              {r.context}
+                              {r.km !== undefined && ` · ${r.km.toLocaleString()} km`}
+                            </span>
                           </button>
                         </li>
                       ))}

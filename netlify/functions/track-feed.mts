@@ -11,6 +11,7 @@ import {
   ELEVATION_SAMPLE_M,
   GAIN_THRESHOLD_M,
   TRAIL_SMOOTHING,
+  GAP_M,
   hysteresisGain,
   loadTotals,
   simplify,
@@ -323,7 +324,8 @@ export default async function handler(req: Request): Promise<Response> {
       -- Everything today's summary needs, from the one scan: how far, how many,
       -- how long, and where he set off from.
       select
-        coalesce(sum(step_m), 0)::float8 as today_m,
+        coalesce(sum(case when step_m > ${GAP_M}::float8 then 0 else step_m end), 0)::float8
+          as today_m,
         count(*)::int as points_today,
         coalesce(extract(epoch from (max(tst) - min(tst))), 0)::float8 as elapsed_s,
         (array_agg(lat order by tst asc))[1]::float8 as start_lat,

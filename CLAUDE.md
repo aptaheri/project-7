@@ -243,6 +243,22 @@ they are the things a reasonable change would otherwise undo.
     half its section. The cron is unaffected at a budget of one. `check-fact`
     asserts both.
 
+18. **A jump of more than 200 km between two fixes was not ridden** (`GAP_M`
+    in `lib/rollups.mts`). Ferries and flights have no fixes on them — Baku to
+    Aktau was one fix on each shore — so joined up they drew a line across the
+    Caspian and counted it as a day's riding. Such a step counts for nothing in
+    every distance, including the email's movement gate, and the stored trail
+    is cut into legs *before* smoothing and simplifying, with `breaks` marking
+    where each starts: the simplified line can't be split by distance after the
+    fact, since a straight desert road keeps two points hundreds of km apart.
+    `check-feed` asserts both.
+
+19. **A place search answer is the nearest one, and never one no day could
+    reach.** Mapbox offered a Romanian hamlet for "Say-Otes" and had no
+    Karakalpakiya at all. `searchPlaces` asks Mapbox, Mapbox again without the
+    hyphen, and OpenStreetMap (Photon), then sorts by distance from where the
+    day starts; `/api/route` refuses a ride whose ends are over 650 km apart.
+
 ## Testing
 
 Every change to SQL or to a rule gets an assertion in `scripts/check-*.mjs`.

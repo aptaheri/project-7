@@ -7,6 +7,7 @@ import { buildDailyEmail } from './email.mts'
 import { countryAt } from './country.mts'
 import { currentLeg } from './itinerary.mts'
 import { lineForEmail, loadRoute } from './route.mts'
+import { GAP_M } from './rollups.mts'
 import { mailerConfigured, sendBatch, unsubscribeUrl } from './mailer.mts'
 import type { OutgoingEmail } from './mailer.mts'
 
@@ -263,17 +264,23 @@ export async function runDailyEmail(options: DailyOptions = {}): Promise<DailyOu
       where (device = any(${devices}::text[])) = false
         and source = 'device'
         and tst >= (${today}::date::timestamp at time zone ${zone}::text)
+    ),
+    steps as (
+      select
+        case when plat is null then 0 else
+          2 * 6371000 * asin(least(1, sqrt(
+            power(sin(radians(lat - plat) / 2), 2) +
+            cos(radians(plat)) * cos(radians(lat)) *
+            power(sin(radians(lon - plon) / 2), 2)
+          )))
+        end as step_m
+      from ordered
     )
-    select coalesce(sum(
-      case when plat is null then 0 else
-        2 * 6371000 * asin(least(1, sqrt(
-          power(sin(radians(lat - plat) / 2), 2) +
-          cos(radians(plat)) * cos(radians(lat)) *
-          power(sin(radians(lon - plon) / 2), 2)
-        )))
-      end
-    ), 0)::float8 as today_m
-    from ordered
+    -- Stepping off a ferry is not riding: the first fix on the far shore would
+    -- otherwise count the whole crossing and pass this gate from the dock.
+    select coalesce(sum(case when step_m > ${GAP_M}::float8 then 0 else step_m end), 0)::float8
+      as today_m
+    from steps
   `) as unknown as { today_m: number }[]
 
   const todayKm = (movedRows[0]?.today_m ?? 0) / 1000

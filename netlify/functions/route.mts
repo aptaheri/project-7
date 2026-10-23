@@ -1,6 +1,6 @@
 import { json } from '../lib/auth.mts'
 import { requireTrackViewer } from '../lib/gate.mts'
-import { englishNames, fillMissingRoads, loadRoute, rechainNextDay, saveDay, shiftFrom } from '../lib/route.mts'
+import { englishNames, fillMissingRoads, haversineKm, loadRoute, rechainNextDay, saveDay, shiftFrom } from '../lib/route.mts'
 import type { DayKind, SaveDay } from '../lib/route.mts'
 
 /**
@@ -18,6 +18,9 @@ import type { DayKind, SaveDay } from '../lib/route.mts'
 /** Days either side of today the editor can see and change. */
 const BEFORE = 3
 const AHEAD = 10
+
+/** Straight-line km past which a destination is not one day's ride: 400 miles. */
+const MAX_RIDE_KM = 650
 
 const KINDS: DayKind[] = ['ride', 'rest', 'travel', 'other']
 
@@ -119,6 +122,19 @@ export default async function handler(req: Request): Promise<Response> {
     }
     if (body.fromCoords !== null && body.fromCoords !== undefined && !isCoords(body.fromCoords)) {
       return json({ error: 'fromCoords must be [lon, lat]' }, 400)
+    }
+    // A day's ride ends somewhere a day can reach. The place search once handed
+    // back a hamlet in Romania for a village in Kazakhstan, and it was saved and
+    // drawn as two lines back across the Black Sea. A travel day is exempt: he
+    // flies between continents.
+    if (body.kind === 'ride' && isCoords(body.fromCoords) && isCoords(body.toCoords)) {
+      const km = haversineKm(body.fromCoords, body.toCoords)
+      if (km > MAX_RIDE_KM) {
+        return json({
+          error: `${body.to ?? 'That town'} is ${Math.round(km).toLocaleString()} km from ` +
+            `${body.from ?? 'where the day starts'} — not one day's ride. Is it the right place?`,
+        }, 400)
+      }
     }
     if (body.miles !== null && body.miles !== undefined) {
       if (typeof body.miles !== 'number' || body.miles < 0 || body.miles > 400) {

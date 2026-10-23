@@ -543,12 +543,54 @@ check('a failed lookup throws rather than returning nothing', raised instanceof 
   raised?.message)
 
 let geocodeUrl = ''
-globalThis.fetch = async (url) => (geocodeUrl = String(url), new Response(JSON.stringify({
-  features: [{ text: 'Saint-Marcellin', place_name: 'Saint-Marcellin, Isère, France', center: [5.32, 45.15] }],
-}), { status: 200, headers: { 'content-type': 'application/json' } }))
+globalThis.fetch = async (url) => (
+  String(url).includes('mapbox') && (geocodeUrl = String(url)),
+  new Response(JSON.stringify({
+    features: [{ text: 'Saint-Marcellin', place_name: 'Saint-Marcellin, Isère, France', center: [5.32, 45.15] }],
+  }), { status: 200, headers: { 'content-type': 'application/json' } }))
 const found = await searchPlaces('Saint-Marcellin', [4.38, 44.62], 'pk.test')
 check('towns are named in English, not their own script', geocodeUrl.includes('language=en'),
   geocodeUrl.slice(geocodeUrl.indexOf('?')))
+check('the same town is one suggestion, however many times it is asked for',
+  found.length === 1, `${found.length}`)
+
+// ── A town Mapbox does not know, and a namesake it does ─────────────────────
+// "Say-Otes" came back from Mapbox as a hamlet in Romania, 2,400 km behind him,
+// and Karakalpakiya not at all. OpenStreetMap has the Kazakh village, and the
+// nearest answer must come first.
+const asked = []
+globalThis.fetch = async (url) => {
+  url = String(url)
+  asked.push(url)
+  const ok = (body) => new Response(JSON.stringify(body), { status: 200 })
+  if (url.includes('photon')) {
+    return ok({ features: [
+      { geometry: { coordinates: [56.19, 44.77] }, properties: { name: 'Karakalpakstan', osm_value: 'town', country: 'Uzbekistan' } },
+      { geometry: { coordinates: [59.03, 43.79] }, properties: { name: 'Karakalpakia', osm_value: 'industrial', country: 'Uzbekistan' } },
+    ] })
+  }
+  if (url.includes('SayOtes')) {
+    return ok({ features: [{ text: 'Saiotes', place_name: 'Saiotes, Mangystau, Kazakhstan', center: [53.53, 44.33] }] })
+  }
+  return ok({ features: [{ text: 'Oteștii de Sus', place_name: 'Oteștii de Sus, Olt, Romania', center: [24.39, 44.72] }] })
+}
+const aktau = [51.2, 43.65]
+const sayOtes = await searchPlaces('Say-Otes', aktau, 'pk.test')
+check('a hyphenated name is also asked for joined up', asked.some((u) => u.includes('SayOtes')))
+check('and the nearest answer comes first', sayOtes[0]?.name === 'Saiotes',
+  sayOtes.map((p) => `${p.name} ${p.km} km`).join(', '))
+check('with how far away each one is', sayOtes.at(-1)?.km > 2000, `${sayOtes.at(-1)?.km} km`)
+const kk = await searchPlaces('Karakalpakia', [55.19, 45.32], 'pk.test')
+check('OpenStreetMap is asked too, for settlements only',
+  kk.some((p) => p.name === 'Karakalpakstan') && !kk.some((p) => p.name === 'Karakalpakia'),
+  kk.map((p) => p.name).join(', '))
+
+// One source failing is not the search failing.
+globalThis.fetch = async (url) => String(url).includes('photon')
+  ? new Response('down', { status: 503 })
+  : new Response(JSON.stringify({ features: [{ text: 'Beyneu', place_name: 'Beyneu, Kazakhstan', center: [55.19, 45.32] }] }), { status: 200 })
+const halfDown = await searchPlaces('Beyneu', aktau, 'pk.test').catch(() => [])
+check('a town is still found when OpenStreetMap is down', halfDown[0]?.name === 'Beyneu')
 check('a good lookup returns the town and its coordinates',
   found[0]?.name === 'Saint-Marcellin' && found[0]?.coords[0] === 5.32, found[0]?.context)
 check('a query too short to mean anything asks nothing',
