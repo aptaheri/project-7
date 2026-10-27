@@ -212,6 +212,14 @@ export function ensureSchema(): Promise<void> {
       // What the place is now, as opposed to what happened there. The half
       // people said was missing: something coming up, something recent.
       await sql`alter table destination_facts add column if not exists now_line text`
+      // Set when the town had nothing and the paragraph is about the region
+      // around it instead — "Mangystau, Kazakhstan" — so the email can say so,
+      // and so the next hamlet in the same region is told what was already said.
+      await sql`alter table destination_facts add column if not exists about_region text`
+      // When a question about this place last ran out of time. A run sends the
+      // places that just timed out to the back, so one slow town cannot take
+      // every run's single question while tomorrow's waits.
+      await sql`alter table destination_facts add column if not exists failed_at timestamptz`
 
       // The route as it now stands — see lib/route.mts. Only days he has
       // changed live here; the rest are the plan in src/data/itinerary.json.

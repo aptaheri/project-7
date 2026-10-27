@@ -112,3 +112,41 @@ export async function countryAt(lat: number, lon: number): Promise<Country | nul
     return null
   }
 }
+
+/** Where a point is, from the district up, for telling a model which Tölep. */
+export interface Whereabouts {
+  district: string | null
+  region: string | null
+  country: string | null
+}
+
+/**
+ * The district, region and country a destination sits in.
+ *
+ * A web search cannot look anything up by coordinates, so the coordinates are
+ * turned into names it can use. "Tölep" alone is a hamlet, a surname and a
+ * dozen other things; "Tölep, Mangystau District, Mangystau, Kazakhstan" is one
+ * place. Null when the geocoder has nothing or cannot be reached.
+ */
+export async function whereabouts(lat: number, lon: number): Promise<Whereabouts | null> {
+  const token = mapboxToken()
+  if (!token) return null
+  try {
+    const response = await fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${lon},${lat}.json` +
+        `?types=district,region,country&language=en&access_token=${token}`,
+      { signal: AbortSignal.timeout(4000) },
+    )
+    if (!response.ok) return null
+    const body = (await response.json()) as {
+      features?: { place_type?: string[]; text?: string }[]
+    }
+    const named = (type: string) =>
+      body.features?.find((f) => f.place_type?.includes(type))?.text ?? null
+    const found = { district: named('district'), region: named('region'), country: named('country') }
+    return found.country || found.region ? found : null
+  } catch (error) {
+    console.warn('whereabouts lookup failed', error)
+    return null
+  }
+}

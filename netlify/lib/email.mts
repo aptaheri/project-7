@@ -27,6 +27,12 @@ export interface DailyEmailInput {
    */
   fact: string | null
   /**
+   * Set when the town had nothing written about it and `fact` is about the
+   * region around it instead. Said out loud in the email, so a paragraph about
+   * the Ustyurt plateau is not read as a claim about one hamlet on it.
+   */
+  factRegion?: string | null
+  /**
    * What the place is now — something coming up, something recent, what it
    * lives on. Drawn under the history as its own paragraph, because it answers
    * a different question and reads as a different thought.
@@ -191,6 +197,10 @@ export function buildDailyEmail(input: DailyEmailInput): {
 } {
   const fact = input.fact
   const now = input.now
+  const region = fact ? (input.factRegion ?? null) : null
+  const regionIntro = region
+    ? `Little is written about ${input.to}, so here is the country around it.`
+    : null
   // Written about this place if there is one, arithmetic about the number if
   // not. The fallback is never wrong, which is why it stays.
   const scale = input.distanceLine ?? scaleLine(input.plannedMiles, input.dayNumber)
@@ -289,7 +299,8 @@ export function buildDailyEmail(input: DailyEmailInput): {
     ${fact ? `<tr><td style="padding:26px 20px 0;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:rgba(255,255,255,.045);border-radius:12px;">
         <tr><td style="padding:20px 22px;border-left:4px solid ${RED};border-radius:12px 0 0 12px;">
-          <div style="font:700 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${RED};letter-spacing:.12em;text-transform:uppercase;">About ${escape(input.to)}</div>
+          <div style="font:700 11px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${RED};letter-spacing:.12em;text-transform:uppercase;">${region ? `Around ${escape(input.to)} · ${escape(region)}` : `About ${escape(input.to)}`}</div>
+          ${regionIntro ? `<div style="font:italic 400 15px/1.5 ${FONT};color:${MUTED};padding-top:11px;">${escape(regionIntro)}</div>` : ''}
           <div style="font:400 17px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${TEXT};padding-top:11px;">${escape(fact)}</div>
           ${now ? `<div style="font:700 11px/1 ${FONT};color:${RED};letter-spacing:.12em;text-transform:uppercase;padding-top:22px;">The town today</div>
           <div style="font:400 17px/1.65 ${FONT};color:${TEXT};padding-top:11px;">${escape(now)}</div>` : ''}
@@ -351,7 +362,8 @@ export function buildDailyEmail(input: DailyEmailInput): {
       ? milestone.stats.map(([l, v, sub]) => `${l}: ${v}${sub ? ` (${sub})` : ''}`).join('\n')
       : null,
     milestone ? '' : null,
-    fact ? `About ${input.to}: ${fact}` : null,
+    fact && region ? `Around ${input.to} (${region}): ${regionIntro} ${fact}` : null,
+    fact && !region ? `About ${input.to}: ${fact}` : null,
     now ? '' : null,
     now ? `The town today: ${now}` : null,
     fact || now ? '' : null,

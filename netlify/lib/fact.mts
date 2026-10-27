@@ -1,6 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk'
 import facts from '../../src/data/destination-facts.json'
 import { db, ensureSchema } from './db.mts'
+import { whereabouts } from './country.mts'
+import type { Whereabouts } from './country.mts'
 
 /**
  * One true line about tonight's destination, written when the email is sent.
@@ -231,6 +233,76 @@ Rules:
 
 Place: ${destination}`
 
+/**
+ * The backstop: the country around a place that has nothing written about it.
+ *
+ * Tölep is a railway halt on the Ustyurt plateau, and the model searched for
+ * twenty seconds and rightly found nothing it could stand behind — so the
+ * email opened on the stat box, five mornings running through Mangystau. The
+ * land around it has plenty: the plateau, the old caravan routes, the Soviet
+ * test site at Say-Utes. The email says plainly that this is about the region
+ * and why, so nobody reads it as a claim about the hamlet.
+ *
+ * Handed what earlier mornings said about the same region, because the next
+ * village along will land here too, and the same paragraph twice in a week is
+ * worse than none.
+ */
+const REGION_PROMPT = (
+  destination: string,
+  where: string,
+  ride: RideContext,
+  already: string[],
+) => `You write the part of a daily email about a cycling expedition that people actually read. Tonight the rider reaches ${destination}, which is ${where}. Almost nothing is written about ${destination} itself, so the email will say so and print your piece about the country around it instead.
+
+Search the web first.
+
+PIECE ONE — "history": one story about the land around ${destination} — within a day's ride, or the region it belongs to — in three or four sentences. One story, not a survey.
+
+It can be the landscape and how it came to be, a road or railway that crosses it and why it was built, something that happened there, a people who live or lived there and how. Pick the single thing a reader would repeat to somebody that evening, and tell it properly: what led to it, what happened, what came of it. Plain English a twelve-year-old would follow.
+
+Do not claim anything about ${destination} itself unless a source says it. The email has already told the reader this piece is about the region.
+${already.length ? `
+Earlier mornings in the same region already printed these. Tell a different story, and do not repeat their facts:
+${already.map((a) => `- "${a}"`).join('\n')}
+` : ''}
+PIECE TWO — "ride": one or two sentences about what kind of day today is for the rider.
+
+Today he rides ${ride.from ? `from ${ride.from} ` : ''}to ${destination}${
+  ride.miles === null
+    ? ', distance unknown'
+    : `, ${Math.round(ride.miles)} miles (${Math.round(ride.miles * 1.609)} km)`
+}.${ride.note ? ` The route notes say: ${ride.note}.` : ''}
+
+Rules:
+- No preamble, no quotes, no source list, no headings.
+- Never write about yourself or about searching, or about how little is known. The email says that already.
+- Write about the rider in the third person, as "he". Never address anybody as "you".
+- Short sentences. One idea each. No semicolons.
+- Do not describe anywhere as charming, picturesque, quaint, or a hidden gem.
+- No superlatives unless a source says so plainly. Use only figures you verified, plus the distance above.
+- Return an empty string for either piece you cannot make true and specific.
+- Return an empty string for "now".
+
+Place: ${destination}, ${where}`
+
+/**
+ * A place, named well enough for a search to find it.
+ *
+ * Through France "Chanac" was enough. Through Kazakhstan a one-word name is a
+ * hamlet, a surname and a railway siding at once, so every question now says
+ * which district and country, and where.
+ */
+function located(where: Whereabouts | null, coords: [number, number] | null | undefined): string {
+  const names = where ? [where.district, where.region, where.country].filter(Boolean) : []
+  const at = coords
+    ? `${Math.abs(coords[1]).toFixed(2)}°${coords[1] >= 0 ? 'N' : 'S'}, ` +
+      `${Math.abs(coords[0]).toFixed(2)}°${coords[0] >= 0 ? 'E' : 'W'}`
+    : null
+  if (names.length && at) return `in ${names.join(', ')} (${at})`
+  if (names.length) return `in ${names.join(', ')}`
+  return at ? `at ${at}` : ''
+}
+
 const NOW_SCHEMA = {
   type: 'object',
   properties: { now: { type: 'string' } },
@@ -261,6 +333,8 @@ export interface RideContext {
   miles: number | null
   from?: string | null
   note?: string | null
+  /** Where the destination is, [lon, lat], so the question can say which one. */
+  coords?: [number, number] | null
 }
 
 interface Generated {
@@ -315,6 +389,14 @@ function withoutAsides(text: string): string {
   return wordsIn(kept) >= MIN_NOW_WORDS ? kept : ''
 }
 
+/**
+ * Every brief ends "Place: <name>". Saying where it is costs nothing there and
+ * is the difference between the right Tölep and none.
+ */
+function withPlace(prompt: string, destination: string, where: string): string {
+  return where ? prompt.replace(/Place: [^\n]*$/, `Place: ${destination}, ${where}`) : prompt
+}
+
 function tidy(text: string): string {
   return text
     .replace(/\s+/g, ' ')
@@ -336,18 +418,21 @@ function tidy(text: string): string {
  * `curated` writes the ride line only, under a hand-written paragraph.
  * `expand` asks whether a thin paragraph has more in it.
  * `now` asks the second question — what the place is today — given the first.
+ * `region` writes about the land around a place that had nothing of its own.
  *
  * They are separate calls rather than one because one call asking for both
  * halves does not come back inside twenty-five seconds. Davos, Kavala and Scuol
  * were each measured at the full deadline and returned nothing at all.
  */
-type Mode = 'fresh' | 'curated' | 'expand' | 'now'
+type Mode = 'fresh' | 'curated' | 'expand' | 'now' | 'region'
 
 async function generate(
   destination: string,
   ride: RideContext,
   mode: Mode,
   existingFact: string | null = null,
+  /** Which district and country, for the question; and for `region`, what was said nearby. */
+  context: { where: string; already?: string[] } = { where: '' },
 ): Promise<Attempt> {
   if (!process.env.ANTHROPIC_API_KEY) {
     console.warn(`no fact generated for ${destination}: ANTHROPIC_API_KEY is not set`)
@@ -392,18 +477,25 @@ async function generate(
       tools: [{
         type: 'web_search_20260209',
         name: 'web_search',
-        max_uses: mode === 'now' ? 2 : 3,
+        // The region too: measured on Tölep at 22 and 25 seconds with three,
+        // and a broad question about a plateau is answered by the first search.
+        max_uses: mode === 'now' || mode === 'region' ? 2 : 3,
       }],
       messages: [{
         role: 'user',
-        content:
-          mode === 'now'
-            ? NOW_PROMPT(destination, existingFact ?? '')
-            : mode === 'expand'
-              ? EXPAND_PROMPT(destination, existingFact ?? '')
-              : mode === 'curated'
-                ? CURATED_PROMPT(destination, ride, existingFact ?? '')
-                : PROMPT(destination, ride),
+        content: mode === 'region'
+          ? REGION_PROMPT(destination, context.where, ride, context.already ?? [])
+          : withPlace(
+            mode === 'now'
+              ? NOW_PROMPT(destination, existingFact ?? '')
+              : mode === 'expand'
+                ? EXPAND_PROMPT(destination, existingFact ?? '')
+                : mode === 'curated'
+                  ? CURATED_PROMPT(destination, ride, existingFact ?? '')
+                  : PROMPT(destination, ride),
+            destination,
+            context.where,
+          ),
       }],
     })])
 
@@ -430,7 +522,7 @@ async function generate(
     // Only the two questions that write a paragraph read one back. The others
     // were handed the paragraph that stands and asked for something beside it.
     const fact =
-      mode === 'fresh' || mode === 'expand'
+      mode === 'fresh' || mode === 'expand' || mode === 'region'
         ? tidy(typeof parsed.history === 'string' ? parsed.history : '')
         : existingFact ?? ''
     const nowText = tidy(typeof parsed.now === 'string' ? parsed.now : '')
@@ -524,6 +616,12 @@ export interface DestinationLines {
    * true by construction.
    */
   distance: string | null
+  /**
+   * Set when the town had nothing of its own and `fact` is about the region
+   * around it — "Mangystau, Kazakhstan". The email says so rather than letting
+   * a reader take it as a claim about the hamlet.
+   */
+  region: string | null
 }
 
 export async function factFor(
@@ -539,13 +637,14 @@ export async function factFor(
   try {
     await ensureSchema()
     const stored = (await db()`
-      select fact, now_line, distance_line, distance_miles from destination_facts
+      select fact, now_line, distance_line, distance_miles, about_region from destination_facts
       where destination = ${destination}
     `) as unknown as {
       fact: string | null
       now_line: string | null
       distance_line: string | null
       distance_miles: number | null
+      about_region: string | null
     }[]
     // Şamaxı went out on 18 October as "293 miles from Gurjaani, close to three
     // centuries in a single day" above a stat box reading 67 mi: the line was
@@ -571,10 +670,13 @@ export async function factFor(
       // paragraph.
       now: stored[0]?.now_line || null,
       distance: sameDay ? (stored[0]?.distance_line ?? null) : null,
+      // Only when the paragraph printed is the regional one: a hand-written
+      // fact is about the place itself, whatever the row says.
+      region: !written && stored[0]?.fact ? (stored[0]?.about_region ?? null) : null,
     }
   } catch (error) {
     console.error(`fact lookup failed for ${destination}`, error)
-    return { fact: written, now: null, distance: null }
+    return { fact: written, now: null, distance: null, region: null }
   }
 }
 
@@ -602,6 +704,105 @@ export type Warmed =
  */
 const GIVE_UP_AFTER = 3
 
+/** Questions about the region a place may have, once the town has had nothing. */
+const REGION_TRIES = 2
+
+/** How many earlier region paragraphs a new one is shown, so as not to repeat them. */
+const REGION_MEMORY = 4
+
+/** The region a paragraph is about, as stored and as shown in the email. */
+function regionName(where: Whereabouts | null): string | null {
+  if (!where) return null
+  return [where.region, where.country].filter(Boolean).join(', ') || null
+}
+
+/**
+ * Records that a question ran out of time. When the place has no paragraph at
+ * all, it also counts as an attempt: a town that times out every run is as
+ * unanswerable as one the model declines, and should move on to its region.
+ */
+async function recordFailure(destination: string, counts: boolean): Promise<void> {
+  try {
+    await db()`
+      insert into destination_facts (destination, fact, model, format_version, attempts, failed_at)
+      values (${destination}, null, ${'claude-opus-5'}, ${FORMAT_VERSION}, ${counts ? 1 : 0}, now())
+      on conflict (destination) do update set
+        attempts = destination_facts.attempts + ${counts ? 1 : 0},
+        failed_at = now()
+    `
+  } catch (error) {
+    console.error(`could not record a failure for ${destination}`, error)
+  }
+}
+
+/**
+ * Asks about the country around a place that had nothing, and stores the answer
+ * as its paragraph, marked with the region so the email can say so.
+ *
+ * Stored with an empty present and marked thin: the hamlet is not going to have
+ * a news paragraph either, and a short regional piece is not asked for more.
+ */
+async function askRegion(
+  destination: string,
+  miles: number | null,
+  ride: Omit<RideContext, 'miles'>,
+  where: Whereabouts | null,
+  place: string,
+  tried: number,
+): Promise<Warmed> {
+  const sql = db()
+  const region = regionName(where)
+  if (!region) {
+    await recordFailure(destination, true)
+    return 'failed'
+  }
+
+  const earlier = (await sql`
+    select fact from destination_facts
+    where about_region = ${region} and fact is not null and destination <> ${destination}
+    order by created_at desc
+    limit ${REGION_MEMORY}
+  `) as unknown as { fact: string }[]
+
+  const attempt = await generate(destination, { ...ride, miles }, 'region', null, {
+    where: place,
+    already: earlier.map((row) => row.fact),
+  })
+
+  if (attempt.type === 'failed') {
+    await recordFailure(destination, true)
+    return 'failed'
+  }
+
+  // Nothing about the region either. Recorded, so it is never asked again.
+  if (attempt.type === 'declined') {
+    await sql`
+      update destination_facts set about_region = ${region}, declined_at = now()
+      where destination = ${destination}
+    `
+    console.log(`region: nothing to say around ${destination} either (${region})`)
+    return 'declined'
+  }
+
+  const { generated } = attempt
+  await sql`
+    update destination_facts set
+      fact = ${generated.fact},
+      about_region = ${region},
+      now_line = '',
+      thin = true,
+      distance_line = ${generated.distance},
+      distance_miles = ${miles},
+      model = ${generated.model},
+      format_version = ${FORMAT_VERSION},
+      attempts = ${tried},
+      created_at = now()
+    where destination = ${destination}
+  `
+  console.log(`region written for ${destination} (${region}): ${generated.fact}`)
+  return 'written'
+}
+
 /**
  * Makes sure a line exists for a place, writing one if it does not.
  *
@@ -624,7 +825,9 @@ export async function ensureFact(
     const sql = db()
 
     const stored = (await sql`
-      select fact, now_line, distance_line, distance_miles, format_version, attempts, thin
+      select
+        fact, now_line, distance_line, distance_miles, format_version, attempts, thin,
+        about_region
       from destination_facts where destination = ${destination}
     `) as unknown as {
       fact: string | null
@@ -634,6 +837,7 @@ export async function ensureFact(
       format_version: number
       attempts: number
       thin: boolean | null
+      about_region: string | null
     }[]
 
     // The sentence was written about a number, and the number has changed —
@@ -676,12 +880,32 @@ export async function ensureFact(
       (!written || Boolean(stored[0]?.distance_line))
     if (complete) return 'stored'
 
+    // The town itself came back empty, or ran out of time, at least once: ask
+    // about the country around it instead. Before the give-up below, so places
+    // given up on before this existed get their region asked too — Tölep was
+    // one. Needs to know where the place is, which an unrouted day may not.
+    const tried = stored[0]?.attempts ?? 0
+    const regionAsked = stored[0]?.about_region != null
+    const needsRegion =
+      !written && !stored[0]?.fact && !outdated && tried >= 1 && !regionAsked &&
+      Boolean(ride.coords)
+
+    // Asked about the region and told there was nothing there either.
+    if (!outdated && !stored[0]?.fact && regionAsked) return 'exhausted'
+
     // Asked enough times already and told each time that there is nothing to
-    // say. Believe it, and stop spending a run's one attempt on it.
-    if (!outdated && (stored[0]?.attempts ?? 0) >= GIVE_UP_AFTER) return 'exhausted'
+    // say. Believe it, and stop spending a run's one attempt on it. The region
+    // gets its own few tries on top.
+    if (!outdated && tried >= GIVE_UP_AFTER + (needsRegion ? REGION_TRIES : 0)) return 'exhausted'
 
     // Already used this run's one attempt; the next run will pick this up.
     if (!mayWrite) return 'skipped'
+
+    // Which Tölep. Only looked up once a question is actually going to be asked.
+    const where = ride.coords ? await whereabouts(ride.coords[1], ride.coords[0]) : null
+    const place = located(where, ride.coords)
+
+    if (needsRegion) return await askRegion(destination, miles, ride, where, place, tried)
 
     // One question per run, in the order that matters most to a reader.
     //
@@ -705,7 +929,12 @@ export async function ensureFact(
             ? 'curated'
             : 'now'
     const keepFact = mode === 'fresh' ? null : haveFact
-    const attempt = await generate(destination, { ...ride, miles }, mode, keepFact)
+    const attempt = await generate(destination, { ...ride, miles }, mode, keepFact, { where: place })
+
+    // A timeout is counted for a place with nothing yet, so that the next run
+    // turns to its region rather than asking the same slow question forever,
+    // and stamped so the warmer sends it to the back of the queue meanwhile.
+    if (attempt.type === 'failed') await recordFailure(destination, mode === 'fresh')
 
     // The second question, recorded whatever it said. The empty string is the
     // record of having asked and been told there is nothing — which is why this
@@ -825,6 +1054,9 @@ export async function ensureFact(
         -- on, so the count of refusals goes back to nothing.
         attempts = 0,
         declined_at = null,
+        -- The town's own paragraph, so no longer one about the region around it.
+        about_region = null,
+        failed_at = null,
         created_at = now()
     `
     // Logged in full: the only place a generated sentence can be read back

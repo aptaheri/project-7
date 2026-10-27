@@ -1,3 +1,4 @@
+import { db, ensureSchema } from './db.mts'
 import { ensureFact } from './fact.mts'
 import { loadRoute } from './route.mts'
 import type { Warmed } from './fact.mts'
@@ -47,14 +48,27 @@ export const ATTEMPTS_PER_RUN = 1
  */
 async function upcoming(
   today: string,
-): Promise<{ to: string; date: string; miles: number | null; from: string | null; note: string | null }[]> {
+): Promise<{
+  to: string
+  date: string
+  miles: number | null
+  from: string | null
+  note: string | null
+  coords: [number, number] | null
+}[]> {
   const last = new Date(Date.parse(`${today}T00:00:00Z`) + LOOKAHEAD_DAYS * 86_400_000)
     .toISOString()
     .slice(0, 10)
 
   const byDestination = new Map<
     string,
-    { date: string; miles: number | null; from: string | null; note: string | null }
+    {
+      date: string
+      miles: number | null
+      from: string | null
+      note: string | null
+      coords: [number, number] | null
+    }
   >()
   // The route as it now stands, so a destination he entered last night is
   // warmed tonight rather than whenever somebody edits a file.
@@ -73,12 +87,36 @@ async function upcoming(
         // today is a climbing day.
         from: day.from,
         note: day.note || null,
+        // Where it is, so the question can say which Tölep — and so a place
+        // with nothing of its own can be written about by its region.
+        coords: day.toCoords,
       })
     }
   }
   return [...byDestination].map(([to, at]) => ({
-    to, date: at.date, miles: at.miles, from: at.from, note: at.note,
+    to, date: at.date, miles: at.miles, from: at.from, note: at.note, coords: at.coords,
   }))
+}
+
+/**
+ * Places whose last question timed out within the last few hours — since the
+ * previous run, give or take. Read defensively: a failure here costs only the
+ * ordering, and must not cost the run.
+ */
+async function recentlyFailed(places: string[]): Promise<Set<string>> {
+  if (places.length === 0) return new Set()
+  try {
+    await ensureSchema()
+    const rows = (await db()`
+      select destination from destination_facts
+      where destination = any(${places}::text[])
+        and failed_at > now() - interval '4 hours'
+    `) as unknown as { destination: string }[]
+    return new Set(rows.map((r) => r.destination))
+  } catch (error) {
+    console.error('fact-warm: reading recent failures failed', error)
+    return new Set()
+  }
 }
 
 /**
@@ -125,14 +163,20 @@ export async function warmOnce(budget = ATTEMPTS_PER_RUN): Promise<{
     const tomorrow = new Date(Date.parse(`${today}T00:00:00Z`) + 86_400_000)
       .toISOString()
       .slice(0, 10)
-    const soon = all.filter((d) => d.date <= tomorrow)
+    // Within those two, a place whose question just ran out of time goes after
+    // the other. Through Mangystau every search is slow, and Saiotes timing out
+    // on every run meant Tölep, the next morning's town, was never asked at all.
+    const slow = await recentlyFailed(all.map((d) => d.to))
+    const soon = all
+      .filter((d) => d.date <= tomorrow)
+      .sort((a, b) => Number(slow.has(a.to)) - Number(slow.has(b.to)))
     const later = all.filter((d) => d.date > tomorrow)
     const start = later.length ? Math.floor(now.getUTCHours() / 3) % later.length : 0
     const queue = [...soon, ...later.map((_, i) => later[(start + i) % later.length])]
 
     let attempts = 0
     outer: for (let i = 0; i < queue.length; i++) {
-      const { to, miles, from, note } = queue[i]
+      const { to, miles, from, note, coords } = queue[i]
       // A place takes more than one question to finish — the paragraph, then
       // the present — so finish the one nearest his arrival before moving on.
       // Visiting each place once instead spreads a budget of three across three
@@ -144,7 +188,7 @@ export async function warmOnce(budget = ATTEMPTS_PER_RUN): Promise<{
       for (;;) {
         // Reads are cheap and tell us whether there is anything to do; calling
         // the model is the part that is rationed.
-        const outcome = await ensureFact(to, miles, attempts < budget, { from, note })
+        const outcome = await ensureFact(to, miles, attempts < budget, { from, note, coords })
         counts[outcome] += 1
         if (outcome !== 'written' && outcome !== 'declined' && outcome !== 'failed') break
         attempts += 1

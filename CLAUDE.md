@@ -259,6 +259,20 @@ they are the things a reasonable change would otherwise undo.
     hyphen, and OpenStreetMap (Photon), then sorts by distance from where the
     day starts; `/api/route` refuses a ride whose ends are over 650 km apart.
 
+20. **A town with nothing gets the country around it, and the email says so.**
+    Through Central Asia the town question routinely comes back empty or runs
+    out of time — Tölep did both. Every question names the district, region and
+    country from the day's coordinates (`whereabouts` in `lib/country.mts`;
+    a search can't use coordinates, but it can use names), and once a town has
+    declined *or timed out* the next run asks `region` instead. The paragraph is
+    stored with `about_region`, and the email heads it "Around Tölep · Mangystau,
+    Kazakhstan" with a line saying little is written about the town — so a
+    paragraph about a plateau is never read as a claim about a hamlet. Each
+    region question is shown what earlier mornings in the same region printed.
+    A timeout is also stamped in `failed_at`, and the warmer puts a town that
+    just timed out behind tomorrow's, so one slow place can't take every run.
+    `check-fact` and `check-sql` assert all of it.
+
 ## Testing
 
 Every change to SQL or to a rule gets an assertion in `scripts/check-*.mjs`.

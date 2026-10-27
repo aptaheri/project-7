@@ -41,7 +41,8 @@ await pg.exec(`
   );
   create table destination_facts (
     destination text primary key, fact text, model text not null,
-    created_at timestamptz not null default now(), now_line text, distance_line text
+    created_at timestamptz not null default now(), now_line text, distance_line text,
+    about_region text, failed_at timestamptz
   );
   create table route_geometry (
     date date primary key,

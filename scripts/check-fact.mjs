@@ -48,6 +48,8 @@ await pg.exec(`
     format_version int not null default 1,
     attempts       int not null default 0,
     declined_at    timestamptz,
+    about_region   text,
+    failed_at      timestamptz,
     created_at     timestamptz not null default now()
   );
 `)
@@ -515,6 +517,123 @@ const portoFact = (await factFor('Porto')).fact
 check('a hand-written fact is never expanded', (await ensureFact('Porto', 62)) === 'stored')
 check('and stays exactly as written', (await factFor('Porto')).fact === portoFact)
 check('costing nothing', calls === 0, `${calls} call(s)`)
+
+// ── A town with nothing gets the country around it ─────────────────────────
+// Tölep, on the Ustyurt plateau: the model searched and found nothing it could
+// stand behind, and the email opened on the stat box. Saiotes the day before
+// timed out on every run. Both now fall back to the region, which the email
+// names as such.
+{
+  process.env.VITE_MAPBOX_TOKEN = 'pk.test'
+  const anthropic = globalThis.fetch
+  let geocoded = 0
+  globalThis.fetch = async (url, init) => {
+    if (String(url).includes('api.mapbox.com')) {
+      geocoded++
+      return new Response(JSON.stringify({ features: [
+        { place_type: ['district'], text: 'Mangystau District' },
+        { place_type: ['region'], text: 'Mangystau' },
+        { place_type: ['country'], text: 'Kazakhstan' },
+      ] }), { status: 200 })
+    }
+    return anthropic(url, init)
+  }
+  const ride = { from: 'Saiotes', note: null, coords: [53.9, 44.5] }
+
+  reply = { fact: '', distance: '' }
+  check('a town with nothing to say is declined', (await ensureFact('Tölep', 66, true, ride)) === 'declined')
+  check('and the question said which Tölep',
+    lastPrompt.includes('Mangystau District, Mangystau, Kazakhstan') && lastPrompt.includes('44.50°N'),
+    lastPrompt.slice(lastPrompt.lastIndexOf('Place:')))
+
+  const REGION = 'The Ustyurt plateau is a limestone table the size of a small country, ' +
+    'cut off on its western edge by cliffs that drop a hundred and fifty metres to the salt flats. ' +
+    'Caravans crossed it for centuries between the Caspian and Khiva, watering at wells dug by hand, ' +
+    'and the stone cairns that marked the way still stand beside the modern road he rides today.'
+  reply = { fact: REGION, distance: 'A flat day across the plateau.' }
+  check('the next run asks about the region instead', (await ensureFact('Tölep', 66, true, ride)) === 'written')
+  check('in a brief about the country around it',
+    lastPrompt.includes('country around it') && lastPrompt.includes('Place: Tölep, in Mangystau District'),
+    lastPrompt.slice(0, 120) + '…')
+  const tolep = await row('Tölep')
+  check('stored as a paragraph about the region', tolep?.fact === REGION && tolep?.about_region === 'Mangystau, Kazakhstan',
+    tolep?.about_region)
+  const sent = await factFor('Tölep', 66)
+  check('and the send is told it is about the region', sent.region === 'Mangystau, Kazakhstan' && sent.fact === REGION)
+  check('with the ride line written beside it', sent.distance === 'A flat day across the plateau.')
+  calls = 0
+  check('and the town is then complete', (await ensureFact('Tölep', 66, true, ride)) === 'stored' && calls === 0,
+    `${calls} call(s)`)
+
+  // The next hamlet in the same region is shown what was already said.
+  reply = { fact: '' }
+  await ensureFact('Next Halt', 50, true, ride)
+  reply = { fact: REGION.replace('Ustyurt', 'other'), distance: '' }
+  await ensureFact('Next Halt', 50, true, ride)
+  check('the next town in the region is told what was already printed',
+    lastPrompt.includes('already printed') && lastPrompt.includes('Caravans crossed it'))
+
+  // A timeout counts, so a slow town moves on to its region rather than
+  // taking every run.
+  reply = { status: 500 }
+  check('a timed-out town is a failure', (await ensureFact('Slow Halt', 50, true, ride)) === 'failed')
+  const slowRow = await row('Slow Halt')
+  check('which is counted and stamped', slowRow?.attempts === 1 && slowRow?.failed_at !== null,
+    `attempts ${slowRow?.attempts}`)
+  reply = { fact: REGION.replace('Ustyurt', 'third'), distance: '' }
+  await ensureFact('Slow Halt', 50, true, ride)
+  check('and its next question is the region', (await row('Slow Halt'))?.about_region === 'Mangystau, Kazakhstan')
+
+  // Nothing about the region either: recorded, and never asked again.
+  reply = { fact: '' }
+  await ensureFact('Empty Halt', 50, true, ride)
+  await ensureFact('Empty Halt', 50, true, ride)
+  calls = 0
+  check('a region with nothing is not asked again', (await ensureFact('Empty Halt', 50, true, ride)) === 'exhausted' && calls === 0)
+  check('and the send prints nothing for it', (await factFor('Empty Halt')).fact === null)
+
+  // Places given up on before the backstop existed get their region asked.
+  await pg.query(`insert into destination_facts (destination, fact, model, format_version, attempts)
+                  values ('Old Halt', null, 'm', $1, 3)`, [FORMAT_VERSION])
+  reply = { fact: REGION.replace('Ustyurt', 'fourth'), distance: '' }
+  check('a place given up on before still gets its region', (await ensureFact('Old Halt', 50, true, ride)) === 'written')
+  check('without coordinates there is no region to ask', (await ensureFact('Nowhere Halt', 50, true, {})) !== 'written' ||
+    (await row('Nowhere Halt'))?.about_region === null)
+
+  globalThis.fetch = anthropic
+  delete process.env.VITE_MAPBOX_TOKEN
+}
+
+// ── A town that just timed out waits behind the other ──────────────────────
+{
+  const today = new Date().toISOString().slice(0, 10)
+  const plus = (n) => new Date(Date.parse(`${today}T00:00:00Z`) + n * 86400000).toISOString().slice(0, 10)
+  const routeShim = resolve(dir, 'route-shim-slow.mjs')
+  writeFileSync(routeShim, `export async function loadRoute() {
+  return [
+    { date: '${today}',   kind: 'ride', from: 'A', to: 'Stuck Town',    miles: 60, note: '' },
+    { date: '${plus(1)}', kind: 'ride', from: 'B', to: 'Tomorrow Town', miles: 66, note: '' },
+  ]
+}
+`)
+  const built = await esbuild.build({
+    entryPoints: ['netlify/lib/warm.mts'],
+    bundle: true, format: 'esm', platform: 'node', write: false,
+    plugins: [{ name: 'swap', setup(b) {
+      b.onResolve({ filter: /db\.mts$/ }, () => ({ path: shimPath }))
+      b.onResolve({ filter: /route\.mts$/ }, () => ({ path: routeShim }))
+    } }],
+  })
+  const out = join(dir, 'warm-slow.mjs')
+  writeFileSync(out, built.outputFiles[0].text)
+  const { warmOnce } = await import(pathToFileURL(resolve(out)).href)
+  await pg.query(`insert into destination_facts (destination, fact, model, attempts, failed_at)
+                  values ('Stuck Town', null, 'm', 1, now() - interval '3 hours')`)
+  reply = { fact: SETTLED, distance: '' }
+  const run = await warmOnce(1)
+  check("tomorrow's town is asked before one that just timed out",
+    run.spentOn.join().startsWith('Tomorrow Town'), run.spentOn.join(' | '))
+}
 
 console.log(failures === 0 ? '\nAll fact checks passed.' : `\n${failures} check(s) failed.`)
 process.exit(failures === 0 ? 0 : 1)

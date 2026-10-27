@@ -93,7 +93,8 @@ await pg.exec(`
     now_line text, thin boolean,
     distance_line text, distance_miles double precision,
     format_version int not null default 1, attempts int not null default 0,
-    declined_at timestamptz, created_at timestamptz not null default now()
+    declined_at timestamptz, created_at timestamptz not null default now(),
+    about_region text, failed_at timestamptz
   );
   create table route_days (
     date date primary key, kind text not null,
@@ -260,6 +261,18 @@ check('an empty present is not printed as a paragraph',
   !(noNow.preview?.html ?? '').includes('lives on the paper mill'))
 check('while the history still is',
   (noNow.preview?.html ?? '').includes('the only crossing for forty miles'))
+
+// A paragraph about the region around a town with nothing of its own says so,
+// so a reader does not take the Ustyurt plateau as a claim about one hamlet.
+check('a town\'s own paragraph is not labelled as the region',
+  !(noNow.preview?.html ?? '').includes('Little is written about'))
+await pg.query(`update destination_facts set about_region = 'Mangystau, Kazakhstan' where destination = 'Rerouted End'`)
+const regional = await runDailyEmail({ force: true, dryRun: true })
+check('a regional paragraph says why it is about the region',
+  (regional.preview?.html ?? '').includes('Little is written about Rerouted End, so here is the country around it.') &&
+  (regional.preview?.html ?? '').includes('Around Rerouted End · Mangystau, Kazakhstan'))
+check('in the plain-text version too',
+  (regional.preview?.text ?? '').includes('Around Rerouted End (Mangystau, Kazakhstan): Little is written'))
 await pg.query(`delete from destination_facts where destination = 'Rerouted End'`)
 
 // ── The last town of a stage gets its own section ─────────────────────────
