@@ -16,7 +16,8 @@
     "check-access": "node scripts/check-access.mjs",
     "check-fact": "node scripts/check-fact.mjs",
     "check-route": "node scripts/check-route.mjs",
-    "check": "npm run check-sql && npm run check-feed && npm run check-where && npm run check-access && npm run check-fact && npm run check-route"
+    "check-safety": "node scripts/check-safety.mjs",
+    "check": "npm run check-sql && npm run check-feed && npm run check-where && npm run check-access && npm run check-fact && npm run check-route && npm run check-safety"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",

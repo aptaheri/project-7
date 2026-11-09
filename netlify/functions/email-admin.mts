@@ -1,5 +1,6 @@
 import { json } from '../lib/auth.mts'
 import { runDailyEmail } from '../lib/daily.mts'
+import { runSafetyCheck } from '../lib/safety.mts'
 import { currentSession } from '../lib/session.mts'
 import { db, ensureSchema } from '../lib/db.mts'
 import { normalizeEmail } from '../lib/users.mts'
@@ -24,6 +25,20 @@ export default async function handler(req: Request): Promise<Response> {
 
   const url = new URL(req.url)
   const format = url.searchParams.get('format')
+
+  // What the safety check makes of this moment, sent to nobody: the numbers it
+  // saw, and the email it would send. ?safety=1&format=html shows that email.
+  // The thresholds are a guess until a few weeks of these say otherwise.
+  if (url.searchParams.get('safety') === '1') {
+    const safety = await runSafetyCheck({ dryRun: true })
+    if (format === 'html' && safety.preview) {
+      return new Response(safety.preview.html, {
+        headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' },
+      })
+    }
+    return json({ ...safety, preview: undefined })
+  }
+
   const force = url.searchParams.get('force') === '1'
   const send = url.searchParams.get('send')
   // A test send goes to the signed-in owner, never to an address off the query

@@ -246,6 +246,25 @@ export function ensureSchema(): Promise<void> {
       // on the highway a car would take. Null is cycling, as every day was.
       await sql`alter table route_days add column if not exists profile text`
 
+      // Safety alerts sent to the owners — see lib/safety.mts. One row per
+      // episode: claimed before the alert goes, so a send that half fails is
+      // not retried into a second copy every fifteen minutes, and stamped
+      // resolved before the all-clear goes, for the same reason.
+      await sql`
+        create table if not exists safety_alerts (
+          id          bigserial primary key,
+          local_date  date not null,
+          kind        text not null,
+          lat         double precision not null,
+          lon         double precision not null,
+          last_fix    timestamptz not null,
+          detail      text,
+          sent_at     timestamptz not null default now(),
+          resolved_at timestamptz
+        )
+      `
+      await sql`create index if not exists safety_alerts_local_date on safety_alerts (local_date)`
+
       // Finished days, computed once and then read back rather than derived
       // from the whole history on every poll. Keyed by mode so the owner's
       // test view cannot contaminate the real numbers.

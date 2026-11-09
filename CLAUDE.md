@@ -14,7 +14,8 @@ npm run check    # every check suite; run before pushing
 
 The suites are also individually runnable: `check-sql` (daily email),
 `check-feed` (live tracker), `check-where` (public country line),
-`check-access` (sign-in, roles, names), `check-fact` (destination lines).
+`check-access` (sign-in, roles, names), `check-fact` (destination lines),
+`check-route` (the route editor), `check-safety` (owner safety alerts).
 
 **Build with Node 22.** The machine default is 20.18.3, and Vite 8 / rolldown
 need `^20.19 || >=22.12`. `@rolldown/binding-darwin-arm64` is an *optional*
@@ -282,6 +283,22 @@ they are the things a reasonable change would otherwise undo.
     shift — so a refill never quietly swaps his car road back for a bike one.
     `check-route` asserts each.
 
+22. **A safety alert goes to owners only, once per episode, and is followed by
+    an all-clear.** `safety-check` runs every fifteen minutes in his riding
+    hours. On a riding day, once he has covered 3 km and while he is more than
+    5 km from the night's town, it emails the owners after 60 min with no fix
+    ("quiet") or 120 min within 300 m while still reporting ("still" — lunch is
+    often an hour). The row in `safety_alerts` is claimed *before* the send,
+    like `sent_emails`, so a half-failed send is not repeated every fifteen
+    minutes; an open alert is never re-sent, and the all-clear closes it — and
+    says "it was the signal" when fixes from inside the gap arrive late showing
+    him riding. Through Central Asia most "quiet" alerts will be signal, which
+    is why the email says what it usually is rather than raising an alarm.
+    Thresholds are `SAFETY_*` settings (a redeploy to change, like every
+    setting here); `SAFETY_PAUSED` holds it. `/api/email-admin?safety=1` is an owner's dry run (`&format=html` shows
+    the email). A night run stops on the plan without touching the database.
+    `check-safety` plays a whole day through it.
+
 ## Testing
 
 Every change to SQL or to a rule gets an assertion in `scripts/check-*.mjs`.
@@ -318,6 +335,7 @@ own schema before the code that needs a column can ship.
 | `TRACK_TEST_DEVICES` | Devices whose fixes are test data; everything else is real |
 | `RESEND_API_KEY`, `EMAIL_FROM` | The daily email |
 | `EMAIL_PAUSED`, `EMAIL_SEND_FROM_HOUR`, `EMAIL_SEND_UNTIL_HOUR` | Hold or shift the send without a deploy |
+| `SAFETY_PAUSED`, `SAFETY_QUIET_MINUTES`, `SAFETY_STILL_MINUTES`, `SAFETY_STILL_RADIUS_M`, `SAFETY_NEAR_KM`, `SAFETY_SET_OFF_KM`, `SAFETY_FROM_HOUR`, `SAFETY_UNTIL_HOUR`, `SAFETY_MAX_PER_DAY` | Tune or hold the safety alert (rule 22) |
 | `ANTHROPIC_API_KEY` | Writing destination lines |
 | `OWNTRACKS_*` | The phone posting fixes |
 
@@ -327,7 +345,8 @@ like a DNS problem and is not.
 
 ## Scheduled functions
 
-`daily-email` runs hourly, `fact-warm` every three hours. **Netlify crons are
+`daily-email` runs hourly, `fact-warm` every three hours, `safety-check` every
+fifteen minutes. **Netlify crons are
 UTC**, whatever the machine you are testing from thinks. Scheduled functions get
 about 30 seconds — the reason rule 5 exists.
 
