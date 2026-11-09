@@ -191,7 +191,7 @@ check('moving on clears it', r.action === 'cleared' && r.kind === 'still' && sen
 sent.length = 0
 await fix('12:40', [GAZLI[0] - 0.03, GAZLI[1]])
 r = await runSafetyCheck({ now: at('14:30') })
-check('quiet within 5 km of the night\'s town is arriving, not an alert', r.action === 'nothing' && sent.length === 0, r.reason)
+check('quiet within 3 km of the night\'s town is arriving, not an alert', r.action === 'nothing' && sent.length === 0, r.reason)
 
 // ── The night ──────────────────────────────────────────────────────────────
 r = await runSafetyCheck({ now: at('18:30') })

@@ -49,7 +49,7 @@ export function safetySettings() {
     stillMinutes: setting('SAFETY_STILL_MINUTES', 120, 30, 600),
     stillRadiusM: setting('SAFETY_STILL_RADIUS_M', 300, 50, 5000),
     /** Within this straight-line distance of the night's town, he has arrived. */
-    nearKm: setting('SAFETY_NEAR_KM', 5, 0.5, 50),
+    nearKm: setting('SAFETY_NEAR_KM', 3, 0.5, 50),
     /** He has set off once he has covered this much today. */
     setOffKm: setting('SAFETY_SET_OFF_KM', 3, 0.5, 50),
     /** His local hours in which a riding day is watched at all. */

@@ -286,7 +286,7 @@ they are the things a reasonable change would otherwise undo.
 22. **A safety alert goes to owners only, once per episode, and is followed by
     an all-clear.** `safety-check` runs every fifteen minutes in his riding
     hours. On a riding day, once he has covered 3 km and while he is more than
-    5 km from the night's town, it emails the owners after 60 min with no fix
+    3 km from the night's town, it emails the owners after 60 min with no fix
     ("quiet") or 120 min within 300 m while still reporting ("still" — lunch is
     often an hour). The row in `safety_alerts` is claimed *before* the send,
     like `sent_emails`, so a half-failed send is not repeated every fifteen
