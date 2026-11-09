@@ -22,6 +22,16 @@ import { simplify } from './rollups.mts'
 
 export type DayKind = 'ride' | 'rest' | 'travel' | 'other'
 
+/**
+ * Which router draws a day's road.
+ *
+ * Cycling keeps a bike off main roads, which is right in France and wrong in
+ * the Kyzylkum: there the only road is the A380, and the cycling router sent
+ * Sarymay to Gazli along farm tracks on the Turkmen border, 141 miles for a
+ * day John rode in about a hundred. He picks driving for days like that.
+ */
+export type Profile = 'cycling' | 'driving'
+
 export interface RouteDay {
   day: number
   date: string
@@ -36,8 +46,10 @@ export interface RouteDay {
   needsReview: boolean
   /** What Mapbox makes of riding it, for reference. His own number wins. */
   cyclingMiles?: number | null
-  /** The cycling line, for the map and the email. */
+  /** The road's line, for the map and the email. */
   routeCoords?: [number, number][] | null
+  /** Which router drew it. Cycling unless he chose otherwise. */
+  profile?: Profile
   /** True when this day has been changed from the plan. */
   edited?: boolean
   editedBy?: string | null
@@ -60,6 +72,7 @@ interface Row {
   to_lat: number | null
   cycling_miles: number | null
   route_coords: [number, number][] | null
+  profile: Profile | null
   needs_review: boolean
   updated_by: string | null
   updated_at: string
@@ -78,6 +91,7 @@ function merge(day: RouteDay, row: Row): RouteDay {
     needsReview: row.needs_review,
     cyclingMiles: row.cycling_miles,
     routeCoords: row.route_coords,
+    profile: row.profile ?? 'cycling',
     edited: true,
     editedBy: row.updated_by,
     editedAt: row.updated_at,
@@ -97,7 +111,7 @@ export async function loadRoute(): Promise<RouteDay[]> {
     const rows = (await db()`
       select
         to_char(date, 'YYYY-MM-DD') as date, kind, from_place, to_place, miles, note,
-        from_lon, from_lat, to_lon, to_lat, cycling_miles, route_coords, needs_review,
+        from_lon, from_lat, to_lon, to_lat, cycling_miles, route_coords, profile, needs_review,
         updated_by, updated_at::text as updated_at
       from route_days
     `) as unknown as Row[]
@@ -157,8 +171,9 @@ export interface CyclingRoute {
 export async function cyclingRoute(
   from: [number, number],
   to: [number, number],
+  profile: Profile = 'cycling',
 ): Promise<CyclingRoute | null> {
-  const direct = await directions(from, to)
+  const direct = await directions(from, to, profile)
   if (direct) return direct
 
   // No road, or only an absurd one: perhaps a border crossing Mapbox will not
@@ -174,7 +189,10 @@ export async function cyclingRoute(
     const via = haversineKm(from, near) + haversineKm(far, to)
     if (via > straight * 1.5 + 5) continue
 
-    const [before, after] = await Promise.all([directions(from, near), directions(far, to)])
+    const [before, after] = await Promise.all([
+      directions(from, near, profile),
+      directions(far, to, profile),
+    ])
     if (!before || !after) continue
     console.log(`route: routed through the ${crossing.name} crossing`)
     return {
@@ -202,6 +220,7 @@ const CROSSINGS: { name: string; sides: [[number, number], [number, number]] }[]
 async function directions(
   from: [number, number],
   to: [number, number],
+  profile: Profile,
 ): Promise<CyclingRoute | null> {
   const token = process.env.VITE_MAPBOX_TOKEN ?? process.env.MAPBOX_TOKEN
   if (!token) {
@@ -217,7 +236,7 @@ async function directions(
   // and Tekirdağ. He is riding to the seven continents, not sailing between
   // them, and a leg that genuinely needs a boat is better drawn as nothing.
   const url =
-    `https://api.mapbox.com/directions/v5/mapbox/cycling/${coords}` +
+    `https://api.mapbox.com/directions/v5/mapbox/${profile}/${coords}` +
     `?geometries=geojson&overview=full&exclude=ferry&access_token=${token}`
 
   try {
@@ -313,10 +332,12 @@ export interface SaveDay {
   fromCoords: [number, number] | null
   to: string | null
   toCoords: [number, number] | null
-  /** Null asks for the cycling distance to be used. */
+  /** Null asks for the road's distance to be used. */
   miles: number | null
   note: string
   needsReview: boolean
+  /** Absent keeps cycling, which is what every caller before this meant. */
+  profile?: Profile
 }
 
 /**
@@ -332,7 +353,7 @@ export async function saveDay(input: SaveDay, editor: string): Promise<RouteDay>
 
   let cycling: CyclingRoute | null = null
   if (input.kind !== 'rest' && input.fromCoords && input.toCoords) {
-    cycling = await cyclingRoute(input.fromCoords, input.toCoords)
+    cycling = await cyclingRoute(input.fromCoords, input.toCoords, input.profile ?? 'cycling')
   }
 
   // His number if he gave one, the road's if he did not, and nothing rather
@@ -343,12 +364,13 @@ export async function saveDay(input: SaveDay, editor: string): Promise<RouteDay>
     insert into route_days (
       date, kind, from_place, to_place, miles, note,
       from_lon, from_lat, to_lon, to_lat,
-      cycling_miles, route_coords, needs_review, updated_by, updated_at
+      cycling_miles, route_coords, profile, needs_review, updated_by, updated_at
     ) values (
       ${input.date}::date, ${input.kind}, ${input.from}, ${input.to}, ${miles}, ${input.note},
       ${input.fromCoords?.[0] ?? null}, ${input.fromCoords?.[1] ?? null},
       ${input.toCoords?.[0] ?? null}, ${input.toCoords?.[1] ?? null},
       ${cycling?.miles ?? null}, ${JSON.stringify(cycling?.coords ?? null)}::jsonb,
+      ${input.profile === 'driving' ? 'driving' : null},
       ${input.needsReview}, ${editor}, now()
     )
     on conflict (date) do update set
@@ -358,6 +380,7 @@ export async function saveDay(input: SaveDay, editor: string): Promise<RouteDay>
       from_lon = excluded.from_lon, from_lat = excluded.from_lat,
       to_lon = excluded.to_lon, to_lat = excluded.to_lat,
       cycling_miles = excluded.cycling_miles, route_coords = excluded.route_coords,
+      profile = excluded.profile,
       needs_review = excluded.needs_review,
       updated_by = excluded.updated_by, updated_at = now()
   `
@@ -480,7 +503,11 @@ export async function fillMissingRoads(from: string, until: string): Promise<num
   const routed = await Promise.all(
     missing.map(async ({ day, origin }) => ({
       day,
-      road: await cyclingRoute(origin as [number, number], day.toCoords as [number, number]),
+      road: await cyclingRoute(
+        origin as [number, number],
+        day.toCoords as [number, number],
+        day.profile ?? 'cycling',
+      ),
     })),
   )
 
@@ -635,6 +662,8 @@ export async function shiftFrom(from: string, until: string, editor: string): Pr
         to_lat: source.toCoords?.[1] ?? null,
         cycling_miles: source.cyclingMiles ?? null,
         route_coords: source.routeCoords ?? null,
+        // The road travels with the leg, and so does the router that drew it.
+        profile: source.profile === 'driving' ? 'driving' : null,
         needs_review: source.needsReview ?? false,
       }
     })
@@ -648,14 +677,14 @@ export async function shiftFrom(from: string, until: string, editor: string): Pr
     insert into route_days (
       date, kind, from_place, to_place, miles, note,
       from_lon, from_lat, to_lon, to_lat,
-      cycling_miles, route_coords, needs_review, updated_by, updated_at
+      cycling_miles, route_coords, profile, needs_review, updated_by, updated_at
     )
     select
       (r->>'date')::date, r->>'kind', r->>'from_place', r->>'to_place',
       (r->>'miles')::float8, coalesce(r->>'note', ''),
       (r->>'from_lon')::float8, (r->>'from_lat')::float8,
       (r->>'to_lon')::float8, (r->>'to_lat')::float8,
-      (r->>'cycling_miles')::float8, r->'route_coords',
+      (r->>'cycling_miles')::float8, r->'route_coords', r->>'profile',
       (r->>'needs_review')::boolean, ${editor}, now()
     from jsonb_array_elements(${JSON.stringify(rows)}::jsonb) as r
     on conflict (date) do update set
@@ -665,6 +694,7 @@ export async function shiftFrom(from: string, until: string, editor: string): Pr
       from_lon = excluded.from_lon, from_lat = excluded.from_lat,
       to_lon = excluded.to_lon, to_lat = excluded.to_lat,
       cycling_miles = excluded.cycling_miles, route_coords = excluded.route_coords,
+      profile = excluded.profile,
       needs_review = excluded.needs_review,
       updated_by = excluded.updated_by, updated_at = now()
   `
@@ -700,6 +730,7 @@ export async function rechainNextDay(date: string, editor: string): Promise<Rout
       miles: null,
       note: next.note,
       needsReview: true,
+      profile: next.profile,
     },
     editor,
   )

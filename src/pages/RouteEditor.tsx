@@ -32,6 +32,8 @@ interface Day {
   toCoords: [number, number] | null
   needsReview: boolean
   cyclingMiles?: number | null
+  /** Which router drew the road. Cycling unless he chose the car's road. */
+  profile?: 'cycling' | 'driving'
   edited?: boolean
   editedBy?: string | null
 }
@@ -62,6 +64,7 @@ export default function RouteEditor() {
   const [searchError, setSearchError] = useState<string | null>(null)
   const [miles, setMiles] = useState('')
   const [note, setNote] = useState('')
+  const [profile, setProfile] = useState<'cycling' | 'driving'>('cycling')
   const [saving, setSaving] = useState(false)
   // The day a shift would start from, while he is looking at what it would do.
   const [shifting, setShifting] = useState<string | null>(null)
@@ -120,6 +123,20 @@ export default function RouteEditor() {
     setResults([])
     setMiles(day.miles !== null ? String(day.miles) : '')
     setNote(day.note ?? '')
+    setProfile(day.profile ?? 'cycling')
+  }
+
+  /**
+   * Bike road or car road. Out in the Kyzylkum the A380 is the only road and
+   * the cycling router goes looking for farm tracks along the Turkmen border.
+   *
+   * A distance that was only ever the old road's own figure is cleared, so the
+   * new road's is used; one he typed himself is his and stays.
+   */
+  function chooseRoad(day: Day, next: 'cycling' | 'driving') {
+    const auto = day.cyclingMiles != null ? String(Math.round(day.cyclingMiles)) : null
+    if (next !== profile && miles.trim() === auto) setMiles('')
+    setProfile(next)
   }
 
   function cancel() {
@@ -179,6 +196,7 @@ export default function RouteEditor() {
           note,
           needsReview: false,
           rechain,
+          profile,
         }),
       })
       if (!response.ok) {
@@ -243,6 +261,8 @@ export default function RouteEditor() {
           // standing in. Flagged rather than saved quietly as zero miles,
           // because it is the morning email's destination too.
           needsReview: !toRest && (!to || to === from),
+          // Kept, not reset: a rest day and back is still the road he chose.
+          profile: day.profile ?? 'cycling',
           // Changing what kind of day this is changes where he ends up, so the
           // day after has to start somewhere else — and its road has to be
           // fetched again, because it now runs from a different town. Without
@@ -357,6 +377,7 @@ export default function RouteEditor() {
                 <span className="to">{day.to ?? '—'}</span>
                 <span className="miles">
                   {day.miles !== null ? `${day.miles} mi` : 'distance unknown'}
+                  {day.profile === 'driving' && day.kind !== 'rest' && ' · car road'}
                 </span>
               </div>
 
@@ -449,8 +470,32 @@ export default function RouteEditor() {
                     </p>
                   )}
 
+                  {day.kind !== 'rest' && (
+                    <div className="road" role="group" aria-label="Which road">
+                      <span>Road <em>— the line on the map, and the distance if Miles is blank</em></span>
+                      <div className="road-choice">
+                        <button
+                          type="button"
+                          className={profile === 'cycling' ? 'chosen-road' : ''}
+                          aria-pressed={profile === 'cycling'}
+                          onClick={() => chooseRoad(day, 'cycling')}
+                        >
+                          Bike route
+                        </button>
+                        <button
+                          type="button"
+                          className={profile === 'driving' ? 'chosen-road' : ''}
+                          aria-pressed={profile === 'driving'}
+                          onClick={() => chooseRoad(day, 'driving')}
+                        >
+                          Car route
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <label>
-                    <span>Miles <em>— leave blank to use the cycling route</em></span>
+                    <span>Miles <em>— leave blank to use the {profile === 'driving' ? 'car' : 'cycling'} route</em></span>
                     <input
                       value={miles}
                       onChange={(e) => setMiles(e.target.value)}

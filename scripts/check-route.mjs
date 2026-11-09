@@ -35,7 +35,7 @@ await pg.exec(`
     from_place text, to_place text, miles double precision, note text,
     from_lon double precision, from_lat double precision,
     to_lon double precision, to_lat double precision,
-    cycling_miles double precision, route_coords jsonb,
+    cycling_miles double precision, route_coords jsonb, profile text,
     needs_review boolean not null default false,
     updated_by text, updated_at timestamptz not null default now()
   );
@@ -253,6 +253,40 @@ check('and nothing past the window moves',
 
 check('every shifted day is marked as changed',
   ['2026-09-05', '2026-09-06', '2026-09-07'].every((d) => on(d).edited === true))
+
+// ── A day can follow the car's road ────────────────────────────────────────
+// Out in the Kyzylkum the A380 is the only road, and the cycling router sent
+// Sarymay to Gazli along farm tracks by the Turkmen border — 141 miles for a
+// day he rode in about a hundred. He can pick the car's road for a day.
+{
+  const ride = PLAN.find((d) => d.date > '2026-09-20' && d.kind === 'ride' && d.fromCoords && d.toCoords)
+  const base = {
+    date: ride.date, kind: 'ride', from: ride.from, fromCoords: ride.fromCoords,
+    to: ride.to, toCoords: ride.toCoords, miles: null, note: '', needsReview: false,
+  }
+  await saveDay(base, 'john@example.com')
+  check('a day is drawn by the cycling router unless told otherwise',
+    lastDirectionsUrl.includes('/mapbox/cycling/') && (await dayOn(ride.date)).profile === 'cycling')
+
+  await saveDay({ ...base, profile: 'driving' }, 'john@example.com')
+  check('the car road is asked of the driving router', lastDirectionsUrl.includes('/mapbox/driving/'),
+    lastDirectionsUrl.slice(0, 70))
+  check('still without ferries', lastDirectionsUrl.includes('exclude=ferry'))
+  check('and the choice is kept with the day', (await dayOn(ride.date)).profile === 'driving')
+
+  // A road fetched again later is fetched the same way.
+  await pg.query(`update route_days set route_coords = null where date = $1::date`, [ride.date])
+  await fillMissingRoads(ride.date, ride.date)
+  check('a missing road is fetched again by the router he chose',
+    lastDirectionsUrl.includes('/mapbox/driving/'))
+
+  // And it travels with the leg when he loses a day.
+  const callsBefore = directionsCalls
+  const next = PLAN[PLAN.findIndex((d) => d.date === ride.date) + 1]
+  await shiftFrom(next.date, next.date, 'john@example.com')
+  check('a shifted leg keeps the road it was drawn on',
+    (await dayOn(next.date)).profile === 'driving' && directionsCalls === callsBefore)
+}
 
 // Nothing to take a schedule from is a refusal, not a silent no-op on day one.
 const nothingBefore = await shiftFrom(PLAN[0].date, PLAN[3].date, 'john@example.com')

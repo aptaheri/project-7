@@ -1,7 +1,7 @@
 import { json } from '../lib/auth.mts'
 import { requireTrackViewer } from '../lib/gate.mts'
 import { englishNames, fillMissingRoads, haversineKm, loadRoute, rechainNextDay, saveDay, shiftFrom } from '../lib/route.mts'
-import type { DayKind, SaveDay } from '../lib/route.mts'
+import type { DayKind, Profile, SaveDay } from '../lib/route.mts'
 
 /**
  * The route John edits from the road.
@@ -23,6 +23,7 @@ const AHEAD = 10
 const MAX_RIDE_KM = 650
 
 const KINDS: DayKind[] = ['ride', 'rest', 'travel', 'other']
+const PROFILES: Profile[] = ['cycling', 'driving']
 
 function isCoords(value: unknown): value is [number, number] {
   return (
@@ -117,6 +118,9 @@ export default async function handler(req: Request): Promise<Response> {
     if (!body.kind || !KINDS.includes(body.kind)) {
       return json({ error: `kind must be one of ${KINDS.join(', ')}` }, 400)
     }
+    if (body.profile !== undefined && !PROFILES.includes(body.profile)) {
+      return json({ error: `profile must be one of ${PROFILES.join(', ')}` }, 400)
+    }
     if (body.toCoords !== null && body.toCoords !== undefined && !isCoords(body.toCoords)) {
       return json({ error: 'toCoords must be [lon, lat]' }, 400)
     }
@@ -153,6 +157,7 @@ export default async function handler(req: Request): Promise<Response> {
         miles: body.miles ?? null,
         note: body.note ?? '',
         needsReview: body.needsReview ?? false,
+        profile: body.profile ?? 'cycling',
       },
       gate.email,
     )

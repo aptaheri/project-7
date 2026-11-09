@@ -101,7 +101,7 @@ await pg.exec(`
     from_place text, to_place text, miles double precision, note text,
     from_lon double precision, from_lat double precision,
     to_lon double precision, to_lat double precision,
-    cycling_miles double precision, route_coords jsonb,
+    cycling_miles double precision, route_coords jsonb, profile text,
     needs_review boolean not null default false,
     updated_by text, updated_at timestamptz not null default now()
   );

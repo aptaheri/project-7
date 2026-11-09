@@ -242,6 +242,9 @@ export function ensureSchema(): Promise<void> {
           updated_at    timestamptz not null default now()
         )
       `
+      // Which router drew the day's road: 'cycling', or 'driving' where he is
+      // on the highway a car would take. Null is cycling, as every day was.
+      await sql`alter table route_days add column if not exists profile text`
 
       // Finished days, computed once and then read back rather than derived
       // from the whole history on every poll. Keyed by mode so the owner's

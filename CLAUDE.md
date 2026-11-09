@@ -273,6 +273,15 @@ they are the things a reasonable change would otherwise undo.
     just timed out behind tomorrow's, so one slow place can't take every run.
     `check-fact` and `check-sql` assert all of it.
 
+21. **A day's road is drawn by the router he chose for it.** Cycling keeps a
+    bike off main roads, which is right in France and wrong in the Kyzylkum:
+    there the A380 is the only road, and the cycling router sent Sarymay → Gazli
+    along tracks by the Turkmen border, 141 mi against 108 by car and his own
+    ~100. `route_days.profile` is `'driving'` or null (cycling), and every
+    path that fetches or copies a road carries it — save, refill, rechain and
+    shift — so a refill never quietly swaps his car road back for a bike one.
+    `check-route` asserts each.
+
 ## Testing
 
 Every change to SQL or to a rule gets an assertion in `scripts/check-*.mjs`.

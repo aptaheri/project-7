@@ -268,6 +268,29 @@
   }
 }
 
+// Bike road or car road, as two halves of one control.
+.road {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  > span { font-size: 13px; color: rgba(255, 255, 255, 0.6); }
+  em { font-style: normal; color: rgba(255, 255, 255, 0.38); }
+}
+
+.road-choice {
+  display: flex;
+  gap: 8px;
+
+  button { flex: 1 1 0; }
+
+  .chosen-road {
+    background: rgba(66, 133, 244, 0.22);
+    border-color: #4285f4;
+    font-weight: 600;
+  }
+}
+
 .edit-actions {
   display: flex;
   flex-direction: column;
