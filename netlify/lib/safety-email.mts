@@ -48,7 +48,7 @@ export interface SafetyEmailInput {
   connection: string | null
   /** On an all-clear after a quiet spell, how far the late-arriving fixes say he rode meanwhile. */
   rodeDuringGapKm: number | null
-  settings: { quietMinutes: number; stillMinutes: number; stillRadiusM: number; nearKm: number }
+  settings: { quietMinutes: number; stillMinutes: number; stillRadiusM: number; nearKm: number; silentHour: number }
   origin: string
 }
 
@@ -90,10 +90,10 @@ export function buildSafetyEmail(input: SafetyEmailInput): {
 
   if (input.clearing) {
     subject =
-      input.kind === 'quiet'
+      input.kind !== 'still'
         ? `All clear: John's fixes are coming in again`
         : `All clear: John is moving again`
-    headline = input.kind === 'quiet' ? 'His fixes are back' : 'He is moving again'
+    headline = input.kind !== 'still' ? 'His fixes are back' : 'He is moving again'
     const gap =
       input.rodeDuringGapKm !== null && input.rodeDuringGapKm >= 1
         ? ` Fixes recorded during the gap have now arrived and show him riding ${distance(input.rodeDuringGapKm)} through it — so it was the signal, not him.`
@@ -105,6 +105,21 @@ export function buildSafetyEmail(input: SafetyEmailInput): {
         : '.') +
       gap
     likely = []
+  } else if (input.kind === 'silent') {
+    subject = `Safety check: no fix from John yet today — last one ${duration(input.minutes)} ago`
+    headline = 'No fix from John yet today'
+    summary =
+      `It is ${input.localTime} his time on a riding day, and nothing has arrived since ${input.lastFix}. ` +
+      (input.destination && input.toDestinationKm !== null
+        ? `Today's ride is to ${input.destination}, ${distance(input.toDestinationKm)} from where that fix was.`
+        : 'Today is a riding day.')
+    likely = [
+      'No signal since he set off. OwnTracks keeps recording and sends everything when it reconnects, so the day fills in on its own.',
+      'The phone died overnight, or has not been charged.',
+      'OwnTracks was stopped or closed on the phone.',
+      'He changed plans and is not riding today.',
+      'Less often, a problem. If you have not heard from him, try reaching him.',
+    ]
   } else if (input.kind === 'quiet') {
     subject = `Safety check: no fix from John for ${duration(input.minutes)}, ${short}`
     headline = `No fix from John for ${duration(input.minutes)}`
@@ -135,7 +150,7 @@ export function buildSafetyEmail(input: SafetyEmailInput): {
     ['His time now', input.localTime],
     ['Latest fix', `${input.lastFix} his time`],
   ]
-  if (!input.clearing) facts.push(['Ridden today', distance(input.riddenKm)])
+  if (!input.clearing && input.kind !== 'silent') facts.push(['Ridden today', distance(input.riddenKm)])
   if (input.destination && input.toDestinationKm !== null) {
     facts.push([`To ${input.destination}`, `${distance(input.toDestinationKm)}, straight line`])
   }
@@ -200,9 +215,10 @@ export function buildSafetyEmail(input: SafetyEmailInput): {
         ${escape(
           input.clearing
             ? 'Sent to owners only.'
-            : `Sent to owners only. You'll get one more email when ${input.kind === 'quiet' ? 'his fixes resume' : 'he moves on'}. ` +
-              `This fires on a riding day when he has set off and is more than ${input.settings.nearKm} km from the night's town, ` +
-              `after ${input.settings.quietMinutes} min with no fix, or ${input.settings.stillMinutes} min within ${input.settings.stillRadiusM} m.`,
+            : `Sent to owners only. You'll get one more email when ${input.kind === 'still' ? 'he moves on' : 'his fixes resume'}. ` +
+              `This fires on a riding day while he is more than ${input.settings.nearKm} km from the night's town: ` +
+              `once he has set off, after ${input.settings.quietMinutes} min with no fix or ${input.settings.stillMinutes} min within ${input.settings.stillRadiusM} m; ` +
+              `and from ${input.settings.silentHour}:00 his time if nothing has arrived since midnight.`,
         )}
       </div>
     </td></tr>

@@ -288,7 +288,10 @@ they are the things a reasonable change would otherwise undo.
     hours. On a riding day, once he has covered 3 km and while he is more than
     3 km from the night's town, it emails the owners after 60 min with no fix
     ("quiet") or 120 min within 300 m while still reporting ("still" — lunch is
-    often an hour). The row in `safety_alerts` is claimed *before* the send,
+    often an hour). Those two only watch once he has set off, so a third,
+    "silent", covers a riding day with **no fix at all since his midnight** by
+    noon his time — the day it was added, his last fix was 27 hours old and the
+    check called him "not set off". The row in `safety_alerts` is claimed *before* the send,
     like `sent_emails`, so a half-failed send is not repeated every fifteen
     minutes; an open alert is never re-sent, and the all-clear closes it — and
     says "it was the signal" when fixes from inside the gap arrive late showing
@@ -335,7 +338,7 @@ own schema before the code that needs a column can ship.
 | `TRACK_TEST_DEVICES` | Devices whose fixes are test data; everything else is real |
 | `RESEND_API_KEY`, `EMAIL_FROM` | The daily email |
 | `EMAIL_PAUSED`, `EMAIL_SEND_FROM_HOUR`, `EMAIL_SEND_UNTIL_HOUR` | Hold or shift the send without a deploy |
-| `SAFETY_PAUSED`, `SAFETY_QUIET_MINUTES`, `SAFETY_STILL_MINUTES`, `SAFETY_STILL_RADIUS_M`, `SAFETY_NEAR_KM`, `SAFETY_SET_OFF_KM`, `SAFETY_FROM_HOUR`, `SAFETY_UNTIL_HOUR`, `SAFETY_MAX_PER_DAY` | Tune or hold the safety alert (rule 22) |
+| `SAFETY_PAUSED`, `SAFETY_QUIET_MINUTES`, `SAFETY_STILL_MINUTES`, `SAFETY_STILL_RADIUS_M`, `SAFETY_NEAR_KM`, `SAFETY_SET_OFF_KM`, `SAFETY_FROM_HOUR`, `SAFETY_UNTIL_HOUR`, `SAFETY_MAX_PER_DAY`, `SAFETY_SILENT_HOUR` | Tune or hold the safety alert (rule 22) |
 | `ANTHROPIC_API_KEY` | Writing destination lines |
 | `OWNTRACKS_*` | The phone posting fixes |
 

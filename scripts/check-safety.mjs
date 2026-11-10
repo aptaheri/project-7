@@ -217,5 +217,39 @@ r = await runSafetyCheck({ now: at('09:20') })
 check('SAFETY_PAUSED holds everything', r.action === 'skipped', r.reason)
 delete process.env.SAFETY_PAUSED
 
+// ── A whole morning with nothing ───────────────────────────────────────────
+// The next day nothing arrives at all. The other two alerts only watch once he
+// has ridden 3 km today, so this is the case they could never see — and the
+// day it was added, the last fix was 27 hours old and the check said "not set
+// off".
+{
+  const BUKHARA = [64.4569, 39.7683]
+  await pg.query(`insert into route_days (date, kind, from_place, to_place, from_lon, from_lat, to_lon, to_lat)
+    values ('2026-11-12', 'ride', 'Gazli', 'Bukhara', $1, $2, $3, $4)`, [...GAZLI, ...BUKHARA])
+  const next = (utc) => new Date(`2026-11-12T${utc}:00Z`)
+  sent.length = 0
+
+  r = await runSafetyCheck({ now: next('06:30') })
+  check('a quiet morning is not an alert before noon', r.action === 'nothing' && sent.length === 0, r.reason)
+
+  r = await runSafetyCheck({ now: next('07:05') })
+  check('at noon on a riding day with no fix since midnight, the owners hear', r.action === 'alerted' && r.kind === 'silent',
+    r.reason)
+  check('saying so, and how old the last fix is', /no fix from John yet today — last one 1[89] h/.test(sent[0]?.subject ?? ''),
+    sent[0]?.subject)
+  check('naming the day of that fix', sent[0]?.text.includes('on Wednesday'), sent[0]?.text.split('\n')[2])
+  check('without claiming a distance ridden today', !sent[0]?.text.includes('Ridden today'))
+
+  sent.length = 0
+  r = await runSafetyCheck({ now: next('07:20') })
+  check('and once', r.action === 'nothing' && sent.length === 0, r.reason)
+
+  await pg.query(`insert into locations (device, tst, lat, lon, batt, conn) values ('phone', $1, $2, $3, 80, 'm')`,
+    ['2026-11-12T07:30:00Z', GAZLI[1], GAZLI[0] + 0.2])
+  r = await runSafetyCheck({ now: next('07:35') })
+  check('the first fix of the day clears it', r.action === 'cleared' && r.kind === 'silent' &&
+    sent[0]?.subject === "All clear: John's fixes are coming in again", sent[0]?.subject)
+}
+
 console.log(failures === 0 ? '\nAll safety checks passed.' : `\n${failures} check(s) failed.`)
 process.exit(failures === 0 ? 0 : 1)

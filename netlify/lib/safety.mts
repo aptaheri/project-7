@@ -14,13 +14,18 @@ import type { SafetyEmailInput } from './safety-email.mts'
  * A quiet word to the owners when a riding day stops looking like one.
  *
  * Asked for after John was hit by a car outside Kipchak — he was fine, and the
- * only way anybody heard was a text the next morning. Two shapes of trouble are
+ * only way anybody heard was a text the next morning. Three shapes of trouble are
  * visible from here:
  *
  * - **quiet**: he had set off, and then the fixes stopped, with him well short
  *   of the night's town.
  * - **still**: the fixes keep arriving, but he has not moved for a long time,
  *   again well short of the town.
+ * - **silent**: a riding day, noon where he is, and not one fix since midnight.
+ *   The other two only watch once he has ridden 3 km, so a phone that died
+ *   overnight — or no signal from the moment he left — was the one case they
+ *   could never see. The day this was added, the last fix was 27 hours old and
+ *   the check reported him as "not set off".
  *
  * Neither is proof of anything. Through Central Asia the commonest cause of
  * "quiet" is no signal — OwnTracks keeps recording and sends the lot when it
@@ -57,6 +62,8 @@ export function safetySettings() {
     untilHour: setting('SAFETY_UNTIL_HOUR', 20, 0, 23),
     /** Alerts of all kinds in one of his days, so a bad-signal day cannot become a flood. */
     maxPerDay: setting('SAFETY_MAX_PER_DAY', 3, 1, 20),
+    /** His local hour after which a riding day with no fix at all is "silent". */
+    silentHour: setting('SAFETY_SILENT_HOUR', 12, 0, 23),
   }
 }
 
@@ -69,7 +76,7 @@ const MOVED_AGAIN_M = 1000
 /** Hours of slack when guessing his local time from the plan, as the email does. */
 const GUESS_SLACK_HOURS = 2
 
-export type AlertKind = 'quiet' | 'still'
+export type AlertKind = 'quiet' | 'still' | 'silent'
 
 export interface SafetyOutcome {
   /** What happened, for a log line or the owner's dry run. */
@@ -200,6 +207,12 @@ export async function runSafetyCheck(options: SafetyOptions = {}): Promise<Safet
 
   const lastFixAt = new Date(latest.tst)
   const quietMinutes = (now.getTime() - lastFixAt.getTime()) / 60_000
+  // "13:35", or "13:35 on Sunday" when the last fix was not today.
+  const lastFixClock = clock(zone, lastFixAt)
+  const lastFix =
+    lastFixClock.date === today
+      ? lastFixClock.time
+      : `${lastFixClock.time} on ${new Intl.DateTimeFormat('en-GB', { timeZone: zone, weekday: 'long' }).format(lastFixAt)}`
 
   // Today, as a range the index can answer (rule 3), and only up to now.
   const { start } = localDayRange(zone, today)
@@ -286,7 +299,7 @@ export async function runSafetyCheck(options: SafetyOptions = {}): Promise<Safet
   // the town, or the clock has moved past riding hours on the next run.
   for (const alert of open) {
     const back =
-      alert.kind === 'quiet'
+      alert.kind !== 'still'
         ? quietMinutes <= FRESH_MINUTES
         : metres([alert.lon, alert.lat], position) > MOVED_AGAIN_M ||
           (toDestinationKm !== null && toDestinationKm <= s.nearKm)
@@ -295,7 +308,7 @@ export async function runSafetyCheck(options: SafetyOptions = {}): Promise<Safet
     // Fixes from inside the gap that arrived late mean the phone was recording
     // all along and simply had no signal.
     let rodeDuringGap: number | null = null
-    if (alert.kind === 'quiet') {
+    if (alert.kind !== 'still') {
       const gap = (await sql`
         with ordered as (
           select lat, lon,
@@ -321,8 +334,8 @@ export async function runSafetyCheck(options: SafetyOptions = {}): Promise<Safet
       kind: alert.kind,
       clearing: true,
       localTime: time,
-      lastFix: clock(zone, lastFixAt).time,
-      minutes: alert.kind === 'quiet' ? quietMinutes : stillForMinutes ?? 0,
+      lastFix,
+      minutes: alert.kind === 'still' ? stillForMinutes ?? 0 : quietMinutes,
       riddenKm,
       destination: riding ? leg.to : null,
       toDestinationKm,
@@ -340,19 +353,29 @@ export async function runSafetyCheck(options: SafetyOptions = {}): Promise<Safet
   if (!riding) {
     return { ...base, observed, action: 'nothing', reason: leg ? `a ${leg.kind} day` : 'no riding leg matches where he is' }
   }
-  if (riddenKm < s.setOffKm) {
-    return { ...base, observed, action: 'nothing', reason: `has not set off — ${riddenKm.toFixed(1)} km today` }
-  }
   if (toDestinationKm !== null && toDestinationKm <= s.nearKm) {
     return { ...base, observed, action: 'nothing', reason: `within ${s.nearKm} km of ${leg.to}` }
   }
 
-  const kind: AlertKind | null =
-    quietMinutes >= s.quietMinutes
-      ? 'quiet'
-      : stillForMinutes !== null && stillForMinutes >= s.stillMinutes
-        ? 'still'
-        : null
+  let kind: AlertKind | null
+  if (!todayRows[0]?.first_fix) {
+    // Not one fix since his midnight. Before noon that is a late start or a
+    // phone still in a bag; after it, on a riding day, the owners should know.
+    if (hour < s.silentHour) {
+      return { ...base, observed, action: 'nothing', reason: `no fix yet today; asks again from ${s.silentHour}:00` }
+    }
+    kind = 'silent'
+  } else {
+    if (riddenKm < s.setOffKm) {
+      return { ...base, observed, action: 'nothing', reason: `has not set off — ${riddenKm.toFixed(1)} km today` }
+    }
+    kind =
+      quietMinutes >= s.quietMinutes
+        ? 'quiet'
+        : stillForMinutes !== null && stillForMinutes >= s.stillMinutes
+          ? 'still'
+          : null
+  }
   if (!kind) {
     return { ...base, observed, action: 'nothing', reason: 'moving, or not long enough to worry' }
   }
@@ -368,8 +391,8 @@ export async function runSafetyCheck(options: SafetyOptions = {}): Promise<Safet
     kind,
     clearing: false,
     localTime: time,
-    lastFix: clock(zone, lastFixAt).time,
-    minutes: kind === 'quiet' ? quietMinutes : stillForMinutes ?? 0,
+    lastFix,
+    minutes: kind === 'still' ? stillForMinutes ?? 0 : quietMinutes,
     riddenKm,
     destination: leg.to,
     toDestinationKm,
@@ -402,9 +425,11 @@ async function deliver(
   const reason =
     action === 'cleared'
       ? `${input.kind} alert cleared`
-      : input.kind === 'quiet'
-        ? `no fix for ${Math.round(input.minutes)} min`
-        : `within ${input.settings.stillRadiusM} m for ${Math.round(input.minutes)} min`
+      : input.kind === 'silent'
+        ? `no fix today by ${input.localTime}`
+        : input.kind === 'quiet'
+          ? `no fix for ${Math.round(input.minutes)} min`
+          : `within ${input.settings.stillRadiusM} m for ${Math.round(input.minutes)} min`
 
   if (dryRun) {
     return { ...context, action, kind: input.kind, reason: `dry run — would send: ${reason}`, subject: email.subject, preview: email }
