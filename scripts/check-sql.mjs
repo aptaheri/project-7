@@ -299,8 +299,16 @@ check('and in the plain text part', (rerouted.preview?.text ?? '').includes('Fra
 // Put it back, so the gates below are tested against the plan as before.
 await pg.query('delete from route_days')
 
-// The clock gate, at whatever hour this happens to run.
+// The clock gate. It used to run "at whatever hour this happens to run", and
+// the fixture is a rider moving right now a few hours east of UTC — so a run a
+// little after 02:00 UTC fell inside his morning window, passed every gate and
+// failed. A window from 23:00 to 00:59 that excludes every hour (from > until)
+// makes the gate the thing under test at any hour.
+process.env.EMAIL_SEND_FROM_HOUR = '23'
+process.env.EMAIL_SEND_UNTIL_HOUR = '0'
 const unforced = await runDailyEmail({ dryRun: true })
+delete process.env.EMAIL_SEND_FROM_HOUR
+delete process.env.EMAIL_SEND_UNTIL_HOUR
 check(
   'a gate stops the unforced run',
   unforced.sent === false && !unforced.reason.startsWith('dry run'),
